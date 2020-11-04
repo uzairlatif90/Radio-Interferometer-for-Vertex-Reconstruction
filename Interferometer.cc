@@ -1,70 +1,54 @@
 #include "Interferometer.hh"
 
-bool Interferometer::GenerateChHitTimeAndCheckHits(double DummyTx[3],double ChHitTime[2][TotalAntennasRx],int IgnoreCh[2][TotalAntennasRx]){
+void Interferometer::GenerateChHitTimeAndCheckHits(double TxCor[3],double timeRay[2][TotalAntennasRx],int IgnoreCh[2][TotalAntennasRx]){
 
-  double RangD[TotalAntennasRx];
-  double RangR[TotalAntennasRx];
-  double RangRa[TotalAntennasRx];
-  double RangRay[2][TotalAntennasRx];
-  bool NoChHit=true;
-  int DHits=0;
-  int RHits=0;
+  double AntennaCoordTx[3]={TxCor[0],TxCor[1],-TxCor[2]};
+  
+  int DHits=0,RHits=0;
+  // double LangD=0;double LangR=0;double LangRa=0;
+  double timeD[TotalAntennasRx], timeR[TotalAntennasRx], timeRa[TotalAntennasRx];
+  double RangD[TotalAntennasRx], RangR[TotalAntennasRx], RangRa[TotalAntennasRx];
+  double RangRay[2][TotalAntennasRx];  
   
   for(int iRx=0;iRx<TotalAntennasRx;iRx++){
-
-    double Distance=sqrt(pow(AntennaCoordRx[iRx][0]-DummyTx[0],2) + pow(AntennaCoordRx[iRx][1]-DummyTx[1],2));
+    double Distance=sqrt(pow(AntennaCoordRx[iRx][0]-AntennaCoordTx[0],2) + pow(AntennaCoordRx[iRx][1]-AntennaCoordTx[1],2));
     double RxDepth=AntennaCoordRx[iRx][2];
-    double TxDepth=DummyTx[2];
+    double TxDepth=AntennaCoordTx[2];
     double *RTresults=IceRayTracing::IceRayTracing(0, TxDepth, Distance,RxDepth);
 
-    for(int iray=0;iray<3;iray++){ 
-      // if(RTresults[6+iray]==0){
-      // 	RTresults[0+iray]=0;
-      // 	RTresults[3+iray]=0;
-      // 	RTresults[6+iray]=0;
-      // }
-    }
-    
-    double timeD=RTresults[3]*pow(10,9);
-    double timeR=RTresults[4]*pow(10,9);
-    double timeRa=RTresults[5]*pow(10,9);
+    // LangD=RTresults[0];LangR=RTresults[1];LangRa=RTresults[2];
+    timeD[iRx]=RTresults[3]*pow(10,9);
+    timeR[iRx]=RTresults[4]*pow(10,9);
+    timeRa[iRx]=RTresults[5]*pow(10,9);
     RangD[iRx]=RTresults[6];
     RangR[iRx]=RTresults[7];
-    RangRa[iRx]=RTresults[8];  
-
-    ChHitTime[0][iRx]=timeD;
-    ChHitTime[1][iRx]=timeR;
+    RangRa[iRx]=RTresults[8];
+    
+    timeRay[0][iRx]=timeD[iRx];
+    timeRay[1][iRx]=timeR[iRx];
 
     RangRay[0][iRx]=RangD[iRx];
     RangRay[1][iRx]=RangR[iRx];
-
-    //cout<<iRx<<" "<<timeD<<" "<<timeR<<" "<<timeRa<<endl;
-    
+ 
     if(RangD[iRx]==0 && RangRa[iRx]!=0){
       //cout<<"direct becomes refracted "<<endl;
-      ChHitTime[0][iRx]=timeRa;
+      timeRay[0][iRx]=timeRa[iRx];
       RangRay[0][iRx]=RangRa[iRx];
     }
     if(RangR[iRx]==0 && RangRa[iRx]!=0){
       //cout<<"reflected becomes refracted "<<endl;
-      ChHitTime[1][iRx]=timeRa;
+      timeRay[1][iRx]=timeRa[iRx];
       RangRay[1][iRx]=RangRa[iRx];
     }
 
     if(RangRay[0][iRx]==0){
-      //ChHitTime[0][iRx]=100000000;
       IgnoreCh[0][iRx]=0;
     }
 
     if(RangRay[1][iRx]==0){
-      //ChHitTime[1][iRx]=100000000;
       IgnoreCh[1][iRx]=0;
-    }   
-    
-    if(RangRay[0][iRx]!=0 || RangRay[1][iRx]!=0){
-      NoChHit=false;
     }
-
+    
     if(RangRay[0][iRx]!=0){
       DHits++;
     }
@@ -74,11 +58,8 @@ bool Interferometer::GenerateChHitTimeAndCheckHits(double DummyTx[3],double ChHi
     }
     
     delete [] RTresults;  
-  }
-  // if(DHits<=5 && DHits>0){
-  //   cout<<"hits are "<<DHits<<" "<<RHits<<endl;
-  // }
-  return NoChHit;
+  }  
+  //cout<<"hits are "<<DHits<<" "<<RHits<<endl; 
 }
 
 bool Interferometer::CheckTrigger(int IgnoreCh[2][TotalAntennasRx]){
@@ -120,7 +101,6 @@ bool Interferometer::CheckTrigger(int IgnoreCh[2][TotalAntennasRx]){
   }
 
   return DidStationTrigger;
-  
 }
 
 void Interferometer::ReadChHitTimeFromData(const char * filename,double ChHitTime[2][TotalAntennasRx]){
@@ -145,21 +125,63 @@ void Interferometer::ReadChHitTimeFromData(const char * filename,double ChHitTim
   ain.close();
 }
 
-void Interferometer::FindFirstHitAndNormalizeHitTime(double ChHitTime[2][TotalAntennasRx]){
+void Interferometer::FindFirstHitAndNormalizeHitTime(double ChHitTime[2][TotalAntennasRx],int IgnoreCh[2][TotalAntennasRx],double ChDRTime[TotalAntennasRx]){
 
   double FirstHitTime[2];
-  int FirstHitCh[2]; 
+  int FirstHitCh[2];
+  vector <double> ChHitTimeB[2];
 
   for(int iray=0;iray<2;iray++){ 
-    FirstHitTime[iray]=TMath::MinElement(TotalAntennasRx,ChHitTime[iray]);
-    FirstHitCh[iray]=TMath::LocMin(TotalAntennasRx,ChHitTime[iray]);
     for(int iRx=0;iRx<TotalAntennasRx;iRx++){
-      ChHitTime[iray][iRx]=ChHitTime[iray][iRx]-ChHitTime[0][FirstHitCh[0]];
-      //cout<<iray<<" "<<iRx<<" "<<ChHitTime[iray][iRx]<<endl;
+      if(IgnoreCh[iray][iRx]==1){
+	ChHitTimeB[iray].push_back(ChHitTime[iray][iRx]);
+      }
     }
   }
 
-  
+  for(int iRx=0;iRx<TotalAntennasRx;iRx++){
+    if(IgnoreCh[0][iRx]==1 && IgnoreCh[1][iRx]==1){
+      ChDRTime[iRx]=ChHitTime[1][iRx]-ChHitTime[0][iRx];
+    }else{
+      ChDRTime[iRx]=0;
+    }
+  }
+
+  if(ChHitTimeB[0].size()!=0 && ChHitTimeB[1].size()!=0){
+    for(int iray=0;iray<2;iray++){   
+      FirstHitTime[iray]=TMath::MinElement(ChHitTimeB[iray].size(),ChHitTimeB[iray].data());
+      FirstHitCh[iray]=TMath::LocMin(ChHitTimeB[iray].size(),ChHitTimeB[iray].data());
+      
+      for(int iRx=0;iRx<TotalAntennasRx;iRx++){
+	ChHitTime[iray][iRx]=ChHitTime[iray][iRx]-ChHitTimeB[0][FirstHitCh[0]];
+      }      
+    }
+  }
+
+  if(ChHitTimeB[0].size()!=0 && ChHitTimeB[1].size()==0){    
+    FirstHitTime[0]=TMath::MinElement(ChHitTimeB[0].size(),ChHitTimeB[0].data());
+    FirstHitCh[0]=TMath::LocMin(ChHitTimeB[0].size(),ChHitTimeB[0].data());
+    
+    for(int iRx=0;iRx<TotalAntennasRx;iRx++){
+      ChHitTime[0][iRx]=ChHitTime[0][iRx]-ChHitTimeB[0][FirstHitCh[0]];
+    }
+  }
+
+  if(ChHitTimeB[0].size()==0 && ChHitTimeB[1].size()!=0){    
+    FirstHitTime[1]=TMath::MinElement(ChHitTimeB[1].size(),ChHitTimeB[1].data());
+    FirstHitCh[1]=TMath::LocMin(ChHitTimeB[1].size(),ChHitTimeB[1].data());
+    
+    for(int iRx=0;iRx<TotalAntennasRx;iRx++){
+      ChHitTime[1][iRx]=ChHitTime[1][iRx]-ChHitTimeB[1][FirstHitCh[1]];
+    }
+  }
+
+  if(ChHitTimeB[0].size()==0 && ChHitTimeB[1].size()==0){
+    for(int iRx=0;iRx<TotalAntennasRx;iRx++){
+      ChHitTime[0][iRx]=0;
+      ChHitTime[1][iRx]=0;
+    }
+  }
 }
 
 void Interferometer::AddGaussianJitterToHitTimes(double JitterNumber,double ChHitTime[2][TotalAntennasRx]){
@@ -174,110 +196,65 @@ void Interferometer::AddGaussianJitterToHitTimes(double JitterNumber,double ChHi
   }
 }
 
-double Interferometer::MinimizeXYZ(const gsl_vector *v, void *params){
+double Interferometer::Minimizer_f(const gsl_vector *v, void *params){
 
   double x, y, z;
-  double *p = (double *)params;  
-  
+  double *p = (double *)params; 
   x = gsl_vector_get(v, 0);
   y = gsl_vector_get(v, 1);
   z = gsl_vector_get(v, 2);
-  
-  double AntennaCoordTx[3]={x,y,-z};
-
-  // double LangD=0;double LangR=0;double LangRa=0;
-  double timeD[TotalAntennasRx];
-  double timeR[TotalAntennasRx];
-  double timeRa[TotalAntennasRx];
-  double RangD[TotalAntennasRx];
-  double RangR[TotalAntennasRx];
-  double RangRa[TotalAntennasRx];
+  double AntennaCoordTx[3]={x,y,z};
 
   double timeRay[2][TotalAntennasRx];
-  double RangRay[2][TotalAntennasRx];  
+  int IgnoreCh[2][TotalAntennasRx];
+  double ChDRTime[TotalAntennasRx];
+
+  for(int iRx=0;iRx<TotalAntennasRx;iRx++){
+    for(int iray=0;iray<2;iray++){
+      IgnoreCh[iray][iRx]=1;
+    }
+    ChDRTime[iRx]=0;
+  }
   
-  for(int iRx=0;iRx<TotalAntennasRx;iRx++){
-    double Distance=sqrt(pow(AntennaCoordRx[iRx][0]-AntennaCoordTx[0],2) + pow(AntennaCoordRx[iRx][1]-AntennaCoordTx[1],2));
-    double RxDepth=AntennaCoordRx[iRx][2];
-    double TxDepth=AntennaCoordTx[2];
-    double *RTresults=IceRayTracing::IceRayTracing(0, TxDepth, Distance,RxDepth);
+  Interferometer::GenerateChHitTimeAndCheckHits(AntennaCoordTx,timeRay,IgnoreCh);
 
-    // for(int iray=0;iray<3;iray++){ 
-    //   if(RTresults[6+iray]==0){
-    // 	// RTresults[0+iray]=0;
-    // 	// RTresults[3+iray]=0;
-    // 	// RTresults[6+iray]=0;
-    //   }
-    // }   
+  bool CheckStationTrigger=Interferometer::CheckTrigger(IgnoreCh);
 
-    // LangD=RTresults[0];LangR=RTresults[1];LangRa=RTresults[2];
-    timeD[iRx]=RTresults[3]*pow(10,9);
-    timeR[iRx]=RTresults[4]*pow(10,9);
-    timeRa[iRx]=RTresults[5]*pow(10,9);
-    RangD[iRx]=RTresults[6];
-    RangR[iRx]=RTresults[7];
-    RangRa[iRx]=RTresults[8];
+  if(CheckStationTrigger==true){
+    Interferometer::FindFirstHitAndNormalizeHitTime(timeRay,IgnoreCh,ChDRTime);
     
-    timeRay[0][iRx]=timeD[iRx];
-    timeRay[1][iRx]=timeR[iRx];
-
-    RangRay[0][iRx]=RangD[iRx];
-    RangRay[1][iRx]=RangR[iRx];
-    
-    if(RangD[iRx]==0 && RangRa[iRx]!=0){
-      //cout<<"direct becomes refracted "<<endl;
-      timeRay[0][iRx]=timeRa[iRx];
-      RangRay[0][iRx]=RangRa[iRx];
+    double chi2=0;
+    for(int iRx=0;iRx<TotalAntennasRx;iRx++){
+      if(p[2*TotalAntennasRx +iRx]!=0){
+      	chi2+=pow(timeRay[0][iRx] - p[0+iRx],2);
+      }
+      // if(p[3*TotalAntennasRx +iRx]!=0){
+      // 	chi2+=pow(timeRay[1][iRx] - p[1*TotalAntennasRx+iRx],2);
+      // }
+      // if(p[2*TotalAntennasRx +iRx]!=0 && p[3*TotalAntennasRx +iRx]!=0){
+      //   chi2+=pow(ChDRTime[iRx]- (p[1*TotalAntennasRx+iRx] - p[0+iRx]) ,2);
+      // }
     }
-    if(RangR[iRx]==0 && RangRa[iRx]!=0){
-      //cout<<"direct becomes refracted "<<endl;
-      timeRay[1][iRx]=timeRa[iRx];
-      RangRay[1][iRx]=RangRa[iRx];
-    }
-    delete [] RTresults;  
-  }
-
-  Interferometer::FindFirstHitAndNormalizeHitTime(timeRay);
-  
-  double chi2=0;
-  for(int iRx=0;iRx<TotalAntennasRx;iRx++){
-    // if(p[2*TotalAntennasRx +iRx]!=0){
-    //   chi2+=pow(timeRay[0][iRx] - p[0+iRx],2) + pow(timeRay[1][iRx] - p[1*TotalAntennasRx+iRx],2);
-    // }
-    if(p[2*TotalAntennasRx +iRx]!=0){
-      chi2+=pow(timeRay[0][iRx] - p[0+iRx],2);
-    }
-    if(p[3*TotalAntennasRx +iRx]!=0){
-      chi2+=pow(timeRay[1][iRx] - p[1*TotalAntennasRx+iRx],2);
-    }
-  }
-
-  // if(chi2==0){
-  //   cout<<"it is zero "<<endl;
-  //   chi2=10000000;
-  // }
-  for(int iRx=0;iRx<TotalAntennasRx;iRx++){
-    //cout<<p[3*TotalAntennasRx +iRx]<<" "<<timeRay[1][iRx]<<" "<<p[1*TotalAntennasRx+iRx]<<endl;;
-  }
-  return chi2;
-
+    return chi2;
+  }else{ 
+    return GSL_NAN;
+  }  
 }
 
-void Interferometer::DoTheMinimization(double FinalTxCor[3],double ChHitTime[2][TotalAntennasRx],int IgnoreCh[2][TotalAntennasRx], double &FinalMinValue){
+void Interferometer::Minimizer(double InitialValues[3],double FinalTxCor[3],double ChHitTime[2][TotalAntennasRx],int IgnoreCh[2][TotalAntennasRx], double &FinalMinValue){
 
-  double OneDArrayHitTime[4*TotalAntennasRx];
+  double ParameterArray[4*TotalAntennasRx];
   int iEnt=0;
   for(int iray=0;iray<2;iray++){
     for(int iRx=0;iRx<TotalAntennasRx;iRx++){
-      OneDArrayHitTime[iEnt]=ChHitTime[iray][iRx];
+      ParameterArray[iEnt]=ChHitTime[iray][iRx];
       iEnt++;
     } 
   }  
 
   for(int iray=0;iray<2;iray++){
     for(int iRx=0;iRx<TotalAntennasRx;iRx++){
-      OneDArrayHitTime[iEnt]=IgnoreCh[iray][iRx];
-      //cout<<iray<<" "<<iRx<<" "<<IgnoreCh[iray][iRx]<<endl;
+      ParameterArray[iEnt]=IgnoreCh[iray][iRx];
       iEnt++;
     } 
   }
@@ -290,24 +267,23 @@ void Interferometer::DoTheMinimization(double FinalTxCor[3],double ChHitTime[2][
   size_t Iter = 0;
   int Status;
   double Size;
-
+    
   /* Starting point */
   XYZVec = gsl_vector_alloc (3);
-  gsl_vector_set (XYZVec, 0, 1);
-  gsl_vector_set (XYZVec, 1, 1);
-  gsl_vector_set (XYZVec, 2, 1);
+  gsl_vector_set (XYZVec, 0, InitialValues[0]);
+  gsl_vector_set (XYZVec, 1, InitialValues[1]);
+  gsl_vector_set (XYZVec, 2, InitialValues[2]);
 
   /* Set initial step sizes to 1 */
   XYZStepSizeVector = gsl_vector_alloc (3);
-  //gsl_vector_set_all (XYZStepSizeVector, 10);
   gsl_vector_set (XYZStepSizeVector, 0, 10);
   gsl_vector_set (XYZStepSizeVector, 1, 10);
   gsl_vector_set (XYZStepSizeVector, 2, 10);
   
   /* Initialize method and iterate */
   MultiDimMinFunc.n = 3;
-  MultiDimMinFunc.f = MinimizeXYZ;
-  MultiDimMinFunc.params = OneDArrayHitTime;
+  MultiDimMinFunc.f = Minimizer_f;
+  MultiDimMinFunc.params = ParameterArray;
 
   MinimizerWorkSpace = gsl_multimin_fminimizer_alloc (MinimisationType, 3);
   gsl_multimin_fminimizer_set (MinimizerWorkSpace, &MultiDimMinFunc, XYZVec, XYZStepSizeVector);
@@ -316,168 +292,115 @@ void Interferometer::DoTheMinimization(double FinalTxCor[3],double ChHitTime[2][
     {
       Iter++;
       Status = gsl_multimin_fminimizer_iterate(MinimizerWorkSpace);
-
+     
       if (Status)
         break;
 
       Size = gsl_multimin_fminimizer_size (MinimizerWorkSpace);
-      Status = gsl_multimin_test_size (Size, 1e-2);
+      Status = gsl_multimin_test_size (Size, 1e-3);
 
-      if (Status == GSL_SUCCESS)
-        {
-          //printf ("converged to minimum at\n");
-        }
-
-      // printf ("%5d %10.3e %10.3e f() = %7.3f size = %.3f\n",
+      // if (Status == GSL_SUCCESS)
+      //   {
+      //     printf ("converged to minimum at\n");
+      //   }
+      // printf ("%5d %7.3f %7.3f %7.3f f() = %7.3f size = %.3f\n",
       //         Iter,
-      //         gsl_vector_get (s->x, 0),
-      //         gsl_vector_get (s->x, 1),
-      //         s->fval, size);
+      //         gsl_vector_get (MinimizerWorkSpace->x, 0),
+      //         gsl_vector_get (MinimizerWorkSpace->x, 1),
+      // 	      gsl_vector_get (MinimizerWorkSpace->x, 2),
+      //         MinimizerWorkSpace->fval,Size);
+     
       FinalMinValue=MinimizerWorkSpace->fval;
       FinalTxCor[0]=gsl_vector_get (MinimizerWorkSpace->x, 0);
       FinalTxCor[1]=gsl_vector_get (MinimizerWorkSpace->x, 1);
-      FinalTxCor[2]=-gsl_vector_get (MinimizerWorkSpace->x, 2);
-
-      //cout<<FinalMinValue<<" "<<FinalTxCor[0]<<" "<<FinalTxCor[1]<<" "<<FinalTxCor[2]<<endl;
+      FinalTxCor[2]=-gsl_vector_get (MinimizerWorkSpace->x, 2);      
     }
   while (Status == GSL_CONTINUE && Iter < 1000);
-  
+
   gsl_vector_free(XYZVec);
   gsl_vector_free(XYZStepSizeVector);
   gsl_multimin_fminimizer_free (MinimizerWorkSpace);
-  
 }
 
-
-int Interferometer::TxXYZRoots(const gsl_vector * x, void *params, gsl_vector * f){
+int Interferometer::RootFinder_f(const gsl_vector * x, void *params, gsl_vector * f){
  
   const double X = gsl_vector_get (x, 0);
   const double Y = gsl_vector_get (x, 1);
   const double Z = gsl_vector_get (x, 2);
+  double AntennaCoordTx[3]={X,Y,Z};
+  
   double *p = (double *)params;
   
-  double AntennaCoordTx[3]={X,Y,Z};
-
-  // double LangD=0;double LangR=0;double LangRa=0;
-  double timeD[TotalAntennasRx];
-  double timeR[TotalAntennasRx];
-  double timeRa[TotalAntennasRx];
-  double RangD[TotalAntennasRx];
-  double RangR[TotalAntennasRx];
-  double RangRa[TotalAntennasRx];
-
   double timeRay[2][TotalAntennasRx];
-  double RangRay[2][TotalAntennasRx];  
-  
+  int IgnoreCh[2][TotalAntennasRx];
+  double ChDRTime[TotalAntennasRx];
+
   for(int iRx=0;iRx<TotalAntennasRx;iRx++){
-    double Distance=sqrt(pow(AntennaCoordRx[iRx][0]-AntennaCoordTx[0],2) + pow(AntennaCoordRx[iRx][1]-AntennaCoordTx[1],2));
-    double RxDepth=AntennaCoordRx[iRx][2];
-    double TxDepth=AntennaCoordTx[2];
-    double *RTresults=IceRayTracing::IceRayTracing(0, TxDepth, Distance,RxDepth);
-
-    // for(int iray=0;iray<3;iray++){ 
-    //   if(RTresults[6+iray]==0){
-    // 	// RTresults[0+iray]=0;
-    // 	// RTresults[3+iray]=0;
-    // 	// RTresults[6+iray]=0;
-    //   }
-    // }   
-
-    // LangD=RTresults[0];LangR=RTresults[1];LangRa=RTresults[2];
-    timeD[iRx]=RTresults[3]*pow(10,9);
-    timeR[iRx]=RTresults[4]*pow(10,9);
-    timeRa[iRx]=RTresults[5]*pow(10,9);
-    RangD[iRx]=RTresults[6];
-    RangR[iRx]=RTresults[7];
-    RangRa[iRx]=RTresults[8];
-    
-    timeRay[0][iRx]=timeD[iRx];
-    timeRay[1][iRx]=timeR[iRx];
-
-    RangRay[0][iRx]=RangD[iRx];
-    RangRay[1][iRx]=RangR[iRx];
-    
-    if(RangD[iRx]==0 && RangRa[iRx]!=0){
-      //cout<<"direct becomes refracted "<<endl;
-      timeRay[0][iRx]=timeRa[iRx];
-      RangRay[0][iRx]=RangRa[iRx];
+    for(int iray=0;iray<2;iray++){
+      IgnoreCh[iray][iRx]=1;
     }
-    if(RangR[iRx]==0 && RangRa[iRx]!=0){
-      //cout<<"direct becomes refracted "<<endl;
-      timeRay[1][iRx]=timeRa[iRx];
-      RangRay[1][iRx]=RangRa[iRx];
-    }
-    delete [] RTresults;  
+    ChDRTime[iRx]=0;
   }
-
-  Interferometer::FindFirstHitAndNormalizeHitTime(timeRay);
   
-  double chi2a=0, chi2b=0, chi2c=0;
+  Interferometer::GenerateChHitTimeAndCheckHits(AntennaCoordTx,timeRay,IgnoreCh);
   
-  for(int iRx=0;iRx<TotalAntennasRx;iRx++){
-    if(p[2*TotalAntennasRx +iRx]!=0){
-      chi2a+=pow(timeRay[0][iRx] - p[0+iRx],2);
-      //chi2a+=abs(timeRay[0][iRx] - p[0+iRx]);
-    }
-    if(p[3*TotalAntennasRx +iRx]!=0){
-      chi2b+=pow(timeRay[1][iRx] - p[1*TotalAntennasRx+iRx],2);
-      //chi2b+=abs(timeRay[1][iRx] - p[1*TotalAntennasRx+iRx]);
-    }
-    if(p[2*TotalAntennasRx +iRx]!=0){
-      chi2c+=chi2a;
-    }
-    if(p[3*TotalAntennasRx +iRx]!=0){
-      chi2c+=chi2b;
-    }
+  bool CheckStationTrigger=Interferometer::CheckTrigger(IgnoreCh);
+
+  if(CheckStationTrigger==true){
+    Interferometer::FindFirstHitAndNormalizeHitTime(timeRay,IgnoreCh,ChDRTime);
     
+    double chi2a=0, chi2b=0, chi2c=0;
+
+    for(int iRx=0;iRx<TotalAntennasRx;iRx++){
+      if(p[2*TotalAntennasRx +iRx]!=0){
+	chi2a+=pow(timeRay[0][iRx] - p[0+iRx],2);
+      }
+      if(p[3*TotalAntennasRx +iRx]!=0){
+      	chi2b+=pow(timeRay[1][iRx] - p[1*TotalAntennasRx+iRx],2);
+      }
+      // if(p[2*TotalAntennasRx +iRx]!=0){
+      // 	chi2c+=chi2a;
+      // }
+      // if(p[3*TotalAntennasRx +iRx]!=0){
+      // 	chi2c+=chi2b;
+      // }
+      if(p[2*TotalAntennasRx +iRx]!=0 && p[3*TotalAntennasRx +iRx]!=0){
+        chi2c+=pow(ChDRTime[iRx]- (p[1*TotalAntennasRx+iRx] - p[0+iRx]) ,2);
+      }
+    }
+
+    const double chi2A = chi2a;
+    const double chi2B = chi2b;
+    const double chi2C = chi2c;
+    
+    gsl_vector_set (f, 0, chi2A);
+    gsl_vector_set (f, 1, chi2B);
+    gsl_vector_set (f, 2, chi2C);
+    
+    return GSL_SUCCESS;
+  }else{
+    gsl_vector_set (f, 0, GSL_NAN);
+    gsl_vector_set (f, 1, GSL_NAN);
+    gsl_vector_set (f, 2, GSL_NAN);
+    
+    return GSL_ERANGE; 
   }
-
-  // if(chi2==0){
-  //   cout<<"it is zero "<<endl;
-  //   chi2=10000000;
-  // }
-  for(int iRx=0;iRx<TotalAntennasRx;iRx++){
-    //cout<<p[3*TotalAntennasRx +iRx]<<" "<<timeRay[1][iRx]<<" "<<p[1*TotalAntennasRx+iRx]<<endl;;
-  }
-
-  const double chi2A = chi2a;
-  const double chi2B = chi2b;
-  const double chi2C = chi2c;
-
-  gsl_vector_set (f, 0, chi2A);
-  gsl_vector_set (f, 1, chi2B);
-  gsl_vector_set (f, 2, chi2C);
-
-  return GSL_SUCCESS;
 }
-  
-void Interferometer::print_state (size_t iter, gsl_multiroot_fsolver * s){
-  printf ("iter = %3u x = % .3f % .3f % .3f "
-          "f(x) = % .3e % .3e % .3e\n",
-          iter,
-          gsl_vector_get (s->x, 0),
-          gsl_vector_get (s->x, 1),
-	  gsl_vector_get (s->x, 2),
-          gsl_vector_get (s->f, 0),
-          gsl_vector_get (s->f, 1),
-	  gsl_vector_get (s->f, 2));
- }
 
-void Interferometer::FindRoots3D(double TxCor[3],double FinalTxCor[3],double ChHitTime[2][TotalAntennasRx],int IgnoreCh[2][TotalAntennasRx], int AdjustIniCond, int &Status){
+void Interferometer::RootFinder(double InitialValues[3],double FinalTxCor[3],double ChHitTime[2][TotalAntennasRx],int IgnoreCh[2][TotalAntennasRx],int &Status){
   
-  double OneDArrayHitTime[4*TotalAntennasRx+3];
+  double ParameterArray[4*TotalAntennasRx+3];
   int iEnt=0;
   for(int iray=0;iray<2;iray++){
     for(int iRx=0;iRx<TotalAntennasRx;iRx++){
-      OneDArrayHitTime[iEnt]=ChHitTime[iray][iRx];
+      ParameterArray[iEnt]=ChHitTime[iray][iRx];
       iEnt++;
     } 
   }  
 
   for(int iray=0;iray<2;iray++){
     for(int iRx=0;iRx<TotalAntennasRx;iRx++){
-      OneDArrayHitTime[iEnt]=IgnoreCh[iray][iRx];
-      //cout<<iray<<" "<<iRx<<" "<<IgnoreCh[iray][iRx]<<endl;
+      ParameterArray[iEnt]=IgnoreCh[iray][iRx];
       iEnt++;
     } 
   }
@@ -488,56 +411,61 @@ void Interferometer::FindRoots3D(double TxCor[3],double FinalTxCor[3],double ChH
   int status;
   size_t i, iter = 0;
   const size_t n = 3;
-  gsl_multiroot_function f = {&TxXYZRoots, n, &OneDArrayHitTime};
+  gsl_multiroot_function f = {&RootFinder_f, n, &ParameterArray};
 
   double x_init[n];
-
-  if(AdjustIniCond==1){
-    x_init[0] =TxCor[0];
-    x_init[1] =TxCor[1];
-    x_init[2] =TxCor[2];
-  }
-  if(AdjustIniCond==0){
-    x_init[0] =1;
-    x_init[1] =1;
-    x_init[2] =-1;
-  }
-  //double x_init[n] = {1, 1, -1};
-
+  x_init[0] =InitialValues[0];
+  x_init[1] =InitialValues[1];
+  x_init[2] =InitialValues[2];
+ 
   gsl_vector *x = gsl_vector_alloc (n);
   gsl_vector_set (x, 0, x_init[0]);
   gsl_vector_set (x, 1, x_init[1]);
   gsl_vector_set (x, 2, x_init[2]);
 
-  T = gsl_multiroot_fsolver_hybrid;
+  T = gsl_multiroot_fsolver_hybrids;
   s = gsl_multiroot_fsolver_alloc (T, n);
   gsl_multiroot_fsolver_set (s, &f, x);
-
-  //print_state (iter, s);
+  
+  // printf ("iter = %3u x = % .3f % .3f % .3f "
+  //         "f(x) = % .3e % .3e % .3e\n",
+  //         iter,
+  //         gsl_vector_get (s->x, 0),
+  //         gsl_vector_get (s->x, 1),
+  // 	  gsl_vector_get (s->x, 2),
+  //         gsl_vector_get (s->f, 0),
+  //         gsl_vector_get (s->f, 1),
+  // 	  gsl_vector_get (s->f, 2));
 
   do
     {
       iter++;
       status = gsl_multiroot_fsolver_iterate (s);
-
-      //print_state (iter, s);
-
+      
+      // printf ("iter = %3u x = % .3f % .3f % .3f "
+      //     "f(x) = % .3e % .3e % .3e\n",
+      //     iter,
+      //     gsl_vector_get (s->x, 0),
+      //     gsl_vector_get (s->x, 1),
+      // 	  gsl_vector_get (s->x, 2),
+      //     gsl_vector_get (s->f, 0),
+      //     gsl_vector_get (s->f, 1),
+      // 	  gsl_vector_get (s->f, 2));
+      
       if (status)   /* check if solver is stuck */
         break;
 
-      status =gsl_multiroot_test_residual (s->f, 1e-2);
+      status =gsl_multiroot_test_residual (s->f, 1e-3);
     }
   while (status == GSL_CONTINUE && iter < 1000);
 
   FinalTxCor[0]=gsl_vector_get (s->x, 0);
   FinalTxCor[1]=gsl_vector_get (s->x, 1);
-  FinalTxCor[2]=gsl_vector_get (s->x, 2);
+  FinalTxCor[2]=-gsl_vector_get (s->x, 2);
+  Status=status;
   
   //printf ("status = %s %3u \n", gsl_strerror (status), status);
 
-  Status=status;
-  
   gsl_multiroot_fsolver_free (s);
   gsl_vector_free (x);
-  return 0;
 }

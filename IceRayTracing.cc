@@ -36,10 +36,13 @@ double IceRayTracing::Refl_S(double thetai){
   double n1=Nice;
   double n2=Nair;
   
-  double sqterm=sqrt(1-pow(1-(n1/n2)*(sin(thetai)),2));
+  double sqterm=sqrt(1-pow((n1/n2)*(sin(thetai)),2));
   double num=n1*cos(thetai)-n2*sqterm;
   double den=n1*cos(thetai)+n2*sqterm;
   double RS=(num*num)/(den*den);
+  if(isnan(RS)){
+    RS=1;
+  }
   return (RS);
 }
 
@@ -50,10 +53,13 @@ double IceRayTracing::Refl_P(double thetai){
   double n1=Nice;
   double n2=Nair;
   
-  double sqterm=sqrt(1-pow(1-(n1/n2)*(sin(thetai)),2));
+  double sqterm=sqrt(1-pow((n1/n2)*(sin(thetai)),2));
   double num=n1*sqterm-n2*cos(thetai);
   double den=n1*sqterm+n2*cos(thetai);
   double RP=(num*num)/(den*den);
+  if(isnan(RP)){
+    RP=1;
+  }
   return (RP);
 }
 
@@ -85,7 +91,9 @@ double IceRayTracing::FindFunctionRoot(gsl_function F,double x_lo, double x_hi)
       x_lo = gsl_root_fsolver_x_lower (s);
       x_hi = gsl_root_fsolver_x_upper (s);
       status = gsl_root_test_interval (x_lo, x_hi,0, 0.000001);
+      //status = gsl_root_test_interval (x_lo, x_hi,0, 0.000000001);
 	
+	  
       if (status == GSL_SUCCESS){
 	// printf ("Converged:");
 	// printf ("%5d [%.7f, %.7f] %.7f %.7f\n",iter, x_lo, x_hi,r,x_hi - x_lo);
