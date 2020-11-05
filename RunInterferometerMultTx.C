@@ -6,6 +6,19 @@ void RunInterferometerMultTx(){
   double ChHitTime[2][TotalAntennasRx]; ////Channel Hit Time
   int IgnoreCh[2][TotalAntennasRx]; ////Channel Hit Time
   double ChDRTime[TotalAntennasRx]; ////Channel Hit Time
+
+  //double XYZInitialValues[9][3]={{1,1,1},{0,0,1},{-1,-1,1},{0,1,1},{1,0,1},{0,-1,1},{-1,0,1},{1,-1,1},{-1,1,1}};
+  const int InitialValueNum=3;
+  double XYZInitialValues[InitialValueNum][3]={{1,1,1},{0,0,1},{-1,-1,1}};
+  double InitialValues[3];
+  double RecoXYZValues[9][3];
+  double RecofMinValues[9];
+
+  double FinalMinValue=0;
+  int FinalMinValueBin=0;
+  int countTotal=0;
+  int countRecoSuccess=0;
+  int countRecoFailed=0;
   
   double FinalTxCor[3];
   double JitterNumber=5;
@@ -18,11 +31,6 @@ void RunInterferometerMultTx(){
   TH1D *hyZoom=new TH1D("","",100,-50,50);
   TH1D *hzZoom=new TH1D("","",100,-50,50);
   
-  double FinalMinValue;
-  int countTotal=0;
-  int countRecoSuccess=0;
-  int countRecoFailed=0;
-  
   ofstream aout("RFTxPositions.txt");
   
   for(double i=-500; i<501;i=i+100){
@@ -32,8 +40,6 @@ void RunInterferometerMultTx(){
 	
 	for(double k=-1; k>-1001;k=k-50){
 	  double DummyTx[3]={i,j,-k};
-	  
-	  double InitialValues[3]={1,1,1};
 	  for(int iRx=0;iRx<TotalAntennasRx;iRx++){
 	    for(int iray=0;iray<3;iray++){
 	      IgnoreCh[iray][iRx]=1;
@@ -47,21 +53,36 @@ void RunInterferometerMultTx(){
 	    //Interferometer::ReadChHitTimeFromData("ChHitTimesFromData.txt",ChHitTime);
 	    //Interferometer::AddGaussianJitterToHitTimes(JitterNumber,ChHitTime);
 	    Interferometer::FindFirstHitAndNormalizeHitTime(ChHitTime,IgnoreCh,ChDRTime);
-	    
-	    Interferometer::Minimizer(InitialValues,FinalTxCor,ChHitTime,IgnoreCh, FinalMinValue);
-	    cout<<"First Attempt Tx Cor are: dX="<<i-FinalTxCor[0]<<" ,dY="<<j-FinalTxCor[1]<<" ,dZ="<<k-FinalTxCor[2]<<" |  Xtrue="<<i<<" ,Ytrue="<<j<<" ,Ztrue="<<k<<" | Xreco="<<FinalTxCor[0]<<" ,Yreco="<<FinalTxCor[1]<<" ,Zreco="<<FinalTxCor[2]<<" "<<FinalMinValue<<endl;
-	    double CheckReco=fabs(i-FinalTxCor[0])+fabs(j-FinalTxCor[1])+fabs(k-FinalTxCor[2]);
-	    if(CheckReco>=3){
-	      InitialValues[0]=0;
-	      InitialValues[1]=0;
-	      Interferometer::Minimizer(InitialValues,FinalTxCor,ChHitTime,IgnoreCh,FinalMinValue);
-	      CheckReco=fabs(i-FinalTxCor[0])+fabs(j-FinalTxCor[1])+fabs(k-FinalTxCor[2]);
-	      cout<<"Second Attempt Tx Cor are: dX="<<i-FinalTxCor[0]<<" ,dY="<<j-FinalTxCor[1]<<" ,dZ="<<k-FinalTxCor[2]<<" |  Xtrue="<<i<<" ,Ytrue="<<j<<" ,Ztrue="<<k<<" | Xreco="<<FinalTxCor[0]<<" ,Yreco="<<FinalTxCor[1]<<" ,Zreco="<<FinalTxCor[2]<<" "<<FinalMinValue<<endl;
-	      if(CheckReco>=3){
-		cout<<"Minimization Failed!"<<endl;
-		aout<<countRecoFailed<<" "<<DummyTx[0]<<" "<<DummyTx[1]<<" "<<DummyTx[2]<<endl;
-		countRecoFailed++;
+	   
+	    int iInVal=0;
+	    while(iInVal<InitialValueNum){
+	      InitialValues[0]=XYZInitialValues[iInVal][0];
+	      InitialValues[1]=XYZInitialValues[iInVal][1];
+	      InitialValues[2]=XYZInitialValues[iInVal][2];
+	      Interferometer::Minimizer(InitialValues,RecoXYZValues[iInVal],ChHitTime,IgnoreCh,RecofMinValues[iInVal]);
+	      //cout<<"Attempt No. "<<iInVal<<" :: Reco Results are: Xreco="<<RecoXYZValues[iInVal][0]<<" ,Yreco="<<RecoXYZValues[iInVal][1]<<" ,Zreco="<<RecoXYZValues[iInVal][2]<<" "<<RecofMinValues[iInVal]<<endl;
+	      if(iInVal==0){
+	      	FinalMinValue=RecofMinValues[iInVal];
+		FinalMinValueBin=iInVal;
 	      }
+	      if(RecofMinValues[iInVal]< RecofMinValues[iInVal-1] && RecofMinValues[iInVal]<RecofMinValues[0] && iInVal>0){
+		FinalMinValue=RecofMinValues[iInVal];
+		FinalMinValueBin=iInVal;
+	      }
+	      iInVal++;
+	    }
+	    
+	    FinalTxCor[0]=RecoXYZValues[FinalMinValueBin][0];
+	    FinalTxCor[1]=RecoXYZValues[FinalMinValueBin][1];
+	    FinalTxCor[2]=RecoXYZValues[FinalMinValueBin][2];
+	    
+	    double CheckReco=0;
+	    CheckReco=fabs(i-FinalTxCor[0])+fabs(j-FinalTxCor[1])+fabs(k-FinalTxCor[2]);
+	    cout<<"Final Reco Results are: dX="<<i-FinalTxCor[0]<<" ,dY="<<j-FinalTxCor[1]<<" ,dZ="<<k-FinalTxCor[2]<<" |  Xtrue="<<i<<" ,Ytrue="<<j<<" ,Ztrue="<<k<<" | Xreco="<<FinalTxCor[0]<<" ,Yreco="<<FinalTxCor[1]<<" ,Zreco="<<FinalTxCor[2]<<" "<<FinalMinValue<<endl;
+	    if(CheckReco>=3){
+	      cout<<"Minimization Failed!"<<endl;
+	      aout<<countRecoFailed<<" "<<DummyTx[0]<<" "<<DummyTx[1]<<" "<<DummyTx[2]<<endl;
+	      countRecoFailed++;
 	    }
 	    hx->Fill(i-FinalTxCor[0]);	
 	    hy->Fill(j-FinalTxCor[1]);
