@@ -1,0 +1,288 @@
+void PlotRecoResults(){
+
+  Int_t Run=12576;
+  
+  double eventNum;
+  double unixTime;
+  double firstUnixTime;
+  double timeStamp;
+  double runNum;
+  double Duration;
+  double FinalMinValue;
+  int Iterations;
+  double FinalTxCor_XYZ[3];
+  double FinalTxCor_ThPhR[3];
+  double InitialTxCor_XYZ[3];
+  double InitialTxCor_ThPhR[3];
+  double dX,dY,dZ;
+  double dTh,dPh,dR;
+
+  TString InputFileName="Run";
+  InputFileName+=Run;
+  InputFileName+="AllEvents.root";
+  
+  TFile *InputFile=new TFile(InputFileName);
+  TFile *OutputFile=new TFile("Run12576RecoResults.root");  
+  
+  TTree *RecoTree =(TTree*)InputFile->Get("RecoTree");
+  RecoTree->SetBranchAddress("eventNum",&eventNum,);
+  RecoTree->SetBranchAddress("unixTime",&unixTime);
+  RecoTree->SetBranchAddress("firstUnixTime",&firstUnixTime);
+  RecoTree->SetBranchAddress("timeStamp",&timeStamp);  
+  RecoTree->SetBranchAddress("runNum",&runNum);
+  RecoTree->SetBranchAddress("Duration",&Duration);
+  RecoTree->SetBranchAddress("FinalMinValue",&FinalMinValue);
+  RecoTree->SetBranchAddress("Iterations",&Iterations);
+  RecoTree->SetBranchAddress("FinalTxCor_XYZ",FinalTxCor_XYZ);
+  RecoTree->SetBranchAddress("FinalTxCor_ThPhR",FinalTxCor_ThPhR);
+  RecoTree->SetBranchAddress("InitialTxCor_XYZ",InitialTxCor_XYZ);
+  RecoTree->SetBranchAddress("InitialTxCor_ThPhR",InitialTxCor_ThPhR);  
+  RecoTree->SetBranchAddress("dX",&dX);
+  RecoTree->SetBranchAddress("dY",&dY);
+  RecoTree->SetBranchAddress("dZ",&dZ);
+  RecoTree->SetBranchAddress("dTh",&dTh);
+  RecoTree->SetBranchAddress("dPh",&dPh);
+  RecoTree->SetBranchAddress("dR",&dR);
+
+  double numEntries=RecoTree->GetEntries();
+  
+  TH1D * hReco_dXYZ[3];
+  hReco_dXYZ[0]=new TH1D("","",200,TrueX-500,TrueX+500);
+  hReco_dXYZ[1]=new TH1D("","",200,TrueY-500,TrueY+500);
+  hReco_dXYZ[2]=new TH1D("","",200,TrueZ-500,TrueZ+500);
+
+  TH1D * hReco_dThPhR[3];
+  hReco_dThPhR[0]=new TH1D("","",200,-20,20);
+  hReco_dThPhR[1]=new TH1D("","",200,-20,20);  
+  hReco_dThPhR[2]=new TH1D("","",200,-500,500);
+
+  const Int_t NumCutCh=4;
+  Double_t CutCh[NumCutCh]={8,15,11,13};
+
+  vector <double> DurationReco;
+  vector <double> UnixTimeReco;
+  vector <double> Reco_XYZ[3];
+  vector <double> Reco_ThPhR[3];
+  
+  ///Start looping over the events
+  for(Int_t ievt=0; ievt<numEntries; ievt++){
+ 
+    RecoTree->GetEntry(ievt);
+
+    DurationReco.push_back(Duration);
+    UnixTimeReco.push_back(unixTime-firstUnixTime);
+
+    Reco_XYZ[0].push_back(FinalTxCor_XYZ[0]);
+    Reco_XYZ[1].push_back(FinalTxCor_XYZ[1]);
+    Reco_XYZ[2].push_back(FinalTxCor_XYZ[2]);
+    hReco_dXYZ[0]->Fill(dX);
+    hReco_dXYZ[1]->Fill(dY);
+    hReco_dXYZ[2]->Fill(dZ);
+
+    Reco_ThPhR[0].push_back(FinalTxCor_ThPhR[0]);
+    Reco_ThPhR[1].push_back(FinalTxCor_ThPhR[1]);
+    Reco_ThPhR[2].push_back(FinalTxCor_ThPhR[2]);
+    hReco_dThPhR[0]->Fill(dTh);
+    hReco_dThPhR[1]->Fill(dPh);
+    hReco_dThPhR[2]->Fill(dR);
+    
+  }////event loop 
+
+  TGraph *grDurationReco;
+
+  TMultiGraph * mgReco_XYZ=new TMultiGraph();
+  TGraph *grReco_XYZ[3];
+
+  TMultiGraph * mgReco_ThPhR=new TMultiGraph();
+  TGraph *grReco_ThPhR[3];
+  
+  for(Int_t ixyz=0; ixyz<3; ixyz++){
+    grReco_XYZ[ixyz]=new TGraph(Reco_XYZ[ixyz].size(),UnixTimeReco.data(),Reco_XYZ[ixyz].data());
+    grReco_XYZ[ixyz]->SetMarkerStyle(20);
+    grReco_XYZ[ixyz]->SetMarkerColor(2+ixyz);
+
+    grReco_ThPhR[ixyz]=new TGraph(Reco_ThPhR[ixyz].size(),UnixTimeReco.data(),Reco_ThPhR[ixyz].data());
+    grReco_ThPhR[ixyz]->SetMarkerStyle(20);
+    grReco_ThPhR[ixyz]->SetMarkerColor(2+ixyz);
+  }
+
+  grDurationReco=new TGraph(DurationReco.size(),UnixTimeReco.data(),DurationReco.data());
+  grDurationReco->SetMarkerStyle(20);
+  grDurationReco->SetMarkerColor(2);
+  
+  TCanvas *c1 = new TCanvas("c1","c1",1800,1800);
+  c1->Divide(1,3);
+  c1->cd(1);
+  c1->cd(1)->SetGridx();
+  c1->cd(1)->SetGridy();
+  grReco_XYZ[0]->GetXaxis()->SetLabelSize(0.05);
+  grReco_XYZ[0]->GetYaxis()->SetLabelSize(0.05);
+  grReco_XYZ[0]->GetXaxis()->SetTitleSize(0.05);
+  grReco_XYZ[0]->GetYaxis()->SetTitleSize(0.05);
+  grReco_XYZ[0]->Draw("AP");
+  grReco_XYZ[0]->SetTitle(";Unixtime (s);Reconstructed SPICE Theta (^{o});");
+  ResultFile->cd();
+  grReco_XYZ[0]->Write("grRecoSpiceX");
+  
+  c1->cd(2);
+  c1->cd(2)->SetGridx();
+  c1->cd(2)->SetGridy();
+  grReco_XYZ[1]->GetXaxis()->SetLabelSize(0.05);
+  grReco_XYZ[1]->GetYaxis()->SetLabelSize(0.05);
+  grReco_XYZ[1]->GetXaxis()->SetTitleSize(0.05);
+  grReco_XYZ[1]->GetYaxis()->SetTitleSize(0.05);
+  grReco_XYZ[1]->Draw("AP");
+  grReco_XYZ[1]->SetTitle(";Unixtime (s);Reconstructed SPICE Phi (^{o});");
+  ResultFile->cd();
+  grReco_XYZ[1]->Write("grRecoSpiceY");
+  
+  c1->cd(3);
+  c1->cd(3)->SetGridx();
+  c1->cd(3)->SetGridy();
+  grReco_XYZ[2]->GetXaxis()->SetLabelSize(0.05);
+  grReco_XYZ[2]->GetYaxis()->SetLabelSize(0.05);
+  grReco_XYZ[2]->GetXaxis()->SetTitleSize(0.05);
+  grReco_XYZ[2]->GetYaxis()->SetTitleSize(0.05);
+  grReco_XYZ[2]->Draw("AP");
+  grReco_XYZ[2]->SetTitle(";Unixtime (s);Reconstructed SPICE Displacement (m);");  
+  ResultFile->cd();
+  grReco_XYZ[2]->Write("grRecoSpiceZ");
+  c1->SaveAs("RecoXYZ_run12576.png");
+  c1->SaveAs("RecoXYZ_run12576.pdf");
+
+  TCanvas *c2 = new TCanvas("c2","c2",1800,1800);
+  c2->Divide(1,3);
+  c2->cd(1);
+  c2->cd(1)->SetGridx();
+  c2->cd(1)->SetGridy();
+  grReco_ThPhR[0]->GetXaxis()->SetLabelSize(0.05);
+  grReco_ThPhR[0]->GetYaxis()->SetLabelSize(0.05);
+  grReco_ThPhR[0]->GetXaxis()->SetTitleSize(0.05);
+  grReco_ThPhR[0]->GetYaxis()->SetTitleSize(0.05);
+  grReco_ThPhR[0]->Draw("AP");
+  grReco_ThPhR[0]->SetTitle(";Unixtime (s);Reconstructed SPICE Theta (^{o});");
+  ResultFile->cd();
+  grReco_ThPhR[0]->Write("grRecoSpiceX");
+  
+  c2->cd(2);
+  c2->cd(2)->SetGridx();
+  c2->cd(2)->SetGridy();
+  grReco_ThPhR[1]->GetXaxis()->SetLabelSize(0.05);
+  grReco_ThPhR[1]->GetYaxis()->SetLabelSize(0.05);
+  grReco_ThPhR[1]->GetXaxis()->SetTitleSize(0.05);
+  grReco_ThPhR[1]->GetYaxis()->SetTitleSize(0.05);
+  grReco_ThPhR[1]->Draw("AP");
+  grReco_ThPhR[1]->SetTitle(";Unixtime (s);Reconstructed SPICE Phi (^{o});");
+  ResultFile->cd();
+  grReco_ThPhR[1]->Write("grRecoSpiceY");
+  
+  c2->cd(3);
+  c2->cd(3)->SetGridx();
+  c2->cd(3)->SetGridy();
+  grReco_ThPhR[2]->GetXaxis()->SetLabelSize(0.05);
+  grReco_ThPhR[2]->GetYaxis()->SetLabelSize(0.05);
+  grReco_ThPhR[2]->GetXaxis()->SetTitleSize(0.05);
+  grReco_ThPhR[2]->GetYaxis()->SetTitleSize(0.05);
+  grReco_ThPhR[2]->Draw("AP");
+  grReco_ThPhR[2]->SetTitle(";Unixtime (s);Reconstructed SPICE Displacement (m);");  
+  ResultFile->cd();
+  grReco_ThPhR[2]->Write("grRecoSpiceZ");
+  c2->SaveAs("RecoXYZ_run12576.png");
+  c2->SaveAs("RecoXYZ_run12576.pdf");
+  
+  TCanvas *c3 = new TCanvas("c3","c3",1800,1800);
+  c3->Divide(1,3);
+  c3->cd(1);
+  c3->cd(1)->SetGridx();
+  c3->cd(1)->SetGridy();
+  hReco_dXYZ[0]->GetXaxis()->SetLabelSize(0.05);
+  hReco_dXYZ[0]->GetYaxis()->SetLabelSize(0.05);
+  hReco_dXYZ[0]->GetXaxis()->SetTitleSize(0.05);
+  hReco_dXYZ[0]->GetYaxis()->SetTitleSize(0.05);
+  hReco_dXYZ[0]->Draw();
+  hReco_dXYZ[0]->SetTitle(";Reconstructed SPICE Theta True - Reco (^{o});No. of Events;");
+  ResultFile->cd();
+  hReco_dXYZ[0]->Write("hReco_dXYZSpiceX");
+  
+  c3->cd(2);
+  c3->cd(2)->SetGridx();
+  c3->cd(2)->SetGridy();
+  hReco_dXYZ[1]->GetXaxis()->SetLabelSize(0.05);
+  hReco_dXYZ[1]->GetYaxis()->SetLabelSize(0.05);
+  hReco_dXYZ[1]->GetXaxis()->SetTitleSize(0.05);
+  hReco_dXYZ[1]->GetYaxis()->SetTitleSize(0.05);
+  hReco_dXYZ[1]->Draw();
+  hReco_dXYZ[1]->SetTitle(";Reconstructed SPICE Phi True - Reco (^{o});No. of Events;");
+  ResultFile->cd();
+  hReco_dXYZ[1]->Write("hReco_dXYZSpiceY");
+
+  c3->cd(3);
+  c3->cd(3)->SetGridx();
+  c3->cd(3)->SetGridy();
+  hReco_dXYZ[2]->GetXaxis()->SetLabelSize(0.05);
+  hReco_dXYZ[2]->GetYaxis()->SetLabelSize(0.05);
+  hReco_dXYZ[2]->GetXaxis()->SetTitleSize(0.05);
+  hReco_dXYZ[2]->GetYaxis()->SetTitleSize(0.05);
+  hReco_dXYZ[2]->Draw();
+  hReco_dXYZ[2]->SetTitle(";Reconstructed SPICE Displacement True - Reco (m);No. of Events;");
+  c3->SaveAs("RecoXYZ_hist_run12576.png");
+  c3->SaveAs("RecoXYZ_hist_run12576.pdf");
+  ResultFile->cd();
+  hReco_dXYZ[2]->Write("hReco_dXYZSpiceZ");
+
+  TCanvas *c4 = new TCanvas("c4","c4",1800,1800);
+  c4->Divide(1,3);
+  c4->cd(1);
+  c4->cd(1)->SetGridx();
+  c4->cd(1)->SetGridy();
+  hReco_dThPhR[0]->GetXaxis()->SetLabelSize(0.05);
+  hReco_dThPhR[0]->GetYaxis()->SetLabelSize(0.05);
+  hReco_dThPhR[0]->GetXaxis()->SetTitleSize(0.05);
+  hReco_dThPhR[0]->GetYaxis()->SetTitleSize(0.05);
+  hReco_dThPhR[0]->Draw();
+  hReco_dThPhR[0]->SetTitle(";Reconstructed SPICE Theta True - Reco (^{o});No. of Events;");
+  ResultFile->cd();
+  hReco_dThPhR[0]->Write("hReco_dThPhRSpiceX");
+  
+  c4->cd(2);
+  c4->cd(2)->SetGridx();
+  c4->cd(2)->SetGridy();
+  hReco_dThPhR[1]->GetXaxis()->SetLabelSize(0.05);
+  hReco_dThPhR[1]->GetYaxis()->SetLabelSize(0.05);
+  hReco_dThPhR[1]->GetXaxis()->SetTitleSize(0.05);
+  hReco_dThPhR[1]->GetYaxis()->SetTitleSize(0.05);
+  hReco_dThPhR[1]->Draw();
+  hReco_dThPhR[1]->SetTitle(";Reconstructed SPICE Phi True - Reco (^{o});No. of Events;");
+  ResultFile->cd();
+  hReco_dThPhR[1]->Write("hReco_dThPhRSpiceY");
+
+  c4->cd(3);
+  c4->cd(3)->SetGridx();
+  c4->cd(3)->SetGridy();
+  hReco_dThPhR[2]->GetXaxis()->SetLabelSize(0.05);
+  hReco_dThPhR[2]->GetYaxis()->SetLabelSize(0.05);
+  hReco_dThPhR[2]->GetXaxis()->SetTitleSize(0.05);
+  hReco_dThPhR[2]->GetYaxis()->SetTitleSize(0.05);
+  hReco_dThPhR[2]->Draw();
+  hReco_dThPhR[2]->SetTitle(";Reconstructed SPICE Displacement True - Reco (m);No. of Events;");
+  c4->SaveAs("RecoXYZ_hist_run12576.png");
+  c4->SaveAs("RecoXYZ_hist_run12576.pdf");
+  ResultFile->cd();
+  hReco_dThPhR[2]->Write("hReco_dThPhRSpiceZ");
+  
+  TCanvas *c5 = new TCanvas("c5","c5",1800,1800);
+  c5->cd(1);
+  c5->cd(1)->SetGridx();
+  c5->cd(1)->SetGridy();
+  grDurationReco->GetXaxis()->SetLabelSize(0.05);
+  grDurationReco->GetYaxis()->SetLabelSize(0.05);
+  grDurationReco->GetXaxis()->SetTitleSize(0.05);
+  grDurationReco->GetYaxis()->SetTitleSize(0.05);
+  grDurationReco->Draw("AP");
+  grDurationReco->SetTitle(";Run Unixtime (s);Time Taken To Do Reconstruction (ms);");  
+  ResultFile->cd();
+  grDurationReco->Write("grDurationSpice");
+  c5->SaveAs("DurationReco_run12576.png");
+  c5->SaveAs("DurationReco_run12576.pdf");
+  
+}
