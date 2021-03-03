@@ -49,6 +49,8 @@ void PlotRecoResults(){
   double numEntries=RecoTree->GetEntries();
 
   RecoTree->GetEntry(0);
+
+  TH1D *hIterations=new TH1D("","",200,0,500);
   
   TH1D * hReco_dXYZ[3];
   hReco_dXYZ[0]=new TH1D("","",200,-500,+500);
@@ -63,6 +65,7 @@ void PlotRecoResults(){
   const Int_t NumCutCh=4;
   Double_t CutCh[NumCutCh]={8,15,11,13};
 
+  vector <double> IterationsReco;
   vector <double> DurationReco;
   vector <double> UnixTimeReco;
   vector <double> Reco_XYZ[3];
@@ -73,6 +76,8 @@ void PlotRecoResults(){
  
     RecoTree->GetEntry(ievt);
 
+    hIterations->Fill(Iterations);
+    IterationsReco.push_back(Iterations);
     DurationReco.push_back(Duration);
     UnixTimeReco.push_back(unixTime-firstUnixTime);
 
@@ -92,8 +97,6 @@ void PlotRecoResults(){
     
   }////event loop 
 
-  TGraph *grDurationReco;
-
   TMultiGraph * mgReco_XYZ=new TMultiGraph();
   TGraph *grReco_XYZ[3];
 
@@ -110,9 +113,13 @@ void PlotRecoResults(){
     grReco_ThPhR[ixyz]->SetMarkerColor(2+ixyz);
   }
 
-  grDurationReco=new TGraph(DurationReco.size(),UnixTimeReco.data(),DurationReco.data());
+  TGraph *grDurationReco=new TGraph(DurationReco.size(),UnixTimeReco.data(),DurationReco.data());
   grDurationReco->SetMarkerStyle(20);
   grDurationReco->SetMarkerColor(2);
+
+  TGraph *grIterationsReco=new TGraph(IterationsReco.size(),UnixTimeReco.data(),IterationsReco.data());
+  grIterationsReco->SetMarkerStyle(20);
+  grIterationsReco->SetMarkerColor(2);
   
   TCanvas *c1 = new TCanvas("c1","c1",1800,1800);
   c1->Divide(1,3);
@@ -323,5 +330,31 @@ void PlotRecoResults(){
   stringL=PlotFileName.Length();
   PlotFileName.Replace(stringL-4,4,".pdf");
   c5->SaveAs(PlotFileName);
+
+  TCanvas *c6 = new TCanvas("c6","c6",1800,1800);
+  c6->cd(1);
+  c6->cd(1)->SetGridx();
+  c6->cd(1)->SetGridy();
+  grIterationsReco->GetXaxis()->SetLabelSize(0.05);
+  grIterationsReco->GetYaxis()->SetLabelSize(0.05);
+  grIterationsReco->GetXaxis()->SetTitleSize(0.05);
+  grIterationsReco->GetYaxis()->SetTitleSize(0.05);
+  grIterationsReco->Draw("AP");
+  grIterationsReco->SetTitle(";Run Unixtime (s);Minimizer Iterations Do Reconstruction (ms);");  
+  OutputFile->cd();
+  grIterationsReco->Write("grRecoIterations");
+
+  PlotFileName="Run";
+  PlotFileName+=Run;
+  PlotFileName+="RecoIterations";
+  PlotFileName+=".png";
+  c6->SaveAs(PlotFileName);
+  stringL=PlotFileName.Length();
+  PlotFileName.Replace(stringL-4,4,".pdf");
+  c6->SaveAs(PlotFileName);
+
+  TCanvas *c7 = new TCanvas("c7","c7",1800,1800);
+  c7->cd(1);
+  hIterations->Draw();
   
 }
