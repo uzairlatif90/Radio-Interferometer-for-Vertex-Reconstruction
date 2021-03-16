@@ -581,8 +581,17 @@ TGraph* IceRayTracing::GetFullDirectRayPath(double z0, double x1, double z1,doub
       i=dmax+2;      
     }  
   }
-  gr1->SetPoint(npnt,0,z0);
-  npnt++;
+  if(Flip==true){
+    params6a = {A_ice, GetB(zn), GetC(zn), lvalueD};
+    params6b = {A_ice, GetB(z0), GetC(z0), lvalueD};
+    xn=fDnfR(zn,&params6a)-fDnfR(z0,&params6b); 
+    gr1->SetPoint(npnt,x1-xn,z0);
+  }else{
+    params6a = {A_ice, GetB(zn), GetC(zn), lvalueD};
+    params6b = {A_ice, GetB(z0), GetC(z0), lvalueD};
+    xn=fDnfR(zn,&params6a)-fDnfR(z0,&params6b);
+    gr1->SetPoint(npnt,xn,z0);
+  }
   
   dsw=0;
   /* If the Tx and Rx depth were switched then put them back to their original position */
@@ -676,7 +685,18 @@ TGraph* IceRayTracing::GetFullReflectedRayPath(double z0, double x1, double z1,d
       i=dmax+2;
     }
   }
-
+  if(Flip==true){
+    params6a = {A_ice, GetB(zn), GetC(zn), lvalueR};
+    params6b = {A_ice, GetB(z0), GetC(z0), lvalueR};
+    xn=fDnfR(zn,&params6a)-fDnfR(z0,&params6b);
+    gr2->SetPoint(npnt,x1-xn,zn);
+  }else{
+    params6a = {A_ice, GetB(zn), GetC(zn), lvalueR};
+    params6b = {A_ice, GetB(z0), GetC(z0), lvalueR};
+    xn=fDnfR(zn,&params6a)-fDnfR(z0,&params6b);
+    gr2->SetPoint(npnt,xn,zn);
+  }
+  
   dsw=0;
   /* If the Tx and Rx depth were switched then put them back to their original position */
   if(Flip==true){
@@ -684,9 +704,6 @@ TGraph* IceRayTracing::GetFullReflectedRayPath(double z0, double x1, double z1,d
     z0=z1;
     z1=dsw;
   }
-  gr2->SetPoint(npnt,0,z0);
-  npnt++;
-
   
   return gr2;
 
@@ -772,8 +789,17 @@ TGraph* IceRayTracing::GetFullRefractedRayPath(double z0, double x1, double z1, 
       i=dmax+2;
     }
   }
-  gr3->SetPoint(npnt,0,z0);
-  npnt++;
+  if(Flip==true){
+    params6a = {A_ice, GetB(zn), GetC(zn), lvalueRa};
+    params6b = {A_ice, GetB(z0), GetC(z0), lvalueRa};
+    xn=fDnfR(zn,&params6a)-fDnfR(z0,&params6b); 
+    gr3->SetPoint(npnt,x1-xn,z0);
+  }else{
+    params6a = {A_ice, GetB(zn), GetC(zn), lvalueRa};
+    params6b = {A_ice, GetB(z0), GetC(z0), lvalueRa};
+    xn=fDnfR(zn,&params6a)-fDnfR(z0,&params6b);
+    gr3->SetPoint(npnt,xn,z0);
+  }
   
   dsw=0;
   /* If the Tx and Rx depth were switched then put them back to their original position */
@@ -1235,8 +1261,17 @@ TGraph* IceRayTracing::GetFullDirectRayPath_Cnz(double z0, double x1, double z1,
       i=dmax+2;      
     }  
   }
-  gr1->SetPoint(npnt,0,z0);
-  npnt++;
+  if(Flip==true){
+    params6a = {A_ice_Cnz, 0, 0, lvalueD};
+    params6b = {A_ice_Cnz, 0, 0, lvalueD};
+    xn=fDnfR_Cnz(zn,&params6a)-fDnfR_Cnz(z0,&params6b); 
+    gr1->SetPoint(npnt,x1-xn,z0);
+  }else{
+    params6a = {A_ice_Cnz, 0, 0, lvalueD};
+    params6b = {A_ice_Cnz, 0, 0, lvalueD};
+    xn=fDnfR_Cnz(zn,&params6a)-fDnfR_Cnz(z0,&params6b);
+    gr1->SetPoint(npnt,xn,z0);
+  }
   
   dsw=0;
   /* If the Tx and Rx depth were switched then put them back to their original position */
@@ -1330,7 +1365,18 @@ TGraph* IceRayTracing::GetFullReflectedRayPath_Cnz(double z0, double x1, double 
       i=dmax+2;
     }
   }
-
+  if(Flip==true){
+    params6a = {A_ice_Cnz, 0, 0, lvalueR};
+    params6b = {A_ice_Cnz, 0, 0, lvalueR};
+    xn=fDnfR_Cnz(zn,&params6a)-fDnfR_Cnz(z0,&params6b);
+    gr2->SetPoint(npnt,x1-xn,zn);
+  }else{
+    params6a = {A_ice_Cnz, 0, 0, lvalueR};
+    params6b = {A_ice_Cnz, 0, 0, lvalueR};
+    xn=fDnfR_Cnz(zn,&params6a)-fDnfR_Cnz(z0,&params6b);
+    gr2->SetPoint(npnt,xn,zn);
+  }
+  
   dsw=0;
   /* If the Tx and Rx depth were switched then put them back to their original position */
   if(Flip==true){
@@ -1338,9 +1384,6 @@ TGraph* IceRayTracing::GetFullReflectedRayPath_Cnz(double z0, double x1, double 
     z0=z1;
     z1=dsw;
   }
-  gr2->SetPoint(npnt,0,z0);
-  npnt++;
-
   
   return gr2;
 
