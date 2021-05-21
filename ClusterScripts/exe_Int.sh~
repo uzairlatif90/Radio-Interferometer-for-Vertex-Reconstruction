@@ -1,2 +1,0 @@
-#!/bin/bash
-root -q -b -l '/data/user/ulatif/templatematch/GetBrianEvents.C("'$1'"',''$2'',''$3')'
