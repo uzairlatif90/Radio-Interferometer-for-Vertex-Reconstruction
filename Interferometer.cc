@@ -121,14 +121,13 @@ void Interferometer::ReadChHitTimeFromData(const char * filename,double ChHitTim
   std::ifstream ain(filename);
   int n1=0;////variable for counting total number of data points
   std::string line;
-  double dummy[5]={0,0,0};////temporary variable for storing data values from the file  
+  double dummy[3]={0,0,0};////temporary variable for storing data values from the file  
 
   //Check if file is open and store data
   if(ain.is_open()){
     while (true){
       ain>>dummy[0]>>dummy[1]>>dummy[2];
-      if( ain.eof() ) break;     
-      cout<<n1<<" "<<dummy[0]<<" "<<dummy[1]<<" "<<dummy[2]<<endl;
+      if( ain.eof() ) break;
       ChHitTime[0][n1]= dummy[1];
       ChHitTime[1][n1]= dummy[2];
       n1++;
@@ -188,6 +187,10 @@ void Interferometer::FindFirstHitAndNormalizeHitTime(double ChHitTime[2][TotalAn
     }
   }
 
+  // for(int iRx=0;iRx<TotalAntennasRx;iRx++){
+  //   //ChHitTime[iray][iRx]=0;
+  //   cout<<iRx<<" "<<ChHitTime[0][iRx]<<" "<<ChHitTime[0][iRx]<<endl;
+  // }
 }
 
 void Interferometer::AddGaussianJitterToHitTimes(double JitterNumber,double ChHitTime[2][TotalAntennasRx]){
@@ -247,6 +250,7 @@ double Interferometer::Minimizer_f(const gsl_vector *v, void *params){
       }
     }
     SumSNR=SumSNRD+SumSNRR;
+    SumSNR=SumSNRD;
   
     Interferometer::GenerateChHitTimeAndCheckHits(AntennaCoordTx,timeRay,IgnoreCh);
     bool CheckStationTrigger=Interferometer::CheckTrigger(IgnoreCh);
@@ -262,12 +266,14 @@ double Interferometer::Minimizer_f(const gsl_vector *v, void *params){
       }
       if(p[3*TotalAntennasRx +iRx]!=0 && IgnoreCh[1][iRx]!=0){
       	chi2+=pow((p[5*TotalAntennasRx +iRx]*(timeRay[1][iRx] - p[1*TotalAntennasRx+iRx]))/SumSNR,2);
-      }
+       }
       // if(p[2*TotalAntennasRx +iRx]!=0 && p[3*TotalAntennasRx +iRx]!=0){
       //   chi2+=pow((p[4*TotalAntennasRx +iRx]*p[5*TotalAntennasRx +iRx]*(ChDRTime[iRx]- (p[1*TotalAntennasRx+iRx] - p[0+iRx])))/(SumSNR*SumSNR) ,2);
       // }
+     
     }
-   
+    //chi2+=sqrt(pow(ExpectedX-XYZ[0],2)+pow(ExpectedY-XYZ[1],2)+pow(ExpectedZ-XYZ[2],2));
+    //cout<<
     return chi2;
     // }else{ 
     //   return GSL_NAN;
@@ -329,6 +335,8 @@ void Interferometer::Minimizer(double InitialTxCor[3], double FinalTxCor[3], dou
   gsl_vector_set (XYZStepSizeVector, 0, ThetaPhiStepSize*4);
   gsl_vector_set (XYZStepSizeVector, 1, ThetaPhiStepSize*4);
   gsl_vector_set (XYZStepSizeVector, 2, ExpectedUncertainty*2);
+
+  //cout<<"expected uncertainties are :"<<ThetaPhiStepSize*4<<" "<<ThetaPhiStepSize*4<<" "<<ExpectedUncertainty*2<<endl;
   
   /* Initialize method and iterate */
   MultiDimMinFunc.n = 3;
@@ -371,7 +379,7 @@ void Interferometer::Minimizer(double InitialTxCor[3], double FinalTxCor[3], dou
       FinalTxCor[1]=gsl_vector_get (MinimizerWorkSpace->x, 1);
       FinalTxCor[2]=gsl_vector_get (MinimizerWorkSpace->x, 2);      
     }
-  while (Status == GSL_CONTINUE && Iter < 200);
+  while (Status == GSL_CONTINUE && Iter < 2000);
   
   gsl_vector_free(XYZVec);
   gsl_vector_free(XYZStepSizeVector);
@@ -425,36 +433,44 @@ void FindApproximateMin(double RoughtInitialCor[3], double GuessResultCor[3][3],
   double ChDRTime[TotalAntennasRx];
 
   Double_t NumBinsX=10,NumBinsY=10,NumBinsZ=10;
-  Double_t StartX=RoughtInitialCor[0]-500,StartY=RoughtInitialCor[1]-500,StartZ=RoughtInitialCor[2]-500;
-  Double_t StopX=RoughtInitialCor[0]+500,StopY=RoughtInitialCor[1]+500,StopZ=RoughtInitialCor[2]+500;
+  Double_t StartX=RoughtInitialCor[0]-250,StartY=RoughtInitialCor[1]-250,StartZ=RoughtInitialCor[2]-250;
+  Double_t StopX=RoughtInitialCor[0]+250,StopY=RoughtInitialCor[1]+250,StopZ=RoughtInitialCor[2]+250;
+  if(StopZ>0){
+    StopZ=-5;
+  }
   Double_t StepSizeX=(StopX-StartX)/NumBinsX,StepSizeY=(StopY-StartY)/NumBinsY,StepSizeZ=(StopZ-StartZ)/NumBinsZ;
  
   vector <double> RecoPar[4];
-  double ParameterArray[6*TotalAntennasRx];
-   
+  
   //Interferometer::AddGaussianJitterToHitTimes(10,ChHitTime);
   Interferometer::FindFirstHitAndNormalizeHitTime(ChHitTime,IgnoreCh,ChDRTime);
 
+  double ParameterArray[6*TotalAntennasRx+3];
   int iEnt=0;
   for(int iray=0;iray<2;iray++){
     for(int iRx=0;iRx<TotalAntennasRx;iRx++){
       ParameterArray[iEnt]=ChHitTime[iray][iRx];
       iEnt++;
     } 
-  }
+  }  
+
   for(int iray=0;iray<2;iray++){
     for(int iRx=0;iRx<TotalAntennasRx;iRx++){
       ParameterArray[iEnt]=IgnoreCh[iray][iRx];
       iEnt++;
     } 
   }
+
   for(int iray=0;iray<2;iray++){
     for(int iRx=0;iRx<TotalAntennasRx;iRx++){
       ParameterArray[iEnt]=ChSNR[iray][iRx];
       iEnt++;
-    } 
+    }
   }
-
+  ParameterArray[iEnt]=RoughtInitialCor[0];
+  ParameterArray[iEnt+1]=RoughtInitialCor[1];
+  ParameterArray[iEnt+2]=RoughtInitialCor[2];
+ 
   gsl_vector *XYZVec;
   /* Starting point */
   XYZVec = gsl_vector_alloc (3);
@@ -469,15 +485,16 @@ void FindApproximateMin(double RoughtInitialCor[3], double GuessResultCor[3][3],
 	gsl_vector_set (XYZVec, 0, Xt);
 	gsl_vector_set (XYZVec, 1, Yt);
 	gsl_vector_set (XYZVec, 2, Zt);
-	
+
 	double min=Interferometer::Minimizer_f(XYZVec, ParameterArray);
+	
 	if(isnan(min)==false){
+	  
 	  RecoPar[0].push_back(Xt);
 	  RecoPar[1].push_back(Yt);
 	  RecoPar[2].push_back(Zt);
 	  RecoPar[3].push_back(min);
-	}
-		
+	}		
       }
     }
   }
@@ -490,7 +507,8 @@ void FindApproximateMin(double RoughtInitialCor[3], double GuessResultCor[3][3],
 	
     GuessResultCor[Nmin][0]=RecoPar[0][FinalMinValueBin];
     GuessResultCor[Nmin][1]=RecoPar[1][FinalMinValueBin];
-    GuessResultCor[Nmin][2]=-RecoPar[2][FinalMinValueBin];
+    GuessResultCor[Nmin][2]=RecoPar[2][FinalMinValueBin];
+    //cout<<" Xt "<<GuessResultCor[Nmin][0]<<" Yt "<<GuessResultCor[Nmin][1]<<" Zt "<<GuessResultCor[Nmin][2]<<" min "<<FinalMinValue<<endl;
     RecoPar[3][FinalMinValueBin]=10000000000;
     
     Nmin++;
