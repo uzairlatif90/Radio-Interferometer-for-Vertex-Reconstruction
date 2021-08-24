@@ -835,7 +835,7 @@ double *IceRayTracing::GetRefractedRayPar(double z0, double x1 ,double z1, doubl
   }
   
   /* Set up all the variables that will be used to get the parameters for the refracted ray */
-  double lvalueR=sin(LangR*(IceRayTracing::pi/180))*IceRayTracing::Getnz(z0);
+  //double lvalueR=sin(LangR*(IceRayTracing::pi/180))*IceRayTracing::Getnz(z0);
   double lvalueRa[2]={0,0};
   double LangRa[2]={0,0};
   double checkzeroRa[2]={-1000,-1000};
@@ -871,13 +871,13 @@ double *IceRayTracing::GetRefractedRayPar(double z0, double x1 ,double z1, doubl
   lvalueRa[0]=IceRayTracing::FindFunctionRoot(F4,LowerLimit,UpperLimitL[0]);
   LangRa[0]=asin(lvalueRa[0]/IceRayTracing::Getnz(z0))*(180.0/IceRayTracing::pi);
   checkzeroRa[0]=(IceRayTracing::fRaa(lvalueRa[0],&params4));
-  zmax[0]=GetZmax(IceRayTracing::A_ice,lvalueRa[0])+1e-7;
+  zmax[0]=IceRayTracing::GetZmax(IceRayTracing::A_ice,lvalueRa[0])+1e-7;
 
   if(fabs(checkzeroRa[0])>0.5){
     lvalueRa[0]=IceRayTracing::FindFunctionRootFDF(F4b,LowerLimit,UpperLimitL[0]);
     LangRa[0]=asin(lvalueRa[0]/IceRayTracing::Getnz(z0))*(180.0/IceRayTracing::pi);
     checkzeroRa[0]=IceRayTracing::fRaa(lvalueRa[0],&params4);
-    zmax[0]=GetZmax(IceRayTracing::A_ice,lvalueRa[0])+1e-7;
+    zmax[0]=IceRayTracing::GetZmax(IceRayTracing::A_ice,lvalueRa[0])+1e-7;
   }
 
   if(fabs(checkzeroRa[0])<0.5){
@@ -885,27 +885,27 @@ double *IceRayTracing::GetRefractedRayPar(double z0, double x1 ,double z1, doubl
     lvalueRa[1]=IceRayTracing::FindFunctionRoot(F4,lvalueRa[0]-0.15,lvalueRa[0]-0.023);
     LangRa[1]=asin(lvalueRa[1]/IceRayTracing::Getnz(z0))*(180.0/IceRayTracing::pi);
     checkzeroRa[1]=IceRayTracing::fRaa(lvalueRa[1],&params4);
-    zmax[1]=GetZmax(IceRayTracing::A_ice,lvalueRa[1])+1e-7;
+    zmax[1]=IceRayTracing::GetZmax(IceRayTracing::A_ice,lvalueRa[1])+1e-7;
   
-    if(fabs(checkzeroRa[1])>0.5 || isnan(checkzeroRa[1])==true || fabs(lvalueRa[1]-lvalueRa[0])<1e-4 ){  
-      lvalueRa[1]=FindFunctionRoot(F4,lvalueRa[0]-0.23,lvalueRa[0]-0.023);
-      LangRa[1]=asin(lvalueRa[1]/Getnz(z0))*(180.0/pi);
-      checkzeroRa[1]=fRaa(lvalueRa[1],&params4);
-      zmax[1]=GetZmax(A_ice,lvalueRa[1])+1e-7;
+    if(fabs(checkzeroRa[1])>0.5 || std::isnan(checkzeroRa[1])==true || fabs(lvalueRa[1]-lvalueRa[0])<1e-4 ){  
+      lvalueRa[1]=IceRayTracing::FindFunctionRoot(F4,lvalueRa[0]-0.23,lvalueRa[0]-0.023);
+      LangRa[1]=asin(lvalueRa[1]/IceRayTracing::Getnz(z0))*(180.0/IceRayTracing::pi);
+      checkzeroRa[1]=IceRayTracing::fRaa(lvalueRa[1],&params4);
+      zmax[1]=IceRayTracing::GetZmax(IceRayTracing::A_ice,lvalueRa[1])+1e-7;
     }
 
-    if(fabs(checkzeroRa[1])>0.5 || isnan(checkzeroRa[1])==true || fabs(lvalueRa[1]-lvalueRa[0])<1e-4 ){  
-      lvalueRa[1]=FindFunctionRootFDF(F4b,lvalueRa[0]-0.23,lvalueRa[0]-0.023);
-      LangRa[1]=asin(lvalueRa[1]/Getnz(z0))*(180.0/pi);
-      checkzeroRa[1]=fRaa(lvalueRa[1],&params4);
-      zmax[1]=GetZmax(A_ice,lvalueRa[1])+1e-7;
+    if(fabs(checkzeroRa[1])>0.5 || std::isnan(checkzeroRa[1])==true || fabs(lvalueRa[1]-lvalueRa[0])<1e-4 ){  
+      lvalueRa[1]=IceRayTracing::FindFunctionRootFDF(F4b,lvalueRa[0]-0.23,lvalueRa[0]-0.023);
+      LangRa[1]=asin(lvalueRa[1]/IceRayTracing::Getnz(z0))*(180.0/IceRayTracing::pi);
+      checkzeroRa[1]=IceRayTracing::fRaa(lvalueRa[1],&params4);
+      zmax[1]=IceRayTracing::GetZmax(IceRayTracing::A_ice,lvalueRa[1])+1e-7;
     }
 
-    if(fabs(checkzeroRa[1])>0.5 || isnan(checkzeroRa[1])==true || fabs(lvalueRa[1]-lvalueRa[0])<1e-4 ){  
-      lvalueRa[1]=FindFunctionRootFDF(F4b,lvalueRa[0]-0.1,lvalueRa[0]-0.023);
-      LangRa[1]=asin(lvalueRa[1]/Getnz(z0))*(180.0/pi);
-      checkzeroRa[1]=fRaa(lvalueRa[1],&params4);
-      zmax[1]=GetZmax(A_ice,lvalueRa[1])+1e-7;
+    if(fabs(checkzeroRa[1])>0.5 || std::isnan(checkzeroRa[1])==true || fabs(lvalueRa[1]-lvalueRa[0])<1e-4 ){  
+      lvalueRa[1]=IceRayTracing::FindFunctionRootFDF(F4b,lvalueRa[0]-0.1,lvalueRa[0]-0.023);
+      LangRa[1]=asin(lvalueRa[1]/IceRayTracing::Getnz(z0))*(180.0/IceRayTracing::pi);
+      checkzeroRa[1]=IceRayTracing::fRaa(lvalueRa[1],&params4);
+      zmax[1]=IceRayTracing::GetZmax(IceRayTracing::A_ice,lvalueRa[1])+1e-7;
     }
 
   }else{
