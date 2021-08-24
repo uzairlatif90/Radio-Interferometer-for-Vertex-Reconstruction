@@ -46,11 +46,11 @@ void RunInterferometerMultTx(){
 
       if((i!=0 && j==0) || (i==0 && j!=0) || (i!=0 && j!=0)){
 	
-	for(double k=-1; k>-501;k=k-100){
+	for(double k=-10; k>-501;k=k-100){
 	  double DummyTxCor[3]={i,j,k};	  
 
 	  if(DummyTxCor[2]>0){
-	    DummyTxCor[2]=-1;
+	    DummyTxCor[2]=-10;
 	  }
 	  
 	  for(int ixyz=0;ixyz<3;ixyz++){

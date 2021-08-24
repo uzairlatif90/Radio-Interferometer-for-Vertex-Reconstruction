@@ -144,8 +144,7 @@ void Interferometer::GenerateChHitTimeAndCheckHits(double TxCor[3],double timeRa
     if(RangRay[1][iRx]!=-1000){
       RHits++;
     }
-    //cout<<"here 10 "<<endl;
-    //delete [] RTresults;  
+    delete [] RTresults;  
   }  
   //cout<<"hits are "<<DHits<<" "<<RHits<<endl; 
 }
@@ -330,6 +329,7 @@ void Interferometer::AddGaussianJitterToHitTimes(double JitterNumber,double ChHi
       ChHitTime[iray][iRx]=ChHitTime[iray][iRx]+RandNum;
     }
   }
+  delete RandNumIni;
 }
 
 double Interferometer::Minimizer_f(const gsl_vector *v, void *params){
@@ -726,6 +726,7 @@ void Interferometer::MinimizerThPhR(double InitialTxCor_XYZ[3], double InitialTx
   FinalTxCor[1]=ParameterArray[iEnt+7];
   FinalTxCor[2]=m;
   FinalMinValue=ParameterArray[7*TotalAntennasRx+11];
+  
 }
 
 void Interferometer::RootThPhR(double InitialTxCor_XYZ[3], double InitialTxCor_ThPhR[3], double FinalTxCor[3], double ExpectedUncertainty, double ChHitTime[2][TotalAntennasRx], int IgnoreCh[2][TotalAntennasRx], double ChSNR[2][TotalAntennasRx], int ChHitOrder[TotalAntennasRx], double &FinalMinValue, int &Iterations){
@@ -757,7 +758,6 @@ void Interferometer::RootThPhR(double InitialTxCor_XYZ[3], double InitialTxCor_T
     ParameterArray[iEnt]=ChHitOrder[iRx];
     iEnt++;
   }
-
   
   ParameterArray[iEnt]=InitialTxCor_XYZ[0];
   ParameterArray[iEnt+1]=InitialTxCor_XYZ[1];
@@ -1069,8 +1069,7 @@ void Interferometer::GetApproximateDistance(double GuessResultCor[3][3], double 
     //cout<<"Guess Minimas: Tht "<<GuessResultCor[Nmin][0]<<" Pht "<<GuessResultCor[Nmin][1]<<" Rt "<<GuessResultCor[Nmin][2]<<" min "<<FinalMinValue<<endl;
     RecoPar[3][FinalMinValueBin]=10000000000;    
     Nmin++;
-  }
-  
+  }  
   
 }
 
