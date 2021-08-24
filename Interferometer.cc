@@ -887,7 +887,7 @@ void Interferometer::SearchApproxiMin(int C_nz, double StartCor[3],double GuessR
   	  min=Interferometer::Minimizer_fCnz(ThPhRVec, ParameterArray);
   	}
 
-  	if(isnan(min)==false){
+  	if(std::isnan(min)==false){
   	  RecoPar[0].push_back(Tht);
   	  RecoPar[1].push_back(Pht);
   	  RecoPar[2].push_back(Rt);
@@ -1050,7 +1050,7 @@ void Interferometer::GetApproximateDistance(double GuessResultCor[3][3], double 
     FinalTxCor[1]=ParameterArray[iEnt+7];
     FinalTxCor[2]=testR;
 
-    if(isnan(min)==false){
+    if(std::isnan(min)==false){
       RecoPar[0].push_back(FinalTxCor[0]);
       RecoPar[1].push_back(FinalTxCor[1]);
       RecoPar[2].push_back(FinalTxCor[2]);
