@@ -1,0 +1,44 @@
+#!/bin/bash
+
+submitFile=MasterSubmit
+if [ -f $submitFile ] ; then rm $submitFile ; fi
+
+EXE=exe_Int.sh
+
+PRINT_UNI="Universe = vanilla"
+PRINT_EXE="Executable = $EXE"
+PRINT_TRN="should_transfer_files = YES"
+PRINT_WTT="when_to_transfer_output = ON_EXIT"
+PRINT_QUE="Queue"
+PRINT_MEM="request_memory=4GB"
+PRINT_MED="request_disk=2MB"
+
+value1=0
+value2=0
+
+while IFS=" " read -r value1 value2 value3
+do
+    echo "The file values are:" $value1 $value2 $value3
+
+    RUNNUM=$value1
+    EVENTNUM=$value2
+
+    PRINT_ARG="Arguments = 2 /data/user/ulatif/aradata/2017/ARA02/fullset/root/run9129/event9129.root ${RUNNUM} ${EVENTNUM}"
+    PRINT_LOG="Log = /scratch/ulatif/Log/Log_A2_Run${RUNNUM}_Ev${EVENTNUM}.log"
+    PRINT_OUT="Output = /scratch/ulatif/Out/Out_A2_Run${RUNNUM}_Ev${EVENTNUM}.out"
+    PRINT_ERR="Error = /scratch/ulatif/Error/Error_A2_Run${RUNNUM}_Ev${EVENTNUM}.error"
+    echo $PRINT_UNI >> $submitFile
+    echo $PRINT_EXE >> $submitFile
+    echo $PRINT_ARG >> $submitFile
+    echo $PRINT_LOG >> $submitFile
+    #echo $PRINT_OUT >> $submitFile
+    #echo $PRINT_ERR >> $submitFile
+    #echo $PRINT_TRN_IN >> $submitFile
+    echo $PRINT_MEM >> $submitFile
+    echo $PRINT_MED >> $submitFile
+    # echo $PRINT_TRN >> $submitFile
+    # echo $PRINT_WTT >> $submitFile
+    # echo $PRINT_GTE >> $submitFile
+    echo $PRINT_QUE >> $submitFile
+
+done < "/data/user/ulatif/ARA_Inter/ARA2_Run9129.txt"
