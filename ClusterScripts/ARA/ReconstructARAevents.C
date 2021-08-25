@@ -534,8 +534,8 @@ void ReconstructARAevents(Int_t StationId, char const *InputFileName, int Run, i
   RecoTree->Branch("Duration",&Duration,"Duration/D");
   RecoTree->Branch("FinalMinValue",&FinalMinValue,"FinalMinValue/D");
   RecoTree->Branch("Iterations",&Iterations,"Iterations/I");
-  RecoTree->Branch("isCalpulserTrig",&isCalpulserTrig,"isCalpulserTrig/B");
-  RecoTree->Branch("isSoftwareTrig",&isSoftwareTrig,"isSoftwareTrig/B");
+  RecoTree->Branch("isCalpulserTrig",&isCalpulserTrig,"isCalpulserTrig/O");
+  RecoTree->Branch("isSoftwareTrig",&isSoftwareTrig,"isSoftwareTrig/O");
   RecoTree->Branch("FinalTxCor_XYZ",FinalTxCor_XYZ,"FinalTxCor_XYZ[3]/D");
   RecoTree->Branch("FinalTxCor_ThPhR",FinalTxCor_ThPhR,"FinalTxCor_ThPhR[3]/D");
   RecoTree->Branch("InitialTxCor_XYZ",InitialTxCor_XYZ,"InitialTxCor_XYZ[3]/D");
