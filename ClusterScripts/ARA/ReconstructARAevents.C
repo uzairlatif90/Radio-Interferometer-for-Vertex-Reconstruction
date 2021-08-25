@@ -33,6 +33,46 @@ void ReadCPTemp(){
 
 }
 
+void GetCPCor(Int_t iStation, vector <double> CalPulCor[3]){
+
+  ///////////////////////////////////////////////////////////////
+  Double_t antLocD5[2][3];
+  Double_t antLocD6[2][3];
+  
+  AraStationInfo *stationInfo=new AraStationInfo(iStation,2019);
+  AraGeomTool *geom = AraGeomTool::Instance();;
+  
+  Int_t numCalAnts=stationInfo->getNumCalAnts();
+  for(int i=0;i<numCalAnts;i++) {
+    AraCalAntennaInfo *calAntInfo=stationInfo->getCalAntennaInfo(i);
+    //cout << calAntInfo->antName <<" "<<numCalAnts<<endl;
+    //stationInfo->getCalAntennaInfo(i)->printAntennaInfo();
+    Double_t *antLocTx=stationInfo->getCalAntennaInfo(i)->getLocationXYZ();
+    /////////0 is H
+    /////////1 is V
+    if(i<2){
+      antLocD5[i][0]=antLocTx[0];       
+      antLocD5[i][1]=antLocTx[1];       
+      antLocD5[i][2]=antLocTx[2];
+      //cout<<i<<" D5: "<<antLocD5[i][0]<<" "<<antLocD5[i][1]<<" "<<antLocD5[i][2]<<endl;       
+    }
+    if(i>1){
+      antLocD6[i-2][0]=antLocTx[0];       
+      antLocD6[i-2][1]=antLocTx[1];       
+      antLocD6[i-2][2]=antLocTx[2];       
+      //cout<<i<<" D6: "<<antLocD6[i-2][0]<<" "<<antLocD6[i-2][1]<<" "<<antLocD6[i-2][2]<<endl;         
+    }
+    Double_t ThPhR[3]={0,0,0};
+    Interferometer::XYZtoThPhR(antLocTx,ThPhR);
+    ThPhR[0]=ThPhR[0]*(180./Interferometer::pi);
+    ThPhR[1]=ThPhR[1]*(180./Interferometer::pi); 
+    CalPulCor[0].push_back(ThPhR[0]);
+    CalPulCor[1].push_back(ThPhR[1]);
+    CalPulCor[2].push_back(ThPhR[2]);    
+  }
+}
+
+
 double GetNoiseRMS(TGraph *gr){
 
   int nDiv=10;
@@ -275,7 +315,7 @@ void PeakFinder(TGraph *grPwrEnvOriginal, TGraph *grPeakPoint){
     swap(SmallPeak,LargePeak);
   }
 
-  if(SmallPeak>=LargePeak*0.50 && fabs(PowerPeakTime[1]-PowerPeakTime[0])>40 ){
+  if(SmallPeak>=LargePeak*0.25 && fabs(PowerPeakTime[1]-PowerPeakTime[0])>40 ){
     cout<<"We have two peaks "<<endl;
 
     if(PowerPeakTime[0]>PowerPeakTime[1]){
@@ -494,8 +534,8 @@ void ReconstructARAevents(Int_t StationId, char const *InputFileName, int Run, i
   RecoTree->Branch("Duration",&Duration,"Duration/D");
   RecoTree->Branch("FinalMinValue",&FinalMinValue,"FinalMinValue/D");
   RecoTree->Branch("Iterations",&Iterations,"Iterations/I");
-  RecoTree->Branch("isCalpulserTrig",&isCalpulserTrig,"isCalpulserTrig/O");
-  RecoTree->Branch("isSoftwareTrig",&isSoftwareTrig,"isSoftwareTrig/O");
+  RecoTree->Branch("isCalpulserTrig",&isCalpulserTrig,"isCalpulserTrig/B");
+  RecoTree->Branch("isSoftwareTrig",&isSoftwareTrig,"isSoftwareTrig/B");
   RecoTree->Branch("FinalTxCor_XYZ",FinalTxCor_XYZ,"FinalTxCor_XYZ[3]/D");
   RecoTree->Branch("FinalTxCor_ThPhR",FinalTxCor_ThPhR,"FinalTxCor_ThPhR[3]/D");
   RecoTree->Branch("InitialTxCor_XYZ",InitialTxCor_XYZ,"InitialTxCor_XYZ[3]/D");
@@ -713,8 +753,15 @@ void ReconstructARAevents(Int_t StationId, char const *InputFileName, int Run, i
   if(NumChAvailable>=3){
 
     double GuessResultCor[3][3]; 
-    Interferometer::GetApproximateMinThPhR(GuessResultCor,ExpectedPositionUncertainty,ChHitTime,IgnoreCh,ChSNR);
-    Interferometer::GetApproximateDistance(GuessResultCor,ExpectedPositionUncertainty,ChHitTime,IgnoreCh,ChSNR);
+   
+    if(rawAtriEvPtr->isCalpulserEvent()==true){
+      vector <double> CalPulCor[3];
+      GetCPCor(StationId, CalPulCor);
+      Interferometer::GetApproximateMinUserCor(CalPulCor,GuessResultCor,ExpectedPositionUncertainty,ChHitTime,IgnoreCh,ChSNR);
+    }else{
+      Interferometer::GetApproximateMinThPhR(GuessResultCor,ExpectedPositionUncertainty,ChHitTime,IgnoreCh,ChSNR);
+      Interferometer::GetApproximateDistance(GuessResultCor,ExpectedPositionUncertainty,ChHitTime,IgnoreCh,ChSNR);
+    }
     
     InitialTxCor_ThPhR[0]=GuessResultCor[0][0]*(Interferometer::pi/180);
     InitialTxCor_ThPhR[1]=GuessResultCor[0][1]*(Interferometer::pi/180);
