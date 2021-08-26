@@ -315,7 +315,7 @@ void PeakFinder(TGraph *grPwrEnvOriginal, TGraph *grPeakPoint){
     swap(SmallPeak,LargePeak);
   }
 
-  if(SmallPeak>=LargePeak*0.25 && fabs(PowerPeakTime[1]-PowerPeakTime[0])>40 ){
+  if(SmallPeak>=LargePeak*0.50 && fabs(PowerPeakTime[1]-PowerPeakTime[0])>40 ){
     cout<<"We have two peaks "<<endl;
 
     if(PowerPeakTime[0]>PowerPeakTime[1]){
@@ -754,14 +754,14 @@ void ReconstructARAevents(Int_t StationId, char const *InputFileName, int Run, i
 
     double GuessResultCor[3][3]; 
    
-    if(rawAtriEvPtr->isCalpulserEvent()==true){
-      vector <double> CalPulCor[3];
-      GetCPCor(StationId, CalPulCor);
-      Interferometer::GetApproximateMinUserCor(CalPulCor,GuessResultCor,ExpectedPositionUncertainty,ChHitTime,IgnoreCh,ChSNR);
-    }else{
+    // if(rawAtriEvPtr->isCalpulserEvent()==true){
+    //   vector <double> CalPulCor[3];
+    //   GetCPCor(StationId, CalPulCor);
+    //   Interferometer::GetApproximateMinUserCor(CalPulCor,GuessResultCor,ExpectedPositionUncertainty,ChHitTime,IgnoreCh,ChSNR);
+    // }else{
       Interferometer::GetApproximateMinThPhR(GuessResultCor,ExpectedPositionUncertainty,ChHitTime,IgnoreCh,ChSNR);
       Interferometer::GetApproximateDistance(GuessResultCor,ExpectedPositionUncertainty,ChHitTime,IgnoreCh,ChSNR);
-    }
+      //}
     
     InitialTxCor_ThPhR[0]=GuessResultCor[0][0]*(Interferometer::pi/180);
     InitialTxCor_ThPhR[1]=GuessResultCor[0][1]*(Interferometer::pi/180);
