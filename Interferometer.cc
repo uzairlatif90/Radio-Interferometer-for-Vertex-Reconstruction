@@ -413,6 +413,7 @@ double Interferometer::Minimizer_f(const gsl_vector *v, void *params){
     // }
     // ChHitOrderDiff=ChHitOrderDiff/ChHitOrderDiffTot;
    
+    //if(chanD[1]>=chanDsame && chanR[1]>=chanRsame && chanDsame>=chanD[0] && chanRsame>=chanR[0] && ChHitOrderDiff>=0.85){
     if(chanD[1]>=chanDsame && chanR[1]>=chanRsame && chanDsame>=chanD[0] && chanRsame>=chanR[0]){
       double chi2=0,chi2d=0;
       for(int iRx=0;iRx<TotalAntennasRx;iRx++){ 
@@ -834,13 +835,14 @@ void Interferometer::RootThPhR(double InitialTxCor_XYZ[3], double InitialTxCor_T
 
 void Interferometer::SearchApproxiMin(int C_nz, double StartCor[3],double GuessResultCor[3][3],double ParameterArray[7*TotalAntennasRx+12],int &iEnt){
 
-  Double_t NumBinsTh=10,NumBinsPh=10,NumBinsR=10;
+  Double_t NumBinsTh=5,NumBinsPh=5,NumBinsR=5;
   Double_t StartTh=90,StartPh=-180,StartR=20;
   Double_t StopTh=180,StopPh=180,StopR=2000;
   if(C_nz==0){
-    NumBinsTh=10,NumBinsPh=10,NumBinsR=10;
-    StartTh=90,StartPh=StartCor[1]-10,StartR=StartCor[2]-500;
-    StopTh=180,StopPh=StartCor[1]+10,StopR=StartCor[2]+500;
+    NumBinsTh=5,NumBinsPh=5,NumBinsR=5;
+    StartCor[0]+=30;
+    StartTh=StartCor[0]-20,StartPh=StartCor[1]-20,StartR=20;
+    StopTh=StartCor[0]+20,StopPh=StartCor[1]+20,StopR=2000;
   }
   if(StartTh<90){
     StartTh=90;
