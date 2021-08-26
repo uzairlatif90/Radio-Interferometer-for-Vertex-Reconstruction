@@ -559,7 +559,11 @@ void ReconstructARAevents(Int_t StationId, char const *InputFileName, int Run, i
   UsefulAtriStationEvent *realAtriEvPtr=new UsefulAtriStationEvent(rawAtriEvPtr, AraCalType::kLatestCalib);
   isCalpulserTrig=rawAtriEvPtr->isCalpulserEvent();
   isSoftwareTrig=rawAtriEvPtr->isSoftwareTrigger();
-    
+
+  if(isCalpulserTrig==true){
+    cout<<"its a calpulser event"<<endl;
+  }
+  
   eventNum=rawAtriEvPtr->eventNumber;
   unixTime=rawAtriEvPtr->unixTime;
   timeStamp=rawAtriEvPtr->timeStamp;   
@@ -754,14 +758,14 @@ void ReconstructARAevents(Int_t StationId, char const *InputFileName, int Run, i
 
     double GuessResultCor[3][3]; 
    
-    // if(rawAtriEvPtr->isCalpulserEvent()==true){
-    //   vector <double> CalPulCor[3];
-    //   GetCPCor(StationId, CalPulCor);
-    //   Interferometer::GetApproximateMinUserCor(CalPulCor,GuessResultCor,ExpectedPositionUncertainty,ChHitTime,IgnoreCh,ChSNR);
-    // }else{
+    if(rawAtriEvPtr->isCalpulserEvent()==true){
+      vector <double> CalPulCor[3];
+      GetCPCor(StationId, CalPulCor);
+      Interferometer::GetApproximateMinUserCor(CalPulCor,GuessResultCor,ExpectedPositionUncertainty,ChHitTime,IgnoreCh,ChSNR);
+    }else{
       Interferometer::GetApproximateMinThPhR(GuessResultCor,ExpectedPositionUncertainty,ChHitTime,IgnoreCh,ChSNR);
       Interferometer::GetApproximateDistance(GuessResultCor,ExpectedPositionUncertainty,ChHitTime,IgnoreCh,ChSNR);
-      //}
+    }
     
     InitialTxCor_ThPhR[0]=GuessResultCor[0][0]*(Interferometer::pi/180);
     InitialTxCor_ThPhR[1]=GuessResultCor[0][1]*(Interferometer::pi/180);
@@ -810,7 +814,8 @@ void ReconstructARAevents(Int_t StationId, char const *InputFileName, int Run, i
   }
 
   RecoTree->Fill();
-    
+  RecoTree->Write();
+  
   ///Delete the event pointer so we get a new pointer for the next event and there is no memory
   delete realAtriEvPtr;
   delete InputFile;
