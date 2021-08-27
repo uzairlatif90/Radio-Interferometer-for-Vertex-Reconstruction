@@ -426,12 +426,14 @@ double Interferometer::Minimizer_f(const gsl_vector *v, void *params){
       double chi2=0,chi2d=0;
       for(int iRx=0;iRx<TotalAntennasRx;iRx++){ 
 	if(p[2*TotalAntennasRx +iRx]!=0 && IgnoreCh[0][iRx]!=0){
-	  chi2+=pow((p[4*TotalAntennasRx +iRx]*(timeRay[0][iRx] - p[0+iRx]))/SumSNR,2) +  10*pow(std::max(0.0, fabs(timeRay[0][iRx] - p[0+iRx]) - 5),2);
+	  //chi2+=pow((p[4*TotalAntennasRx +iRx]*(timeRay[0][iRx] - p[0+iRx]))/SumSNR,2) +  10*pow(std::max(0.0, fabs(timeRay[0][iRx] - p[0+iRx]) - 5),2);
+	  chi2+=pow((p[4*TotalAntennasRx +iRx]*(timeRay[0][iRx] - p[0+iRx]))/SumSNR,2);
 	  chi2d+=pow(p[4*TotalAntennasRx +iRx]/SumSNR,2);
 	  
 	}
 	if(p[3*TotalAntennasRx +iRx]!=0 && IgnoreCh[1][iRx]!=0){
-	  chi2+=pow((p[5*TotalAntennasRx +iRx]*(timeRay[1][iRx] - p[1*TotalAntennasRx+iRx]))/SumSNR,2) + 10*pow(std::max(0.0,fabs(timeRay[1][iRx] - p[1*TotalAntennasRx+iRx])-5),2);
+	  //chi2+=pow((p[5*TotalAntennasRx +iRx]*(timeRay[1][iRx] - p[1*TotalAntennasRx+iRx]))/SumSNR,2) + 10*pow(std::max(0.0,fabs(timeRay[1][iRx] - p[1*TotalAntennasRx+iRx])-5),2);
+	  chi2+=pow((p[5*TotalAntennasRx +iRx]*(timeRay[1][iRx] - p[1*TotalAntennasRx+iRx]))/SumSNR,2);
 	  chi2d+=pow(p[5*TotalAntennasRx +iRx]/SumSNR,2);
 	}
       }
