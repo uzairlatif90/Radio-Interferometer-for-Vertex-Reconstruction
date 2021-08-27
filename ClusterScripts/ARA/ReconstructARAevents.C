@@ -588,7 +588,7 @@ void ReconstructARAevents(Int_t StationId, char const *InputFileName, int Run, i
     delete grdum;
 
     VoltageSNR[ich]=getmyWaveformSNR(gr);
-    if(VoltageSNR[ich]<6){
+    if(VoltageSNR[ich]<6 || ich==15){
       //cout<<ich<<" channel cut "<<VoltageSNR[ich]<<endl;
       CutCh[ich]=1;
     }else{
@@ -597,7 +597,6 @@ void ReconstructARAevents(Int_t StationId, char const *InputFileName, int Run, i
     
     delete gr;
   }
-  CutCh[15]=1;
   
   for(int ich=0; ich<MCH; ich++){
     CorScore[ich]=0;
