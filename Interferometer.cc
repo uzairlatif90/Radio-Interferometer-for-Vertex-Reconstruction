@@ -255,6 +255,7 @@ void Interferometer::FindFirstHitAndNormalizeHitTime(double ChHitTime[2][TotalAn
   double LastHitTime[2]={0,0};
   int LastHitCh[2]={0,0};
   vector <double> ChHitTimeB[2];
+  vector <double> ChHitTimeC[2];
   vector <int> ChHitNum[2];
 
   for(int iRx=0;iRx<TotalAntennasRx;iRx++){
@@ -287,15 +288,6 @@ void Interferometer::FindFirstHitAndNormalizeHitTime(double ChHitTime[2][TotalAn
       LastHitCh[iray]=TMath::LocMax(ChHitTimeB[iray].size(),ChHitTimeB[iray].data());
     }
   }
-
-  if(ChHitTimeB[0].size()!=0){
-    for(int iRx=0;iRx<ChHitTimeB[0].size();iRx++){
-      int HitBin=TMath::LocMin(ChHitTimeB[0].size(),ChHitTimeB[0].data());
-      int HitCh=ChHitNum[0][HitBin];
-      ChHitOrder[iRx]=HitCh;
-      ChHitTimeB[0][HitBin]=1e9;
-    }
-  }
   
   for(int iray=0;iray<2;iray++){
     if(ChHitTimeB[iray].size()!=0){
@@ -313,6 +305,16 @@ void Interferometer::FindFirstHitAndNormalizeHitTime(double ChHitTime[2][TotalAn
     }
   }
 
+  if(ChHitTimeB[0].size()!=0){
+    for(int iRx=0;iRx<ChHitTimeB[0].size();iRx++){
+      int HitBin=TMath::LocMin(ChHitTimeB[0].size(),ChHitTimeB[0].data());
+      int HitCh=ChHitNum[0][HitBin];
+      ChHitOrder[iRx]=HitCh;
+      ChHitTimeB[0][HitBin]=1e9;
+    }
+  }
+  
+  
   // for(int iRx=0;iRx<TotalAntennasRx;iRx++){
   //   //ChHitTime[iray][iRx]=0;
   //   cout<<iRx<<" "<<ChHitTime[0][iRx]<<" "<<ChHitTime[0][iRx]<<endl;
@@ -367,9 +369,15 @@ double Interferometer::Minimizer_f(const gsl_vector *v, void *params){
       for(int iray=0;iray<2;iray++){
 	IgnoreCh[iray][iRx]=1;
       }
+      if(p[2*TotalAntennasRx +iRx]==0){
+	IgnoreCh[0][iRx]=0;
+      }
+      if(p[3*TotalAntennasRx +iRx]==0){
+	IgnoreCh[1][iRx]=0;
+      }
       ChDRTime[iRx]=0;
-    }
-   
+    }    
+    
     Interferometer::GenerateChHitTimeAndCheckHits(AntennaCoordTx,timeRay,IgnoreCh);  
     Interferometer::FindFirstHitAndNormalizeHitTime(timeRay,IgnoreCh,ChDRTime,ChHitOrder);
 
@@ -404,7 +412,8 @@ double Interferometer::Minimizer_f(const gsl_vector *v, void *params){
     // double ChHitOrderDiff=0;
     // double ChHitOrderDiffTot=0;
     // for(int iRx=0;iRx<TotalAntennasRx;iRx++){
-    //   if(p[6*TotalAntennasRx +iRx]!=-1 && ChHitOrder[iRx]!=-1){   
+    //   if(p[6*TotalAntennasRx +iRx]!=-1  && ChHitOrder[iRx]!=-1){
+ 
     // 	if(p[6*TotalAntennasRx +iRx]!=ChHitOrder[iRx]){
     // 	  ChHitOrderDiff+=1000;
     // 	}
@@ -412,19 +421,19 @@ double Interferometer::Minimizer_f(const gsl_vector *v, void *params){
     //   }
     // }
     // ChHitOrderDiff=ChHitOrderDiff/ChHitOrderDiffTot;
-   
-    //if(chanD[1]>=chanDsame && chanR[1]>=chanRsame && chanDsame>=chanD[0] && chanRsame>=chanR[0] && ChHitOrderDiff>=0.85){
+    
     if(chanD[1]>=chanDsame && chanR[1]>=chanRsame && chanDsame>=chanD[0] && chanRsame>=chanR[0]){
       double chi2=0,chi2d=0;
       for(int iRx=0;iRx<TotalAntennasRx;iRx++){ 
 	if(p[2*TotalAntennasRx +iRx]!=0 && IgnoreCh[0][iRx]!=0){
-	  chi2+=pow((p[4*TotalAntennasRx +iRx]*(timeRay[0][iRx] - p[0+iRx]))/SumSNR,2);
+	  chi2+=pow((p[4*TotalAntennasRx +iRx]*(timeRay[0][iRx] - p[0+iRx]))/SumSNR,2) +  10*pow(std::max(0.0, fabs(timeRay[0][iRx] - p[0+iRx]) - 5),2);
 	  chi2d+=pow(p[4*TotalAntennasRx +iRx]/SumSNR,2);
+	  
 	}
 	if(p[3*TotalAntennasRx +iRx]!=0 && IgnoreCh[1][iRx]!=0){
-	  chi2+=pow((p[5*TotalAntennasRx +iRx]*(timeRay[1][iRx] - p[1*TotalAntennasRx+iRx]))/SumSNR,2);
+	  chi2+=pow((p[5*TotalAntennasRx +iRx]*(timeRay[1][iRx] - p[1*TotalAntennasRx+iRx]))/SumSNR,2) + 10*pow(std::max(0.0,fabs(timeRay[1][iRx] - p[1*TotalAntennasRx+iRx])-5),2);
 	  chi2d+=pow(p[5*TotalAntennasRx +iRx]/SumSNR,2);
-	}      
+	}
       }
       output=(chi2/chi2d);
   

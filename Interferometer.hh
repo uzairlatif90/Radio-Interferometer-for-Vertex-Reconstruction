@@ -6,6 +6,8 @@
 #include <gsl/gsl_vector.h>
 #include <gsl/gsl_multiroots.h>
 #include "AntennaConfig.hh"
+#include <iostream>     // std::cout
+#include <algorithm>    // std::max
 
 using namespace std;
 
