@@ -919,7 +919,7 @@ void Interferometer::SearchApproxiMin(int C_nz, double StartCor[3],double GuessR
     GuessResultCor[Nmin][0]=RecoPar[0][FinalMinValueBin];
     GuessResultCor[Nmin][1]=RecoPar[1][FinalMinValueBin];
     GuessResultCor[Nmin][2]=RecoPar[2][FinalMinValueBin];
-    cout<<"Guess Minimas: Tht "<<GuessResultCor[Nmin][0]<<" Pht "<<GuessResultCor[Nmin][1]<<" Rt "<<GuessResultCor[Nmin][2]<<" min "<<FinalMinValue<<endl;
+    //cout<<"Guess Minimas: Tht "<<GuessResultCor[Nmin][0]<<" Pht "<<GuessResultCor[Nmin][1]<<" Rt "<<GuessResultCor[Nmin][2]<<" min "<<FinalMinValue<<endl;
     RecoPar[3][FinalMinValueBin]=10000000000;    
     Nmin++;
   }
