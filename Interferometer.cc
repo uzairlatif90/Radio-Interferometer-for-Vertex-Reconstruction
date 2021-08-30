@@ -588,6 +588,7 @@ double Interferometer::MinimizerThPh(double x, void * params)
   double FinalMinValue=0;
   double FinalTxCor[2]; 
   int Iterations=0;
+
   do
     {
       Iter++;
@@ -611,7 +612,7 @@ double Interferometer::MinimizerThPh(double x, void * params)
       //         gsl_vector_get (MinimizerWorkSpace->x, 1),
       //         MinimizerWorkSpace->fval,Size);
 
-      // //cout<<Iter<<" "<<gsl_vector_get (MinimizerWorkSpace->x, 0)<<" "<<gsl_vector_get (MinimizerWorkSpace->x, 1) <<" "<<MinimizerWorkSpace->fval<<" "<<Size<<" "<<(*((MultiDimMinFunc).f))(XYZVec,(MultiDimMinFunc).params)<<endl;
+      //cout<<Iter<<" "<<gsl_vector_get (MinimizerWorkSpace->x, 0)<<" "<<gsl_vector_get (MinimizerWorkSpace->x, 1) <<" "<<MinimizerWorkSpace->fval<<" "<<Size<<" "<<(*((MultiDimMinFunc).f))(XYZVec,(MultiDimMinFunc).params)<<endl;
       
       FinalMinValue=MinimizerWorkSpace->fval;
       FinalTxCor[0]=gsl_vector_get (MinimizerWorkSpace->x, 0);
@@ -626,8 +627,8 @@ double Interferometer::MinimizerThPh(double x, void * params)
   p[7*TotalAntennasRx+8]=x;
 
   if(Iter==1 && FinalMinValue==0 ){
-    p[7*TotalAntennasRx+11]=GSL_NAN;
-    FinalMinValue=GSL_NAN;
+    p[7*TotalAntennasRx+11]=1e9;
+    FinalMinValue=1e9;
   }
   
   gsl_vector_free(XYZVec);
@@ -715,6 +716,7 @@ void Interferometer::MinimizerThPhR(double InitialTxCor_XYZ[3], double InitialTx
   Iterations=0;
   do
     {
+      
       iter++;
       Iterations++;
       status = gsl_min_fminimizer_iterate (s);
@@ -901,7 +903,7 @@ void Interferometer::SearchApproxiMin(int C_nz, double StartCor[3],double GuessR
   	  min=Interferometer::Minimizer_fCnz(ThPhRVec, ParameterArray);
   	}
 
-  	if(std::isnan(min)==false){
+  	if(std::isnan(min)==false || min==1e9){
   	  RecoPar[0].push_back(Tht);
   	  RecoPar[1].push_back(Pht);
   	  RecoPar[2].push_back(Rt);
@@ -1006,7 +1008,7 @@ void Interferometer::GetApproximateMinUserCor(vector <double> UserCor[3] ,double
     double min=0;
     min=Interferometer::Minimizer_f(ThPhRVec, ParameterArray);
     
-    if(std::isnan(min)==false){
+    if(std::isnan(min)==false || min==1e9){
       RecoPar[0].push_back(Tht);
       RecoPar[1].push_back(Pht);
       RecoPar[2].push_back(Rt);

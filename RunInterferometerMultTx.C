@@ -83,11 +83,11 @@ void RunInterferometerMultTx(){
 	    InitialTxCor_ThPhR[1]=GuessResultCor[0][1]*(Interferometer::pi/180);
 	    InitialTxCor_ThPhR[2]=GuessResultCor[0][2];
 	    Interferometer::ThPhRtoXYZ(InitialTxCor_ThPhR,InitialTxCor_XYZ);
-     
+	    
 	    double Duration=0;
 	    int Iterations=0;  
 	    Interferometer::DoInterferometery(InitialTxCor_ThPhR, FinalTxCor_ThPhR, ExpectedPositionUncertainty, ChHitTime, IgnoreCh, ChSNR, FinalMinValue, Duration, Iterations);
-    
+	    
 	    Interferometer::XYZtoThPhR(InitialTxCor_XYZ,InitialTxCor_ThPhR);
 	    InitialTxCor_ThPhR[0]=InitialTxCor_ThPhR[0]*(180./Interferometer::pi);
 	    InitialTxCor_ThPhR[1]=InitialTxCor_ThPhR[1]*(180./Interferometer::pi); 

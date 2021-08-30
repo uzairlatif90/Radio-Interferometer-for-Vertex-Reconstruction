@@ -3,7 +3,7 @@
 void RunInterferometer(){
   DeclareAntennaConfig();
 
-  double DummyTxCor[3]={-100,100,-200};
+  double DummyTxCor[3]={-500,500,-200};
   //double DummyTxCor[3]={-500,-500,-151};
   //double DummyTxCor[3]={-500,-500,-101};
   double ExpectedTimeJitter=2;// in ns
