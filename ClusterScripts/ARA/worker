@@ -21,7 +21,7 @@ do
     echo "The file values are:" $value1 $value2 $value3
 
     RUNNUM=$value1
-    EVENTNUM=$value2
+    EVENTNUM=$value3
 
     PRINT_ARG="Arguments = 2 /data/user/ulatif/aradata/2017/ARA02/fullset/root/run9129/event9129.root ${RUNNUM} ${EVENTNUM}"
     PRINT_LOG="Log = /scratch/ulatif/Log/Log_A2_Run${RUNNUM}_Ev${EVENTNUM}.log"

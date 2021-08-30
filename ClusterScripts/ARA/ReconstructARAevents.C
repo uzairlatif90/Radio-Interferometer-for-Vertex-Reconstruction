@@ -753,7 +753,7 @@ void ReconstructARAevents(Int_t StationId, char const *InputFileName, int Run, i
     }
   }
 
-  if(NumChAvailable>=3){
+  if(NumChAvailable>=4){
 
     double GuessResultCor[3][3]; 
    
