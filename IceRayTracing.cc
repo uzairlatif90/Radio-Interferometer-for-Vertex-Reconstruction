@@ -867,7 +867,9 @@ double *IceRayTracing::GetRefractedRayPar(double z0, double x1 ,double z1, doubl
   //double LowerLimit=IceRayTracing::Getnz(z0)*sin((LangR*(IceRayTracing::pi/180.0)))+0.3;
   double LowerLimit=0;
   LowerLimit=IceRayTracing::Getnz(z0)*sin((64.0*(IceRayTracing::pi/180.0)));
-
+  if(LowerLimit>UpperLimitL[0]){
+    LowerLimit=IceRayTracing::Getnz(z0)*sin((LangR*(IceRayTracing::pi/180.0)))+0.3;
+  }
   lvalueRa[0]=IceRayTracing::FindFunctionRoot(F4,LowerLimit,UpperLimitL[0]);
   LangRa[0]=asin(lvalueRa[0]/IceRayTracing::Getnz(z0))*(180.0/IceRayTracing::pi);
   checkzeroRa[0]=(IceRayTracing::fRaa(lvalueRa[0],&params4));
@@ -2216,6 +2218,152 @@ double *IceRayTracing::IceRayTracing_Cnz(double x0, double z0, double x1, double
   output[7]=timeR2;
   output[8]=AngleOfIncidenceInIce;
 
+  
+  return output;
+}
+
+
+/* The set of functions starting with the name "fDa" are used in the minimisation procedure to find the launch angle (or the L parameter) for the direct ray */
+double IceRayTracing::fDa_Air(double x,void *params){
+  struct IceRayTracing::fDanfRa_params *p= (struct IceRayTracing::fDanfRa_params *) params;
+  double A = p->a;
+  double z0 = p->z0;
+  double x1 = p->x1;
+  double z1 = p->z1;
+
+  double nz_Air=1;
+  double AngleInAir=asin(x/nz_Air);
+  double x1_Air=z1*tan(AngleInAir);
+  
+  struct IceRayTracing::fDnfR_L_params params1a = {A, IceRayTracing::GetB(1e-7), IceRayTracing::GetC(1e-7), -1e-7};
+  struct IceRayTracing::fDnfR_L_params params1b = {A, IceRayTracing::GetB(z0), IceRayTracing::GetC(z0), z0};
+  struct IceRayTracing::fDnfR_L_params params1c = {A, IceRayTracing::GetB(IceRayTracing::TransitionBoundary), IceRayTracing::GetC(IceRayTracing::TransitionBoundary), -IceRayTracing::TransitionBoundary};
+  struct IceRayTracing::fDnfR_L_params params1d = {A, IceRayTracing::GetB(-(IceRayTracing::TransitionBoundary+0.000001)), IceRayTracing::GetC(-(IceRayTracing::TransitionBoundary+0.000001)), -(IceRayTracing::TransitionBoundary+0.000001)};
+
+  double distancez0z1=0;
+  
+  if(IceRayTracing::TransitionBoundary!=0){
+    if (fabs(z0)>IceRayTracing::TransitionBoundary && fabs(1e-7)>IceRayTracing::TransitionBoundary){
+      distancez0z1=IceRayTracing::fDnfR_L(x,&params1a) - IceRayTracing::fDnfR_L(x,&params1b);
+    }
+    if (fabs(z0)>IceRayTracing::TransitionBoundary && fabs(1e-7)<IceRayTracing::TransitionBoundary){
+      distancez0z1=IceRayTracing::fDnfR_L(x,&params1a) - IceRayTracing::fDnfR_L(x,&params1c) + IceRayTracing::fDnfR_L(x,&params1d) - IceRayTracing::fDnfR_L(x,&params1b);
+    }
+    if (fabs(z0)<IceRayTracing::TransitionBoundary && fabs(1e-7)<IceRayTracing::TransitionBoundary){
+      distancez0z1=IceRayTracing::fDnfR_L(x,&params1a) - IceRayTracing::fDnfR_L(x,&params1b);
+    }
+    if (fabs(z0)==IceRayTracing::TransitionBoundary && fabs(1e-7)<IceRayTracing::TransitionBoundary){
+      distancez0z1=IceRayTracing::fDnfR_L(x,&params1a) - IceRayTracing::fDnfR_L(x,&params1b);
+    }
+    if (fabs(z0)==IceRayTracing::TransitionBoundary && fabs(1e-7)==IceRayTracing::TransitionBoundary){
+      distancez0z1=IceRayTracing::fDnfR_L(x,&params1a) - IceRayTracing::fDnfR_L(x,&params1b);
+    }
+    if (fabs(z0)>IceRayTracing::TransitionBoundary && fabs(1e-7)==IceRayTracing::TransitionBoundary){
+      distancez0z1=IceRayTracing::fDnfR_L(x,&params1a) - IceRayTracing::fDnfR_L(x,&params1c) + IceRayTracing::fDnfR_L(x,&params1d) - IceRayTracing::fDnfR_L(x,&params1b);
+    }
+  }else{
+    distancez0z1=IceRayTracing::fDnfR_L(x,&params1a) - IceRayTracing::fDnfR_L(x,&params1b);
+  }
+  // if(std::isnan(distancez0z1)){
+  //   distancez0z1=1e9;
+  // }
+  if(std::isnan(x1_Air)){
+    x1_Air=1e9;
+  }
+ 
+  double output=distancez0z1+x1_Air-x1;
+
+  return output;
+}
+
+/* This functions works for the Direct ray and gives you back the launch angle, receive angle and propagation time of the ray together with values of the L parameter and checkzero variable. checkzero variable checks how close the minimiser came to 0. 0 is perfect and less than 0.5 is pretty good. more than that should not be acceptable. */
+double* IceRayTracing::GetDirectRayPar_Air(double z0, double x1, double z1){
+
+  double *output=new double[5];  
+  
+  /* First we setup the fDa function that will be minimised to get the launch angle (or the L parameter) for the direct ray. */
+  gsl_function F1;
+  struct IceRayTracing::fDanfRa_params params1= {IceRayTracing::A_ice, z0, x1, z1};
+  F1.function = &IceRayTracing::fDa_Air;
+  F1.params = &params1;
+  
+  /* In my raytracing solution given in the function IceRayTracing::fDnfR the launch angle (or the L parameter) has limit placed on it by this part in the solution sqrt( n(z)^2 - L^2) . This sqrt cannot be negative for both z0 and 1e-7 and this sets the upper limit in our minimisation to get the launch angle (or the L parameter). Here I am basically setting the upper limit as GSL requires that my function is well behaved on the upper and lower bounds I give it for minimisation. */ 
+  double UpLimnz[]={IceRayTracing::Getnz(1e-7),IceRayTracing::Getnz(z0)};
+  double* UpperLimitL=min_element(UpLimnz,UpLimnz+2);
+
+  /* Do the minimisation and get the value of the L parameter and the launch angle and then verify to see that the value of L that we got was actually a root of fDa function. */
+  double lvalueD=IceRayTracing::FindFunctionRoot(F1,1e-7,UpperLimitL[0]);
+  double LangD=asin(lvalueD/IceRayTracing::Getnz(z0))*(180.0/IceRayTracing::pi);
+  double checkzeroD=IceRayTracing::fDa_Air(lvalueD,&params1);
+
+  /* Get the propagation time for the direct ray using the ftimeD function after we have gotten the value of the L parameter. */
+  struct IceRayTracing::ftimeD_params params2a = {IceRayTracing::A_ice, IceRayTracing::GetB(z0), -IceRayTracing::GetC(z0), IceRayTracing::c_light_ms,lvalueD};
+  struct IceRayTracing::ftimeD_params params2b = {IceRayTracing::A_ice, IceRayTracing::GetB(1e-7), -IceRayTracing::GetC(1e-7), IceRayTracing::c_light_ms,lvalueD};
+  struct IceRayTracing::ftimeD_params params2c = {IceRayTracing::A_ice, IceRayTracing::GetB(IceRayTracing::TransitionBoundary), -IceRayTracing::GetC(IceRayTracing::TransitionBoundary), IceRayTracing::c_light_ms, lvalueD};
+  struct IceRayTracing::ftimeD_params params2d = {IceRayTracing::A_ice, IceRayTracing::GetB(IceRayTracing::TransitionBoundary+1e-7), -IceRayTracing::GetC(IceRayTracing::TransitionBoundary+1e-7), IceRayTracing::c_light_ms, lvalueD};
+
+  /* we do the subtraction because we are measuring the time taken between the Tx and Rx positions */
+  double timeD=0;
+  if(IceRayTracing::TransitionBoundary!=0){
+    if (fabs(z0)>IceRayTracing::TransitionBoundary && fabs(1e-7)>IceRayTracing::TransitionBoundary){
+      timeD=IceRayTracing::ftimeD(-z0,&params2a) - IceRayTracing::ftimeD(1e-7,&params2b);
+    }
+    if (fabs(z0)>IceRayTracing::TransitionBoundary && fabs(1e-7)<IceRayTracing::TransitionBoundary){
+      timeD=IceRayTracing::ftimeD(-z0,&params2a) - IceRayTracing::ftimeD(IceRayTracing::TransitionBoundary+1e-7,&params2d) + IceRayTracing::ftimeD(IceRayTracing::TransitionBoundary,&params2c) - IceRayTracing::ftimeD(1e-7,&params2b);
+    }
+    if (fabs(z0)<IceRayTracing::TransitionBoundary && fabs(1e-7)<IceRayTracing::TransitionBoundary){
+      timeD=IceRayTracing::ftimeD(-z0,&params2a) - IceRayTracing::ftimeD(1e-7,&params2b);
+    }
+    if (fabs(z0)==IceRayTracing::TransitionBoundary && fabs(1e-7)<IceRayTracing::TransitionBoundary){
+      timeD=IceRayTracing::ftimeD(-z0,&params2a) - IceRayTracing::ftimeD(1e-7,&params2b);
+    }
+    if (fabs(z0)==IceRayTracing::TransitionBoundary && fabs(1e-7)==IceRayTracing::TransitionBoundary){
+      timeD=IceRayTracing::ftimeD(-z0,&params2a) - IceRayTracing::ftimeD(1e-7,&params2b);
+    }
+    if (fabs(z0)>IceRayTracing::TransitionBoundary && fabs(1e-7)==IceRayTracing::TransitionBoundary){
+      timeD=IceRayTracing::ftimeD(-z0,&params2a) - IceRayTracing::ftimeD(IceRayTracing::TransitionBoundary+1e-7,&params2d) + IceRayTracing::ftimeD(IceRayTracing::TransitionBoundary,&params2c) - IceRayTracing::ftimeD(1e-7,&params2b);
+    }
+  }else{
+    timeD=IceRayTracing::ftimeD(-z0,&params2a) - IceRayTracing::ftimeD(1e-7,&params2b);
+  }
+
+  /* Setup the function that will be used to calculate the angle of reception for all the rays */
+  gsl_function F5;
+  struct IceRayTracing::fDnfR_params params5a = {IceRayTracing::A_ice, IceRayTracing::GetB(1e-7), -IceRayTracing::GetC(1e-7), lvalueD};
+  double result, abserr;
+  F5.function = &IceRayTracing::fDnfR;
+
+  /* Calculate the recieve angle for direc rays by calculating the derivative of the function at the Rx position */
+  F5.params = &params5a;
+  gsl_deriv_central (&F5, 1e-7, 1e-8, &result, &abserr);
+  double RangD=atan(result);
+  
+  /* When the Tx and Rx are at the same depth my function struggles to find a ray between them when they are very close to each other. In that case the ray is pretty much like a straight line. */
+  if(z1==z0 && std::isnan(RangD)==true){
+    RangD=180-LangD;
+  }
+  
+  /* This sometimes happens that when the Rx is very close to the peak point (or the turning point) of the ray then its hard to calculate the derivative around that area since the solution blows up around that area. therefore this is a good approximation. */
+  if(z1!=z0 && std::isnan(RangD)==true){
+    RangD=90;
+  }
+
+  double AirAngle=asin(IceRayTracing::Getnz(1e-7)*sin(RangD));
+  double AirHorizontalDistance=tan(AirAngle)*z1;
+  double AirTime=AirHorizontalDistance/IceRayTracing::c_light_ms;
+ 
+  timeD=timeD+AirTime;
+  RangD=AirAngle*(180.0/IceRayTracing::pi);
+  
+  output[0]=RangD;
+  output[1]=LangD;
+  output[2]=timeD;
+  output[3]=lvalueD;
+  output[4]=checkzeroD;
+
+  if(fabs(checkzeroD)>0.5){
+    output[0]=-1000;
+  }
   
   return output;
 }

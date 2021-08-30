@@ -3,7 +3,8 @@
 void RunInterferometer(){
   DeclareAntennaConfig();
 
-  double DummyTxCor[3]={-500,500,-200};
+  //double DummyTxCor[3]={-500,500,-200};
+  double DummyTxCor[3]={0,100,20};
   //double DummyTxCor[3]={-500,-500,-151};
   //double DummyTxCor[3]={-500,-500,-101};
   double ExpectedTimeJitter=2;// in ns
@@ -40,9 +41,13 @@ void RunInterferometer(){
       ChSNR[iray][iRx]=10;
     }
   }
-
+  
   //Interferometer::AddGaussianJitterToHitTimes(ExpectedTimeJitter,ChHitTime);
-  Interferometer::GenerateChHitTimeAndCheckHits(TrueTxCor_XYZ,ChHitTime,IgnoreCh);
+  if(TrueTxCor_XYZ[2]<0){
+    Interferometer::GenerateChHitTimeAndCheckHits(TrueTxCor_XYZ,ChHitTime,IgnoreCh);
+  }else{
+    Interferometer::GenerateChHitTimeAndCheckHits_Air(TrueTxCor_XYZ,ChHitTime,IgnoreCh);
+  }
   
   bool CheckStationTrigger=Interferometer::CheckTrigger(IgnoreCh);
   if(CheckStationTrigger==true){

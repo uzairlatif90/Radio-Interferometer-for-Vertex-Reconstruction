@@ -179,5 +179,12 @@ namespace IceRayTracing{
 
   /* This is the main raytracing function. x0 always has to be zero. z0 is the Tx depth in m and z1 is the depth of the Rx in m. Both depths are negative. x1 is the distance between them. This functions works for a constant refractive index */
   double *IceRayTracing_Cnz(double x0, double z0, double x1, double z1, double A_ice_Cnz); 
+
+  /* The set of functions starting with the name "fDa" are used in the minimisation procedure to find the launch angle (or the L parameter) for the direct ray */
+  double fDa_Air(double x,void *params);
+
+  /* This functions works for the Direct ray and gives you back the launch angle, receive angle and propagation time of the ray together with values of the L parameter and checkzero variable. checkzero variable checks how close the minimiser came to 0. 0 is perfect and less than 0.5 is pretty good. more than that should not be acceptable. */
+  double* GetDirectRayPar_Air(double z0, double x1, double z1);
 }
+
 #endif
