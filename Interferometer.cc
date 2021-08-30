@@ -891,9 +891,9 @@ void Interferometer::SearchApproxiMin(int C_nz, double StartCor[3],double GuessR
   Double_t StopTh=180,StopPh=180,StopR=2000;
   if(C_nz==0){
     if(StartCor[0]<90){
-      StartCor[0]-=20;
+      //StartCor[0]-=20;
     }else{
-      StartCor[0]+=20;
+      //StartCor[0]+=20;
     }
     NumBinsTh=5,NumBinsPh=5,NumBinsR=10;
     StartTh=StartCor[0]-20,StartPh=StartCor[1]-20,StartR=20;
