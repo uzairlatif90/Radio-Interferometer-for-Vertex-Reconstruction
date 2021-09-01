@@ -198,8 +198,8 @@ void Interferometer::GenerateChHitTimeAndCheckHits_Air(double TxCor[3],double ti
   for(int iRx=0;iRx<TotalAntennasRx;iRx++){
     double Distance=sqrt(pow(AntennaCoordRx[iRx][0]-AntennaCoordTx[0],2) + pow(AntennaCoordRx[iRx][1]-AntennaCoordTx[1],2));
     double RxDepth=AntennaCoordRx[iRx][2];
-    double TxHeight=AntennaCoordTx[2];
-    
+    double TxHeight=AntennaCoordTx[2];   
+    //cout<<"RT par are "<<RxDepth<<" "<<Distance<<" "<<TxHeight<<endl;
     double *RTresults=IceRayTracing::GetDirectRayPar_Air(RxDepth, Distance, TxHeight);
     timeD[iRx]=RTresults[2]*pow(10,9);
     RangD[iRx]=RTresults[0];
@@ -372,8 +372,11 @@ double Interferometer::Minimizer_f(const gsl_vector *v, void *params){
   double ExpectedX=p[7*TotalAntennasRx];
   double ExpectedY=p[7*TotalAntennasRx+1];
   double ExpectedZ=p[7*TotalAntennasRx+2];
-  double distance=p[7*TotalAntennasRx+5];
 
+  double ExpectedTh=p[7*TotalAntennasRx+3];
+  double ExpectedPh=p[7*TotalAntennasRx+4];
+  double ExpectedR=p[7*TotalAntennasRx+5];
+  
   double theta, phi, r;
   theta = gsl_vector_get(v, 0)*(Interferometer::pi/180.0);
   phi = gsl_vector_get(v, 1)*(Interferometer::pi/180.0);
@@ -412,9 +415,10 @@ double Interferometer::Minimizer_f(const gsl_vector *v, void *params){
     Interferometer::GenerateChHitTimeAndCheckHits(AntennaCoordTx,timeRay,IgnoreCh);  
   }else{
     Interferometer::GenerateChHitTimeAndCheckHits_Air(AntennaCoordTx,timeRay,IgnoreCh);  
-   }
-  Interferometer::FindFirstHitAndNormalizeHitTime(timeRay,IgnoreCh,ChDRTime,ChHitOrder);
+  }
 
+  Interferometer::FindFirstHitAndNormalizeHitTime(timeRay,IgnoreCh,ChDRTime,ChHitOrder);
+  
   Double_t SumSNRD=0, SumSNRR=0,SumSNR=0;
   int chanD[2]={0,0};
   int chanR[2]={0,0};
@@ -469,12 +473,12 @@ double Interferometer::Minimizer_f(const gsl_vector *v, void *params){
 	chi2d+=pow(p[5*TotalAntennasRx +iRx]/SumSNR,2);
       }
     }
+    
     output=(chi2/chi2d);
-  
   }else{
     output=GSL_NAN; 
-  }   
- 
+  }
+  
   return output;
 }
 
@@ -495,90 +499,97 @@ double Interferometer::Minimizer_fCnz(const gsl_vector *v, void *params){
   Double_t ThPhR[3]={theta,phi,r};
   Double_t XYZ[3]={0,0,0};
   Interferometer::ThPhRtoXYZ(ThPhR,XYZ);
-
-  double output=0;
   
+  double output=0;
+
+  double AntennaCoordTx[3]={0,0,0};
+  for(int ixyz=0;ixyz<3;ixyz++){
+    AntennaCoordTx[ixyz]=XYZ[ixyz];
+  }
+    
+  double timeRay[2][TotalAntennasRx];
+  int IgnoreCh[2][TotalAntennasRx];
+  double ChDRTime[TotalAntennasRx];
+  int ChHitOrder[TotalAntennasRx];
+
+  for(int iRx=0;iRx<TotalAntennasRx;iRx++){
+    for(int iray=0;iray<2;iray++){
+      IgnoreCh[iray][iRx]=1;
+    }
+    if(p[2*TotalAntennasRx +iRx]==0){
+      IgnoreCh[0][iRx]=0;
+    }
+    if(p[3*TotalAntennasRx +iRx]==0){
+      IgnoreCh[1][iRx]=0;
+    }
+
+    ChDRTime[iRx]=0;
+  }
+
   if(XYZ[2]<0){
-
-    double AntennaCoordTx[3]={0,0,0};
-    for(int ixyz=0;ixyz<3;ixyz++){
-      AntennaCoordTx[ixyz]=XYZ[ixyz];
-    }
+    Interferometer::GenerateChHitTimeAndCheckHits_Cnz(AntennaCoordTx,timeRay,IgnoreCh);  
+  }else{
+    Interferometer::GenerateChHitTimeAndCheckHits_Air(AntennaCoordTx,timeRay,IgnoreCh);  
+  }
     
-    double timeRay[2][TotalAntennasRx];
-    int IgnoreCh[2][TotalAntennasRx];
-    double ChDRTime[TotalAntennasRx];
-    int ChHitOrder[TotalAntennasRx];
+  Interferometer::FindFirstHitAndNormalizeHitTime(timeRay,IgnoreCh,ChDRTime,ChHitOrder);
 
-    for(int iRx=0;iRx<TotalAntennasRx;iRx++){
-      for(int iray=0;iray<2;iray++){
-	IgnoreCh[iray][iRx]=1;
-      }
-      ChDRTime[iRx]=0;
+  Double_t SumSNRD=0, SumSNRR=0,SumSNR=0;
+  int chanD[2]={0,0};
+  int chanR[2]={0,0};
+  int chanDsame=0,chanRsame=0;
+  for(int iRx=0;iRx<TotalAntennasRx;iRx++){
+    if(p[2*TotalAntennasRx +iRx]!=0){
+      chanD[0]++;
     }
-
-    if(XYZ[2]<0){
-      Interferometer::GenerateChHitTimeAndCheckHits(AntennaCoordTx,timeRay,IgnoreCh);  
-    }else{
-      Interferometer::GenerateChHitTimeAndCheckHits_Air(AntennaCoordTx,timeRay,IgnoreCh);  
+    if(p[3*TotalAntennasRx +iRx]!=0){
+      chanR[0]++;
     }
-    
-    Interferometer::FindFirstHitAndNormalizeHitTime(timeRay,IgnoreCh,ChDRTime,ChHitOrder);
-
-    Double_t SumSNRD=0, SumSNRR=0,SumSNR=0;
-    int chanD[2]={0,0};
-    int chanR[2]={0,0};
-    int chanDsame=0,chanRsame=0;
+    if(IgnoreCh[0][iRx]!=0){
+      chanD[1]++;
+    }
+    if(IgnoreCh[1][iRx]!=0){
+      chanR[1]++;
+    }
+    if(p[2*TotalAntennasRx +iRx]!=0 && IgnoreCh[0][iRx]!=0){
+      SumSNRD+=p[4*TotalAntennasRx +iRx];
+      chanDsame++;
+    }
+    if(p[3*TotalAntennasRx +iRx]!=0 && IgnoreCh[1][iRx]!=0){
+      SumSNRR+=p[5*TotalAntennasRx +iRx];
+      chanRsame++;
+    }
+  }
+  SumSNR=SumSNRD+SumSNRR;
+  if(chanD[1]>=chanDsame && chanR[1]>=chanRsame && chanDsame>=chanD[0] && chanRsame>=chanR[0]){
+    double chi2=0,chi2d=0;
     for(int iRx=0;iRx<TotalAntennasRx;iRx++){
-      if(p[2*TotalAntennasRx +iRx]!=0){
-	chanD[0]++;
-      }
-      if(p[3*TotalAntennasRx +iRx]!=0){
-	chanR[0]++;
-      }
-      if(IgnoreCh[0][iRx]!=0){
-	chanD[1]++;
-      }
-      if(IgnoreCh[1][iRx]!=0){
-	chanR[1]++;
-      }
+
       if(p[2*TotalAntennasRx +iRx]!=0 && IgnoreCh[0][iRx]!=0){
-	SumSNRD+=p[4*TotalAntennasRx +iRx];
-	chanDsame++;
+	// chi2+=pow((timeRay[0][iRx] - p[0+iRx]),2);
+	// chi2d+=1;
+	chi2+=pow(((p[4*TotalAntennasRx +iRx]*(timeRay[0][iRx] - p[0+iRx]))/SumSNR),2);
+	chi2d+=pow(p[4*TotalAntennasRx +iRx]/SumSNR,2);
+
       }
       if(p[3*TotalAntennasRx +iRx]!=0 && IgnoreCh[1][iRx]!=0){
-	SumSNRR+=p[5*TotalAntennasRx +iRx];
-	chanRsame++;
+	// chi2+=pow((timeRay[1][iRx] - p[1*TotalAntennasRx+iRx]),2);
+	// chi2d+=1;
+
+	chi2+=pow(((p[5*TotalAntennasRx +iRx]*(timeRay[1][iRx] - p[1*TotalAntennasRx+iRx]))/SumSNR),2);
+	chi2d+=pow(p[5*TotalAntennasRx +iRx]/SumSNR,2);
       }
+      // if(p[2*TotalAntennasRx +iRx]!=0 && p[3*TotalAntennasRx +iRx]!=0){
+      //   chi2+=pow((p[4*TotalAntennasRx +iRx]*p[5*TotalAntennasRx +iRx]*(ChDRTime[iRx]- (p[1*TotalAntennasRx+iRx] - p[0+iRx])))/(SumSNR*SumSNR) ,2);
+      // }   
     }
-    SumSNR=SumSNRD+SumSNRR;
-    if(chanD[1]>=chanDsame && chanR[1]>=chanRsame && chanDsame>=chanD[0] && chanRsame>=chanR[0]){
-      double chi2=0,chi2d=0;
-      for(int iRx=0;iRx<TotalAntennasRx;iRx++){
 
-	if(p[2*TotalAntennasRx +iRx]!=0 && IgnoreCh[0][iRx]!=0){
-	  chi2+=pow(((p[4*TotalAntennasRx +iRx]*(timeRay[0][iRx] - p[0+iRx]))/SumSNR),2);
-	  chi2d+=pow(p[4*TotalAntennasRx +iRx]/SumSNR,2);
-
-	}
-	if(p[3*TotalAntennasRx +iRx]!=0 && IgnoreCh[1][iRx]!=0){
-	  chi2+=pow(((p[5*TotalAntennasRx +iRx]*(timeRay[1][iRx] - p[1*TotalAntennasRx+iRx]))/SumSNR),2);
-	  chi2d+=pow(p[5*TotalAntennasRx +iRx]/SumSNR,2);
-	}
-	// if(p[2*TotalAntennasRx +iRx]!=0 && p[3*TotalAntennasRx +iRx]!=0){
-	//   chi2+=pow((p[4*TotalAntennasRx +iRx]*p[5*TotalAntennasRx +iRx]*(ChDRTime[iRx]- (p[1*TotalAntennasRx+iRx] - p[0+iRx])))/(SumSNR*SumSNR) ,2);
-	// }   
-      }
-
-      output=(chi2/chi2d);
-  
-    }else{
-      output=GSL_NAN; 
-    }
+    output=(chi2/chi2d);
   
   }else{
-    output= GSL_NAN;
+    output=GSL_NAN; 
   }
+  
 
   return output;
 }
@@ -725,7 +736,7 @@ void Interferometer::MinimizerThPhR(double InitialTxCor_XYZ[3], double InitialTx
   const gsl_min_fminimizer_type *T;
   gsl_min_fminimizer *s;
   double m = InitialTxCor_ThPhR[2];
-  double a = InitialTxCor_ThPhR[2]-100, b = InitialTxCor_ThPhR[2]+100;
+  double a = InitialTxCor_ThPhR[2]-200, b = InitialTxCor_ThPhR[2]+200;
   if(a<0){
     a=10;
   }
@@ -763,13 +774,13 @@ void Interferometer::MinimizerThPhR(double InitialTxCor_XYZ[3], double InitialTx
 
       status= gsl_min_test_interval (a, b, 1e-2,0);
 
-      // if (status == GSL_SUCCESS)
-      //   printf ("Converged:\n");
+      if (status == GSL_SUCCESS)
+        printf ("Converged:\n");
       
-      // printf ("%5d [%.7f, %.7f] "
-      //         "%.7f %.7f\n",
-      //         iter, a, b,
-      //         m, b - a);
+      printf ("%5d [%.7f, %.7f] "
+              "%.7f %.7f\n",
+              iter, a, b,
+              m, b - a);
     }
   while (status == GSL_CONTINUE && iter < max_iter);
   
@@ -832,7 +843,7 @@ void Interferometer::RootThPhR(double InitialTxCor_XYZ[3], double InitialTxCor_T
   const gsl_root_fsolver_type *T;
   gsl_root_fsolver *s;
   double r = InitialTxCor_ThPhR[2];
-  double x_lo = InitialTxCor_ThPhR[2]-200, x_hi = InitialTxCor_ThPhR[2]+200;
+  double x_lo = InitialTxCor_ThPhR[2]-100, x_hi = InitialTxCor_ThPhR[2]+100;
   if(x_lo<0){
     x_lo=10;
   }
@@ -886,39 +897,41 @@ void Interferometer::RootThPhR(double InitialTxCor_XYZ[3], double InitialTxCor_T
 
 void Interferometer::SearchApproxiMin(int C_nz, double StartCor[3],double GuessResultCor[3][3],double ParameterArray[7*TotalAntennasRx+12],int &iEnt){
 
-  Double_t NumBinsTh=10,NumBinsPh=10,NumBinsR=10;
-  Double_t StartTh=0,StartPh=-180,StartR=20;
-  Double_t StopTh=180,StopPh=180,StopR=2000;
+  Double_t NumBinsTh=10,NumBinsPh=10,NumBinsR=4;
+  Double_t StartTh=1,StartPh=-179,StartR=20;
+  Double_t StopTh=179,StopPh=180,StopR=100;
   if(C_nz==0){
-    if(StartCor[0]<90){
-      //StartCor[0]-=20;
-    }else{
-      //StartCor[0]+=20;
-    }
-    NumBinsTh=5,NumBinsPh=5,NumBinsR=10;
+    NumBinsTh=5,NumBinsPh=5,NumBinsR=4;
     StartTh=StartCor[0]-20,StartPh=StartCor[1]-20,StartR=20;
-    StopTh=StartCor[0]+20,StopPh=StartCor[1]+20,StopR=2000;
+    StopTh=StartCor[0]+20,StopPh=StartCor[1]+20,StopR=100;
   }
-  if(StartTh<0){
-    StartTh=0;
+  if(StartTh<=0){
+    StartTh=1;
   } 
-  if(StopTh>180){
-    StopTh=180;
+  if(StopTh>=180){
+    StopTh=179;
   } 
   if(StartR<0){
     StartR=10;
   }
-  Double_t StepSizeTh=(StopTh-StartTh)/NumBinsTh,StepSizePh=(StopPh-StartPh)/NumBinsPh,StepSizeR=(StopR-StartR)/NumBinsR;
+  if(StartPh<-180){
+    StartPh=360+StopPh;
+  } 
+  if(StopPh>180){
+    StopPh=StopPh-360;
+  }
   
+  Double_t StepSizeTh=(StopTh-StartTh)/NumBinsTh,StepSizePh=(StopPh-StartPh)/NumBinsPh,StepSizeR=(StopR-StartR)/NumBinsR;
+  StepSizeR=20;
   vector <double> RecoPar[4];
   gsl_vector *ThPhRVec;
   ThPhRVec = gsl_vector_alloc (2);
   
-  for(double i=0; i<NumBinsTh;i++){
+  for(double i=0; i<=NumBinsTh;i++){
     double Tht=i*StepSizeTh + StartTh;
-    for(double j=0; j<NumBinsPh;j++){	
+    for(double j=0; j<=NumBinsPh;j++){	
       double Pht=j*StepSizePh + StartPh;
-      for(double k=0; k<NumBinsR;k++){
+      for(double k=0; k<=NumBinsR;k++){
   	double Rt=k*StepSizeR + StartR;
 
 	Double_t ThPhR[3]={Tht*(Interferometer::pi/180),Pht*(Interferometer::pi/180),Rt};
@@ -942,8 +955,8 @@ void Interferometer::SearchApproxiMin(int C_nz, double StartCor[3],double GuessR
 	}else{
   	  min=Interferometer::Minimizer_fCnz(ThPhRVec, ParameterArray);
   	}
-
-  	if(std::isnan(min)==false || min==1e9){
+	
+  	if(std::isnan(min)==false && min!=1e9){
   	  RecoPar[0].push_back(Tht);
   	  RecoPar[1].push_back(Pht);
   	  RecoPar[2].push_back(Rt);
@@ -1048,7 +1061,7 @@ void Interferometer::GetApproximateMinUserCor(vector <double> UserCor[3] ,double
     double min=0;
     min=Interferometer::Minimizer_f(ThPhRVec, ParameterArray);
     
-    if(std::isnan(min)==false || min==1e9){
+    if(std::isnan(min)==false && min!=1e9){
       RecoPar[0].push_back(Tht);
       RecoPar[1].push_back(Pht);
       RecoPar[2].push_back(Rt);
@@ -1064,7 +1077,7 @@ void Interferometer::GetApproximateMinUserCor(vector <double> UserCor[3] ,double
     GuessResultCor[Nmin][0]=RecoPar[0][FinalMinValueBin];
     GuessResultCor[Nmin][1]=RecoPar[1][FinalMinValueBin];
     GuessResultCor[Nmin][2]=RecoPar[2][FinalMinValueBin];
-    //cout<<"Guess Minimas: Tht "<<GuessResultCor[Nmin][0]<<" Pht "<<GuessResultCor[Nmin][1]<<" Rt "<<GuessResultCor[Nmin][2]<<" min "<<FinalMinValue<<endl;
+    cout<<"Guess Minimas: Tht "<<GuessResultCor[Nmin][0]<<" Pht "<<GuessResultCor[Nmin][1]<<" Rt "<<GuessResultCor[Nmin][2]<<" min "<<FinalMinValue<<endl;
     RecoPar[3][FinalMinValueBin]=10000000000;    
     Nmin++;
   }
@@ -1170,49 +1183,81 @@ void Interferometer::GetApproximateDistance(double GuessResultCor[3][3], double 
   ParameterArray[iEnt+10]=0;
   ParameterArray[iEnt+11]=0;
   
-  double StartR=10;
-  double StopR=500;
+  double StartR=GuessResultCor[0][2];
+  double StopR=500+GuessResultCor[0][2];
   double StepSizeR=100;//(StopR-StartR)/20;
   double FinalTxCor[3];
   bool checkmincurve=false;
   int iloop=0;
+  double min=0;
+  
+  gsl_vector *ThPhRVec;
+  ThPhRVec = gsl_vector_alloc (2);
   
   while(checkmincurve==false){
-  
-    double testTh=GuessResultCor[0][0];
-    double testPh=GuessResultCor[0][1];
-    double testR=iloop*StepSizeR + StartR;
-  
-    Double_t ThPhR[3]={testTh*(Interferometer::pi/180),testPh*(Interferometer::pi/180),testR};
-    Double_t XYZ[3]={0,0,0}; 
-    Interferometer::ThPhRtoXYZ(ThPhR,XYZ);
-  
-    ParameterArray[iEnt]=XYZ[0];
-    ParameterArray[iEnt+1]=XYZ[1];
-    ParameterArray[iEnt+2]=XYZ[2];
-    ParameterArray[iEnt+3]=testTh;
-    ParameterArray[iEnt+4]=testPh;
-    ParameterArray[iEnt+5]=testR;
     
-    double min=Interferometer::MinimizerThPh(testR, ParameterArray);  
+    if(RecoPar[3].size()==0){      
+      double testTh=GuessResultCor[0][0];
+      double testPh=GuessResultCor[0][1];
+      double testR=iloop*StepSizeR + StartR;
+      
+      Double_t ThPhR[3]={testTh*(Interferometer::pi/180),testPh*(Interferometer::pi/180),testR};
+      Double_t XYZ[3]={0,0,0}; 
+      Interferometer::ThPhRtoXYZ(ThPhR,XYZ);
 
-    FinalTxCor[0]=ParameterArray[iEnt+6];
-    FinalTxCor[1]=ParameterArray[iEnt+7];
-    FinalTxCor[2]=testR;
+      ParameterArray[iEnt]=XYZ[0];
+      ParameterArray[iEnt+1]=XYZ[1];
+      ParameterArray[iEnt+2]=XYZ[2];
+      ParameterArray[iEnt+3]=testTh;
+      ParameterArray[iEnt+4]=testPh;
+      ParameterArray[iEnt+5]=testR;
+    
+      min=Interferometer::MinimizerThPh(testR, ParameterArray);  
+      
+      FinalTxCor[0]=ParameterArray[iEnt+6];
+      FinalTxCor[1]=ParameterArray[iEnt+7];
+      FinalTxCor[2]=testR;
+    }
+    
+    if(iloop>0 && RecoPar[3].size()>0){
+      double testTh=RecoPar[0][0];
+      double testPh=RecoPar[1][0];
+      double testR=(iloop)*StepSizeR + StartR;
+      
+      Double_t ThPhR[3]={testTh*(Interferometer::pi/180),testPh*(Interferometer::pi/180),testR};
+      Double_t XYZ[3]={0,0,0}; 
+      Interferometer::ThPhRtoXYZ(ThPhR,XYZ);
+      ParameterArray[iEnt]=XYZ[0];
+      ParameterArray[iEnt+1]=XYZ[1];
+      ParameterArray[iEnt+2]=XYZ[2];
+      ParameterArray[iEnt+3]=testTh;
+      ParameterArray[iEnt+4]=testPh;
+      ParameterArray[iEnt+5]=testR;
 
-    if(std::isnan(min)==false){
+      gsl_vector_set (ThPhRVec, 0, testTh);
+      gsl_vector_set (ThPhRVec, 1, testPh);
+      ParameterArray[iEnt+10]=testR;
+      
+      min=Interferometer::Minimizer_f(ThPhRVec, ParameterArray);
+
+      FinalTxCor[0]=testTh;
+      FinalTxCor[1]=testPh;
+      FinalTxCor[2]=testR;
+    }
+
+    if(std::isnan(min)==false || min!=1e9){
       RecoPar[0].push_back(FinalTxCor[0]);
       RecoPar[1].push_back(FinalTxCor[1]);
       RecoPar[2].push_back(FinalTxCor[2]);
       RecoPar[3].push_back(min);
-      //cout<<FinalTxCor[0]<<" "<<FinalTxCor[1]<<" "<<FinalTxCor[2]<<" "<<min<<endl;
-    }   
+    }
+    
     int size=RecoPar[3].size();
-    if(RecoPar[3][size-1]>RecoPar[3][size-2] && RecoPar[3][size-2]>RecoPar[3][size-3] && iloop>=5){
+    if((RecoPar[3][size-1]>RecoPar[3][size-2] && RecoPar[3][size-2]>RecoPar[3][size-3] && iloop>=5) ||  (fabs(RecoPar[3][size-1]-RecoPar[3][size-2])/RecoPar[3][size-1]<0.01 && iloop>=5) ){
       //cout<<"found the minima!"<<endl;
       checkmincurve=true;
     }
-    if(RecoPar[3][size-1]<RecoPar[3][size-2] && RecoPar[3][size-2]<RecoPar[3][size-3]){
+    if(RecoPar[3][size-1]<RecoPar[3][size-2] && RecoPar[3][size-2]<RecoPar[3][size-3] && checkmincurve==false){
       checkmincurve=false;
     }
     iloop++;
@@ -1225,10 +1270,80 @@ void Interferometer::GetApproximateDistance(double GuessResultCor[3][3], double 
     GuessResultCor[Nmin][0]=RecoPar[0][FinalMinValueBin];
     GuessResultCor[Nmin][1]=RecoPar[1][FinalMinValueBin];
     GuessResultCor[Nmin][2]=RecoPar[2][FinalMinValueBin];
-    cout<<"Guess Minimas: Tht "<<GuessResultCor[Nmin][0]<<" Pht "<<GuessResultCor[Nmin][1]<<" Rt "<<GuessResultCor[Nmin][2]<<" min "<<FinalMinValue<<endl;
+    cout<<"Guess Minimas 1st : Tht "<<GuessResultCor[Nmin][0]<<" Pht "<<GuessResultCor[Nmin][1]<<" Rt "<<GuessResultCor[Nmin][2]<<" min "<<FinalMinValue<<endl;
     RecoPar[3][FinalMinValueBin]=10000000000;    
     Nmin++;
   }  
+
+  RecoPar[0].clear();
+  RecoPar[1].clear();
+  RecoPar[2].clear();
+  RecoPar[3].clear();
+  
+  StartR=10;
+  StopR=GuessResultCor[0][2];
+  StepSizeR=(StopR-StartR)/5;
+  checkmincurve=false;
+  iloop=0;
+  min=0;
+
+  while(checkmincurve==false){
+      
+    double testTh=GuessResultCor[0][0];
+    double testPh=GuessResultCor[0][1];
+    double testR=iloop*StepSizeR + StartR;
+      
+    Double_t ThPhR[3]={testTh*(Interferometer::pi/180),testPh*(Interferometer::pi/180),testR};
+    Double_t XYZ[3]={0,0,0}; 
+    Interferometer::ThPhRtoXYZ(ThPhR,XYZ);
+
+    ParameterArray[iEnt]=XYZ[0];
+    ParameterArray[iEnt+1]=XYZ[1];
+    ParameterArray[iEnt+2]=XYZ[2];
+    ParameterArray[iEnt+3]=testTh;
+    ParameterArray[iEnt+4]=testPh;
+    ParameterArray[iEnt+5]=testR;
+    
+    min=Interferometer::MinimizerThPh(testR, ParameterArray);  
+      
+    FinalTxCor[0]=ParameterArray[iEnt+6];
+    FinalTxCor[1]=ParameterArray[iEnt+7];
+    FinalTxCor[2]=testR;
+    
+    if(std::isnan(min)==false && min!=1e9){
+      RecoPar[0].push_back(FinalTxCor[0]);
+      RecoPar[1].push_back(FinalTxCor[1]);
+      RecoPar[2].push_back(FinalTxCor[2]);
+      RecoPar[3].push_back(min);
+    }
+    
+    int size=RecoPar[3].size();
+    if((RecoPar[3][size-1]>RecoPar[3][size-2] && RecoPar[3][size-2]>RecoPar[3][size-3] && iloop>=5) ||  (fabs(RecoPar[3][size-1]-RecoPar[3][size-2])/RecoPar[3][size-1]<0.01 && iloop>=5) ){
+      //cout<<"found the minima!"<<endl;
+      checkmincurve=true;
+    }
+    
+    if(RecoPar[3][size-1]<RecoPar[3][size-2] && RecoPar[3][size-2]<RecoPar[3][size-3] && checkmincurve==false){
+      checkmincurve=false;
+      if(iloop==7){
+	StepSizeR=StepSizeR*2;
+      }	
+    }
+    
+    iloop++;
+  }
+
+  Nmin=0;
+  while(Nmin<3){
+    int FinalMinValueBin=TMath::LocMin(RecoPar[3].size(),RecoPar[3].data());
+    double FinalMinValue=RecoPar[3][FinalMinValueBin];	
+    GuessResultCor[Nmin][0]=RecoPar[0][FinalMinValueBin];
+    GuessResultCor[Nmin][1]=RecoPar[1][FinalMinValueBin];
+    GuessResultCor[Nmin][2]=RecoPar[2][FinalMinValueBin];
+    cout<<"Guess Minimas 2nd: Tht "<<GuessResultCor[Nmin][0]<<" Pht "<<GuessResultCor[Nmin][1]<<" Rt "<<GuessResultCor[Nmin][2]<<" min "<<FinalMinValue<<endl;
+    RecoPar[3][FinalMinValueBin]=10000000000;    
+    Nmin++;
+  }
   
 }
 
@@ -1258,7 +1373,7 @@ void Interferometer::DoInterferometery(double InitialTxCor[3], double FinalTxCor
     double DummyRecoCor[3];
     double DummyMin=0;
 
-    //Interferometer::RootThPhR(XYZ,ThPhR,DummyRecoCor,ExpectedUncertainty,ChHitTime,IgnoreCh,ChSNR,DummyMin,Iterations);
+    //Interferometer::RootThPhR(XYZ,ThPhR,DummyRecoCor,ExpectedUncertainty,ChHitTime,IgnoreCh,ChSNR,ChHitOrder,DummyMin,Iterations);
     Interferometer::MinimizerThPhR(XYZ,ThPhR,DummyRecoCor,ExpectedUncertainty,ChHitTime,IgnoreCh,ChSNR,ChHitOrder,DummyMin,Iterations);  
 
     // //if(DummyMin>0.5){
@@ -1267,7 +1382,7 @@ void Interferometer::DoInterferometery(double InitialTxCor[3], double FinalTxCor
     //   Interferometer::ThPhRtoXYZ(ThPhR,XYZ);
     
     //   //Interferometer::RootThPhR(XYZ,DummyRecoCor,DummyRecoCor,ExpectedUncertainty,ChHitTime,IgnoreCh,ChSNR,DummyMin,Iterations);
-    //   Interferometer::MinimizerThPhR(XYZ,DummyRecoCor,DummyRecoCor,ExpectedUncertainty,ChHitTime,IgnoreCh,ChSNR,DummyMin,Iterations);
+    //   Interferometer::MinimizerThPhR(XYZ,DummyRecoCor,DummyRecoCor,ExpectedUncertainty,ChHitTime,IgnoreCh,ChSNR,ChHitOrder,DummyMin,Iterations);
     //   //}
     
     RecoXYZValues[0].push_back(DummyRecoCor[0]);

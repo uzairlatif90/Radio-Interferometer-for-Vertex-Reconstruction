@@ -3,14 +3,16 @@
 void RunInterferometer(){
   DeclareAntennaConfig();
 
-  //double DummyTxCor[3]={-500,500,-200};
-  double DummyTxCor[3]={0,100,20};
+  double DummyTxCor[3]={-500,505,200};
+  //double DummyTxCor[3]={3,4,20};
+  //double DummyTxCor[3]={0.02,3,370};
   //double DummyTxCor[3]={-500,-500,-151};
   //double DummyTxCor[3]={-500,-500,-101};
   double ExpectedTimeJitter=2;// in ns
   double ExpectedPositionUncertainty=sqrt(5*5+pow(ExpectedTimeJitter*0.3*1.78,2));// in m
   
   double ChHitTime[2][TotalAntennasRx]; ////Channel Hit Time
+  int ChHitOrder[TotalAntennasRx]; ////Channel Hit Time
   int IgnoreCh[2][TotalAntennasRx];
   double ChDRTime[TotalAntennasRx];
   double ChSNR[2][TotalAntennasRx];
@@ -48,7 +50,14 @@ void RunInterferometer(){
   }else{
     Interferometer::GenerateChHitTimeAndCheckHits_Air(TrueTxCor_XYZ,ChHitTime,IgnoreCh);
   }
+  Interferometer::FindFirstHitAndNormalizeHitTime(ChHitTime,IgnoreCh,ChDRTime,ChHitOrder);
   
+  // for(int iRx=0;iRx<TotalAntennasRx;iRx++){
+  //   //cout<<"ignore channels are "<<iRx<<" "<<IgnoreCh[0][iRx]<<" "<<IgnoreCh[1][iRx]<<endl;
+  //   cout<<"Hit Times are "<<iRx<<" "<<ChHitTime[0][iRx]<<" "<<ChHitTime[1][iRx]<<endl;
+  // }
+  cout<<" X_true="<<TrueTxCor_XYZ[0]<<" ,Y_true="<<TrueTxCor_XYZ[1]<<" ,Z_true="<<TrueTxCor_XYZ[2]<<endl;
+  cout<<" Th_true="<<TrueTxCor_ThPhR[0]<<" ,Ph_true="<<TrueTxCor_ThPhR[1]<<" ,R_true="<<TrueTxCor_ThPhR[2]<<endl;
   bool CheckStationTrigger=Interferometer::CheckTrigger(IgnoreCh);
   if(CheckStationTrigger==true){
     double GuessResultCor[3][3];
