@@ -26,7 +26,10 @@ void PlotRecoResults(){
  
   TString InputFileName="Run";
   InputFileName+=Run;
-  InputFileName+="AllEvents.root";  
+  //InputFileName+="AllEvents_varyingR_varyingIni.root";
+  InputFileName+="AllEvents_varyingR_fixedIni.root";
+  //InputFileName+="AllEvents_woCPini1st.root";
+  //InputFileName+="AllEvents_wCPini.root";  
   TFile *InputFile=new TFile(InputFileName);
   TString OutputFileName="Run";
   OutputFileName+=Run;
@@ -77,9 +80,6 @@ void PlotRecoResults(){
   hReco_ThPhR[1]=new TH1D("","",200,-180,180);  
   hReco_ThPhR[2]=new TH1D("","",200,0,2000);
   
-  const Int_t NumCutCh=4;
-  Double_t CutCh[NumCutCh]={8,15,11,13};
-
   vector <double> IterationsReco;
   vector <double> DurationReco;
   vector <double> UnixTimeReco;
@@ -91,33 +91,39 @@ void PlotRecoResults(){
  
     RecoTree->GetEntry(ievt);
 
-    if(InitialTxCor_XYZ[0]!=0 && InitialTxCor_XYZ[1]!=0 && InitialTxCor_XYZ[2]!=0 && FinalTxCor_ThPhR[2]<300){
+    //if(InitialTxCor_XYZ[0]!=0 && InitialTxCor_XYZ[1]!=0 && InitialTxCor_XYZ[2]!=0){
+    if(isCalpulserTrig==true){
+      //if(eventNum==1301){
+      //cout<<" its a calpulser event "<<eventNum<<endl;
+      hIterations->Fill(Iterations);
+      IterationsReco.push_back(Iterations);
+      DurationReco.push_back(Duration);
+      UnixTimeReco.push_back(unixTime-firstUnixTime);
+
+      //cout<<setprecision(10)<<ievt<<" "<<unixTime<<" "<<firstUnixTime<<" "<<unixTime-firstUnixTime<<endl;
     
-    hIterations->Fill(Iterations);
-    IterationsReco.push_back(Iterations);
-    DurationReco.push_back(Duration);
-    UnixTimeReco.push_back(unixTime-firstUnixTime);
+      Reco_XYZ[0].push_back(FinalTxCor_XYZ[0]);
+      Reco_XYZ[1].push_back(FinalTxCor_XYZ[1]);
+      Reco_XYZ[2].push_back(FinalTxCor_XYZ[2]);
+      // hReco_dXYZ[0]->Fill(dX);
+      // hReco_dXYZ[1]->Fill(dY);
+      // hReco_dXYZ[2]->Fill(dZ);
 
-    //cout<<setprecision(10)<<ievt<<" "<<unixTime<<" "<<firstUnixTime<<" "<<unixTime-firstUnixTime<<endl;
+      Reco_ThPhR[0].push_back(FinalTxCor_ThPhR[0]);
+      Reco_ThPhR[1].push_back(FinalTxCor_ThPhR[1]);
+      Reco_ThPhR[2].push_back(FinalTxCor_ThPhR[2]);
+
+      hReco_ThPhR[0]->Fill(FinalTxCor_ThPhR[0]);
+      hReco_ThPhR[1]->Fill(FinalTxCor_ThPhR[1]);
+      hReco_ThPhR[2]->Fill(FinalTxCor_ThPhR[2]);
+
+      // hReco_ThPhR[0]->Fill(InitialTxCor_ThPhR[0]);
+      // hReco_ThPhR[1]->Fill(InitialTxCor_ThPhR[1]);
+      // hReco_ThPhR[2]->Fill(InitialTxCor_ThPhR[2]);
     
-    Reco_XYZ[0].push_back(FinalTxCor_XYZ[0]);
-    Reco_XYZ[1].push_back(FinalTxCor_XYZ[1]);
-    Reco_XYZ[2].push_back(FinalTxCor_XYZ[2]);
-    // hReco_dXYZ[0]->Fill(dX);
-    // hReco_dXYZ[1]->Fill(dY);
-    // hReco_dXYZ[2]->Fill(dZ);
-
-    Reco_ThPhR[0].push_back(FinalTxCor_ThPhR[0]);
-    Reco_ThPhR[1].push_back(FinalTxCor_ThPhR[1]);
-    Reco_ThPhR[2].push_back(FinalTxCor_ThPhR[2]);
-
-    hReco_ThPhR[0]->Fill(FinalTxCor_ThPhR[0]);
-    hReco_ThPhR[1]->Fill(FinalTxCor_ThPhR[1]);
-    hReco_ThPhR[2]->Fill(FinalTxCor_ThPhR[2]);
-
-    // hReco_dThPhR[0]->Fill(dTh);
-    // hReco_dThPhR[1]->Fill(dPh);
-    // hReco_dThPhR[2]->Fill(dR);
+      // hReco_dThPhR[0]->Fill(dTh);
+      // hReco_dThPhR[1]->Fill(dPh);
+      // hReco_dThPhR[2]->Fill(dR);
     }
     
   }////event loop 
@@ -198,10 +204,11 @@ void PlotRecoResults(){
   c2->cd(1);
   c2->cd(1)->SetGridx();
   c2->cd(1)->SetGridy();
-  grReco_ThPhR[0]->GetXaxis()->SetLabelSize(0.05);
-  grReco_ThPhR[0]->GetYaxis()->SetLabelSize(0.05);
-  grReco_ThPhR[0]->GetXaxis()->SetTitleSize(0.05);
-  grReco_ThPhR[0]->GetYaxis()->SetTitleSize(0.05);
+  grReco_ThPhR[0]->GetXaxis()->SetLabelSize(0.1);
+  grReco_ThPhR[0]->GetYaxis()->SetLabelSize(0.1);
+  grReco_ThPhR[0]->GetXaxis()->SetTitleSize(0.1);
+  grReco_ThPhR[0]->GetYaxis()->SetTitleSize(0.1);
+
   grReco_ThPhR[0]->Draw("AP");
   grReco_ThPhR[0]->SetTitle(";Unixtime (s);Reconstructed Theta (^{o});");
   OutputFile->cd();
@@ -387,6 +394,8 @@ void PlotRecoResults(){
   c8->cd(1);
   c8->cd(1)->SetGridx();
   c8->cd(1)->SetGridy();
+  c8->cd(1)->SetLogy();
+  hReco_ThPhR[0]->GetXaxis()->SetNdivisions(20);
   hReco_ThPhR[0]->GetXaxis()->SetLabelSize(0.05);
   hReco_ThPhR[0]->GetYaxis()->SetLabelSize(0.05);
   hReco_ThPhR[0]->GetXaxis()->SetTitleSize(0.05);
@@ -399,6 +408,8 @@ void PlotRecoResults(){
   c8->cd(2);
   c8->cd(2)->SetGridx();
   c8->cd(2)->SetGridy();
+  c8->cd(2)->SetLogy();
+  hReco_ThPhR[1]->GetXaxis()->SetNdivisions(20);
   hReco_ThPhR[1]->GetXaxis()->SetLabelSize(0.05);
   hReco_ThPhR[1]->GetYaxis()->SetLabelSize(0.05);
   hReco_ThPhR[1]->GetXaxis()->SetTitleSize(0.05);
@@ -411,6 +422,8 @@ void PlotRecoResults(){
   c8->cd(3);
   c8->cd(3)->SetGridx();
   c8->cd(3)->SetGridy();
+  c8->cd(3)->SetLogy();
+  hReco_ThPhR[2]->GetXaxis()->SetNdivisions(20);
   hReco_ThPhR[2]->GetXaxis()->SetLabelSize(0.05);
   hReco_ThPhR[2]->GetYaxis()->SetLabelSize(0.05);
   hReco_ThPhR[2]->GetXaxis()->SetTitleSize(0.05);
