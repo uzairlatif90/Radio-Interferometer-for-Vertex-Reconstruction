@@ -26,6 +26,7 @@ void Interferometer::GenerateChHitTimeAndCheckHits(double TxCor[3],double timeRa
     double RxDepth=AntennaCoordRx[iRx][2];
     double TxDepth=AntennaCoordTx[2];
     double *RTresults=IceRayTracing::IceRayTracing(0, TxDepth, Distance,RxDepth);
+   
     // cout<<"*******For the Direct Ray********"<<endl;
     // cout<<"Launch Angle: "<<getresults[0]<<" deg"<<endl;
     // cout<<"Recieve Angle: "<<getresults[8]<<" deg"<<endl;
@@ -686,7 +687,7 @@ double Interferometer::MinimizerThPh(double x, void * params)
 }
 
 void Interferometer::MinimizerThPhR(double InitialTxCor_XYZ[3], double InitialTxCor_ThPhR[3], double FinalTxCor[3], double ExpectedUncertainty, double ChHitTime[2][TotalAntennasRx], int IgnoreCh[2][TotalAntennasRx], double ChSNR[2][TotalAntennasRx], int ChHitOrder[TotalAntennasRx], double &FinalMinValue, int &Iterations){
-  
+ 
   double ParameterArray[7*TotalAntennasRx+12];
   int iEnt=0;
   for(int iray=0;iray<2;iray++){
@@ -714,7 +715,7 @@ void Interferometer::MinimizerThPhR(double InitialTxCor_XYZ[3], double InitialTx
     ParameterArray[iEnt]=ChHitOrder[iRx];
     iEnt++;
   }
-  
+
   ParameterArray[iEnt]=InitialTxCor_XYZ[0];
   ParameterArray[iEnt+1]=InitialTxCor_XYZ[1];
   ParameterArray[iEnt+2]=InitialTxCor_XYZ[2];
@@ -730,7 +731,7 @@ void Interferometer::MinimizerThPhR(double InitialTxCor_XYZ[3], double InitialTx
   ParameterArray[iEnt+9]=ExpectedUncertainty;
   ParameterArray[iEnt+10]=0;
   ParameterArray[iEnt+11]=0;
-  
+
   int status;
   int iter = 0, max_iter = 50;
   const gsl_min_fminimizer_type *T;
@@ -748,7 +749,7 @@ void Interferometer::MinimizerThPhR(double InitialTxCor_XYZ[3], double InitialTx
   T = gsl_min_fminimizer_brent;
   s = gsl_min_fminimizer_alloc (T);
   gsl_min_fminimizer_set (s, &F, m, a, b);
-    
+ 
   // printf ("using %s method\n",
   //         gsl_min_fminimizer_name (s));
 
@@ -758,7 +759,7 @@ void Interferometer::MinimizerThPhR(double InitialTxCor_XYZ[3], double InitialTx
 
   // printf ("%5d [%.7f, %.7f] %.7f %.7f\n",
   //         iter, a, b,
-  //         m, b - a); 
+  //         m, b - a);  
   
   Iterations=0;
   do
@@ -774,13 +775,13 @@ void Interferometer::MinimizerThPhR(double InitialTxCor_XYZ[3], double InitialTx
 
       status= gsl_min_test_interval (a, b, 1e-2,0);
 
-      if (status == GSL_SUCCESS)
-        printf ("Converged:\n");
+      // if (status == GSL_SUCCESS)
+      //   printf ("Converged:\n");
       
-      printf ("%5d [%.7f, %.7f] "
-              "%.7f %.7f\n",
-              iter, a, b,
-              m, b - a);
+      // printf ("%5d [%.7f, %.7f] "
+      //         "%.7f %.7f\n",
+      //         iter, a, b,
+      //         m, b - a);
     }
   while (status == GSL_CONTINUE && iter < max_iter);
   
