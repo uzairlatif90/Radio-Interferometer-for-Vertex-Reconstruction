@@ -868,8 +868,9 @@ double *IceRayTracing::GetRefractedRayPar(double z0, double x1 ,double z1, doubl
   double LowerLimit=0;
   LowerLimit=IceRayTracing::Getnz(z0)*sin((64.0*(IceRayTracing::pi/180.0)));
   if(LowerLimit>UpperLimitL[0]){
-    LowerLimit=IceRayTracing::Getnz(z0)*sin((LangR*(IceRayTracing::pi/180.0)))+0.3;
+    LowerLimit=IceRayTracing::Getnz(z0)*sin((LangR*(IceRayTracing::pi/180.0)));
   }
+
   lvalueRa[0]=IceRayTracing::FindFunctionRoot(F4,LowerLimit,UpperLimitL[0]);
   LangRa[0]=asin(lvalueRa[0]/IceRayTracing::Getnz(z0))*(180.0/IceRayTracing::pi);
   checkzeroRa[0]=(IceRayTracing::fRaa(lvalueRa[0],&params4));
@@ -880,7 +881,7 @@ double *IceRayTracing::GetRefractedRayPar(double z0, double x1 ,double z1, doubl
     LangRa[0]=asin(lvalueRa[0]/IceRayTracing::Getnz(z0))*(180.0/IceRayTracing::pi);
     checkzeroRa[0]=IceRayTracing::fRaa(lvalueRa[0],&params4);
     zmax[0]=IceRayTracing::GetZmax(IceRayTracing::A_ice,lvalueRa[0])+1e-7;
-  }
+  }  
 
   if(fabs(checkzeroRa[0])<0.5){
 
@@ -1634,10 +1635,12 @@ double *IceRayTracing::IceRayTracing(double x0, double z0, double x1, double z1)
   double timeRa1[2]={0,0};
   double timeRa2[2]={0,0};
   double zmax[2]={0,0};
-  
+
   /* This if condition makes sure that we only try to find a refracted ray if we don't get two possible ray paths from the direct and reflected case. This saves us alot of time since we know that between each Tx and Rx position we only expect 2 rays. */
   if(fabs(checkzeroR)>0.5 || fabs(checkzeroD)>0.5){
+  
     double* GetRefractedRay=IceRayTracing::GetRefractedRayPar(z0,x1,z1,LangR,RangR);
+  
     RangRa[0]=GetRefractedRay[0];
     LangRa[0]=GetRefractedRay[1];
     timeRa[0]=GetRefractedRay[2];
