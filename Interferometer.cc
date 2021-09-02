@@ -588,7 +588,7 @@ double Interferometer::Minimizer_fCnz(const gsl_vector *v, void *params){
     output=(chi2/chi2d);
   
   }else{
-    output=GSL_NAN; 
+    output=1e9; 
   }
   
 
@@ -598,6 +598,7 @@ double Interferometer::Minimizer_fCnz(const gsl_vector *v, void *params){
 double Interferometer::MinimizerThPh(double x, void * params)
 {
 
+ 
   double *p = (double *)params;
   
   p[7*TotalAntennasRx+10]=x;
@@ -1246,7 +1247,7 @@ void Interferometer::GetApproximateDistance(double GuessResultCor[3][3], double 
       FinalTxCor[2]=testR;
     }
 
-    if(std::isnan(min)==false || min!=1e9){
+    if(std::isnan(min)==false && min!=1e9){
       RecoPar[0].push_back(FinalTxCor[0]);
       RecoPar[1].push_back(FinalTxCor[1]);
       RecoPar[2].push_back(FinalTxCor[2]);
@@ -1258,6 +1259,11 @@ void Interferometer::GetApproximateDistance(double GuessResultCor[3][3], double 
       //cout<<"found the minima!"<<endl;
       checkmincurve=true;
     }
+     
+    if((std::isnan(min)==true || min==1e9) && iloop>=5 ){
+      checkmincurve=true;
+    }
+     
     if(RecoPar[3][size-1]<RecoPar[3][size-2] && RecoPar[3][size-2]<RecoPar[3][size-3] && checkmincurve==false){
       checkmincurve=false;
     }
@@ -1315,12 +1321,16 @@ void Interferometer::GetApproximateDistance(double GuessResultCor[3][3], double 
       RecoPar[0].push_back(FinalTxCor[0]);
       RecoPar[1].push_back(FinalTxCor[1]);
       RecoPar[2].push_back(FinalTxCor[2]);
-      RecoPar[3].push_back(min);
+      RecoPar[3].push_back(min);      
     }
-    
+
     int size=RecoPar[3].size();
     if((RecoPar[3][size-1]>RecoPar[3][size-2] && RecoPar[3][size-2]>RecoPar[3][size-3] && iloop>=5) ||  (fabs(RecoPar[3][size-1]-RecoPar[3][size-2])/RecoPar[3][size-1]<0.01 && iloop>=5) ){
       //cout<<"found the minima!"<<endl;
+      checkmincurve=true;
+    }
+
+    if((std::isnan(min)==true || min==1e9) && iloop>=5 ){
       checkmincurve=true;
     }
     
