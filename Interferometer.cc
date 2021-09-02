@@ -686,7 +686,7 @@ double Interferometer::MinimizerThPh(double x, void * params)
   return FinalMinValue;
 }
 
-void Interferometer::MinimizerThPhR(double InitialTxCor_XYZ[3], double InitialTxCor_ThPhR[3], double FinalTxCor[3], double ExpectedUncertainty, double ChHitTime[2][TotalAntennasRx], int IgnoreCh[2][TotalAntennasRx], double ChSNR[2][TotalAntennasRx], int ChHitOrder[TotalAntennasRx], double &FinalMinValue, int &Iterations){
+void Interferometer::MinimizerThPhR(double InitialTxCor_XYZ[3], double InitialTxCor_ThPhR[3], double FinalTxCor[3], double ExpectedUncertainty, double ChHitTime[2][TotalAntennasRx], int IgnoreCh[2][TotalAntennasRx], double ChSNR[2][TotalAntennasRx], int ChHitOrder[TotalAntennasRx], double &FinalMinValue, int &Iterations, double MinimizerRadialWidth){
  
   double ParameterArray[7*TotalAntennasRx+12];
   int iEnt=0;
@@ -1348,8 +1348,85 @@ void Interferometer::GetApproximateDistance(double GuessResultCor[3][3], double 
   
 }
 
+void Interferometer::GetRecoFixedR(double InitialTxCor[3], double FinalTxCor[3], double ExpectedUncertainty, double ChHitTime[2][TotalAntennasRx], int IgnoreCh[2][TotalAntennasRx], double ChSNR[2][TotalAntennasRx], double &FixedR){
+    
+  double ChDRTime[TotalAntennasRx];
+  int ChHitOrder[TotalAntennasRx];
+  
+  //Interferometer::AddGaussianJitterToHitTimes(10,ChHitTime);
+  Interferometer::FindFirstHitAndNormalizeHitTime(ChHitTime,IgnoreCh,ChDRTime,ChHitOrder);
+  
+  double ParameterArray[7*TotalAntennasRx+12];
+  int iEnt=0;
+  for(int iray=0;iray<2;iray++){
+    for(int iRx=0;iRx<TotalAntennasRx;iRx++){
+      ParameterArray[iEnt]=ChHitTime[iray][iRx];
+      iEnt++;
+    } 
+  }  
 
-void Interferometer::DoInterferometery(double InitialTxCor[3], double FinalTxCor[3], double ExpectedUncertainty, double ChHitTime[2][TotalAntennasRx], int IgnoreCh[2][TotalAntennasRx],double ChSNR[2][TotalAntennasRx], double &FinalMinValue, double &Duration,int &Iterations){ 
+  for(int iray=0;iray<2;iray++){
+    for(int iRx=0;iRx<TotalAntennasRx;iRx++){
+      ParameterArray[iEnt]=IgnoreCh[iray][iRx];
+      iEnt++;
+    } 
+  }
+
+  for(int iray=0;iray<2;iray++){
+    for(int iRx=0;iRx<TotalAntennasRx;iRx++){
+      ParameterArray[iEnt]=ChSNR[iray][iRx];
+      iEnt++;
+    }
+  }
+
+  for(int iRx=0;iRx<TotalAntennasRx;iRx++){
+    ParameterArray[iEnt]=ChHitOrder[iRx];
+    iEnt++;
+  }
+  
+  // for(int iRx=0;iRx<TotalAntennasRx;iRx++){
+  //   ParameterArray[iEnt]=ChDRTime[iRx];
+  //   iEnt++;
+  // }
+
+  ParameterArray[iEnt+6]=0;
+  ParameterArray[iEnt+7]=0;
+  ParameterArray[iEnt+8]=0;
+
+  ParameterArray[iEnt+9]=ExpectedUncertainty;
+  ParameterArray[iEnt+10]=0;
+  ParameterArray[iEnt+11]=0;
+  
+  double min=0;
+  
+  gsl_vector *ThPhRVec;
+  ThPhRVec = gsl_vector_alloc (2);
+  
+  double testTh=InitialTxCor[0];
+  double testPh=InitialTxCor[1];
+  double testR=FixedR;
+      
+  Double_t ThPhR[3]={testTh*(Interferometer::pi/180),testPh*(Interferometer::pi/180),testR};
+  Double_t XYZ[3]={0,0,0}; 
+  Interferometer::ThPhRtoXYZ(ThPhR,XYZ);
+
+  ParameterArray[iEnt]=XYZ[0];
+  ParameterArray[iEnt+1]=XYZ[1];
+  ParameterArray[iEnt+2]=XYZ[2];
+  ParameterArray[iEnt+3]=testTh;
+  ParameterArray[iEnt+4]=testPh;
+  ParameterArray[iEnt+5]=testR;
+    
+  min=Interferometer::MinimizerThPh(testR, ParameterArray);  
+  
+  FinalTxCor[0]=ParameterArray[iEnt+6];
+  FinalTxCor[1]=ParameterArray[iEnt+7];
+  FinalTxCor[2]=testR;
+  
+}
+
+
+void Interferometer::DoInterferometery(double InitialTxCor[3], double FinalTxCor[3], double ExpectedUncertainty, double ChHitTime[2][TotalAntennasRx], int IgnoreCh[2][TotalAntennasRx],double ChSNR[2][TotalAntennasRx], double &FinalMinValue, double &Duration,int &Iterations, double MinimizerRadialWidth){ 
   auto t1b = std::chrono::high_resolution_clock::now();
   
   Double_t ThPhR[3]={InitialTxCor[0],InitialTxCor[1],InitialTxCor[2]};
@@ -1375,7 +1452,7 @@ void Interferometer::DoInterferometery(double InitialTxCor[3], double FinalTxCor
     double DummyMin=0;
 
     //Interferometer::RootThPhR(XYZ,ThPhR,DummyRecoCor,ExpectedUncertainty,ChHitTime,IgnoreCh,ChSNR,ChHitOrder,DummyMin,Iterations);
-    Interferometer::MinimizerThPhR(XYZ,ThPhR,DummyRecoCor,ExpectedUncertainty,ChHitTime,IgnoreCh,ChSNR,ChHitOrder,DummyMin,Iterations);  
+    Interferometer::MinimizerThPhR(XYZ,ThPhR,DummyRecoCor,ExpectedUncertainty,ChHitTime,IgnoreCh,ChSNR,ChHitOrder,DummyMin,Iterations,MinimizerRadialWidth);  
 
     // //if(DummyMin>0.5){
     //   Double_t ThPhR[3]={DummyRecoCor[0]*(Interferometer::pi/180.),DummyRecoCor[1]*(Interferometer::pi/180.),DummyRecoCor[2]};
@@ -1404,7 +1481,7 @@ void Interferometer::DoInterferometery(double InitialTxCor[3], double FinalTxCor
     FinalTxCor[1]=0;
     FinalTxCor[2]=0;
   }
-
+  
   if(FinalTxCor[1]<-180){
     FinalTxCor[1]=FinalTxCor[1]+360;
   }
@@ -1418,6 +1495,5 @@ void Interferometer::DoInterferometery(double InitialTxCor[3], double FinalTxCor
   
   auto t2b = std::chrono::high_resolution_clock::now();
   auto durationb = std::chrono::duration_cast<std::chrono::microseconds>( t2b - t1b ).count();
-
   Duration=durationb/1000;
 }
