@@ -777,8 +777,13 @@ void ReconstructARAevents(Int_t StationId, char const *InputFileName, int Run, i
     InitialTxCor_ThPhR[2]=GuessResultCor[0][2];
  
     Interferometer::DoInterferometery(InitialTxCor_ThPhR, FinalTxCor_ThPhR, ExpectedPositionUncertainty, ChHitTime, IgnoreCh, ChSNR, FinalMinValue, DurationReconstruction, Iterations,MinimizerRadialWidth); 
-
+    
     double FixedR=200;
+    if(rawAtriEvPtr->isCalpulserEvent()==true){
+      FixedR=GuessResultCor[0][2];
+    }else{
+      FixedR=200;
+    }
     Interferometer::GetRecoFixedR(GuessResultCor[0], FinalTxCor_ThPhR_fR,ExpectedPositionUncertainty,ChHitTime, IgnoreCh, ChSNR, FixedR);
     
     DurationTotal=DurationInitialCondition+DurationReconstruction;
