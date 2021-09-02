@@ -737,7 +737,7 @@ void Interferometer::MinimizerThPhR(double InitialTxCor_XYZ[3], double InitialTx
   const gsl_min_fminimizer_type *T;
   gsl_min_fminimizer *s;
   double m = InitialTxCor_ThPhR[2];
-  double a = InitialTxCor_ThPhR[2]-200, b = InitialTxCor_ThPhR[2]+200;
+  double a = InitialTxCor_ThPhR[2]-MinimizerRadialWidth, b = InitialTxCor_ThPhR[2]+MinimizerRadialWidth;
   if(a<0){
     a=10;
   }
