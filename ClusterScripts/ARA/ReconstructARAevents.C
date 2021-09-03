@@ -742,15 +742,38 @@ void ReconstructARAevents(Int_t StationId, char const *InputFileName, int Run, i
     SNRH[dummy2]=0;
     nr++;
   }
- 
+  
+  Double_t NumSinglePeak=0;
+  Double_t NumTotalChannels=0;
   for(int ich=0;ich<TotalAntennasRx;ich++){
     for(int iray=0;iray<2;iray++){
       IgnoreCh[iray][ich]=1;
       if(ChHitTime[iray][ich]==0 || CutCh[ich]==1){
 	IgnoreCh[iray][ich]=0;
       }
+      
+    }
+    if(IgnoreCh[0][ich]==1){
+      NumTotalChannels++;
+    }
+    if((IgnoreCh[0][ich]==1 && IgnoreCh[1][ich]==0)){
+      NumSinglePeak++;
     }
   } 
+
+  Double_t FractionSinglePeak=NumSinglePeak/NumTotalChannels;
+  if(FractionSinglePeak>=0.85){
+    for(int ich=0;ich<TotalAntennasRx;ich++){
+      if(IgnoreCh[1][ich]==1){
+	IgnoreCh[1][ich]=0;
+	if(ChAmp[1][ich]>ChAmp[0][ich]){
+	  swap(ChHitTime[0][ich], ChHitTime[1][ich]);
+	  swap(ChSNR[0][ich], ChSNR[1][ich]);
+	}
+      }
+      
+    }
+  }
   
   if(NumChAvailable>=4){
  
