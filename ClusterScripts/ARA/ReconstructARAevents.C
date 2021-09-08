@@ -68,7 +68,8 @@ void GetCPCor(Int_t iStation, vector <double> CalPulCor[3]){
     ThPhR[1]=ThPhR[1]*(180./Interferometer::pi); 
     CalPulCor[0].push_back(ThPhR[0]);
     CalPulCor[1].push_back(ThPhR[1]);
-    CalPulCor[2].push_back(ThPhR[2]);    
+    CalPulCor[2].push_back(ThPhR[2]);
+    
   }
 }
 
@@ -288,24 +289,24 @@ void PeakFinder(TGraph *grPwrEnvOriginal, TGraph *grPeakPoint){
   PowerPeakTime[1]=Peaks[0][DummyBin];
   PowerPeakBin[1]=Peaks[2][DummyBin];
 
-  for(int ipeak=0;ipeak<2;ipeak++){
-    vector <double> RefinePeak[3];
-    for(int isample=PowerPeakBin[ipeak]-DeltaSamples; isample<=PowerPeakBin[ipeak]+DeltaSamples; isample++){
-      double xp,yp;
-      grPwrEnvOriginal->GetPoint(isample,xp,yp);
-      RefinePeak[0].push_back(xp);
-      RefinePeak[1].push_back(yp);
-      RefinePeak[2].push_back(isample);
-    }
+  // for(int ipeak=0;ipeak<2;ipeak++){
+  //   vector <double> RefinePeak[3];
+  //   for(int isample=PowerPeakBin[ipeak]-DeltaSamples; isample<=PowerPeakBin[ipeak]+DeltaSamples; isample++){
+  //     double xp,yp;
+  //     grPwrEnvOriginal->GetPoint(isample,xp,yp);
+  //     RefinePeak[0].push_back(xp);
+  //     RefinePeak[1].push_back(yp);
+  //     RefinePeak[2].push_back(isample);
+  //   }
       
-    DummyBin=TMath::LocMax(RefinePeak[1].size(),RefinePeak[1].data());
-    PowerPeakAmp[ipeak]=RefinePeak[1][DummyBin];
-    PowerPeakTime[ipeak]=RefinePeak[0][DummyBin];
-    PowerPeakBin[ipeak]=RefinePeak[2][DummyBin];
-    RefinePeak[0].clear();
-    RefinePeak[1].clear();
-    RefinePeak[2].clear();
-  }  
+  //   DummyBin=TMath::LocMax(RefinePeak[1].size(),RefinePeak[1].data());
+  //   PowerPeakAmp[ipeak]=RefinePeak[1][DummyBin];
+  //   PowerPeakTime[ipeak]=RefinePeak[0][DummyBin];
+  //   PowerPeakBin[ipeak]=RefinePeak[2][DummyBin];
+  //   RefinePeak[0].clear();
+  //   RefinePeak[1].clear();
+  //   RefinePeak[2].clear();
+  // }  
 
   double NoiseRMS=GetNoiseRMS(grPwrEnvOriginal);
   int IgnorePeak[2]={1,1};
@@ -325,27 +326,27 @@ void PeakFinder(TGraph *grPwrEnvOriginal, TGraph *grPeakPoint){
     }
 
     for(int ipeak=0;ipeak<2;ipeak++){
-      vector <double> RefinePeak[3];
+      //vector <double> RefinePeak[3];
    
-      for(int isample=PowerPeakBin[ipeak]-20; isample<=PowerPeakBin[ipeak]+20; isample++){
-	if(isample>-1){
-	  double xp,yp;
-	  grPwrEnvOriginal->GetPoint(isample,xp,yp);
-	  if(isample<PowerPeakBin[ipeak]-5 || isample>PowerPeakBin[ipeak]+5){
-	    RefinePeak[0].push_back(xp);
-	    RefinePeak[1].push_back(yp);
-	    RefinePeak[2].push_back(isample);
-	  }
-	}
-      }
+    //   for(int isample=PowerPeakBin[ipeak]-20; isample<=PowerPeakBin[ipeak]+20; isample++){
+    // 	if(isample>-1){
+    // 	  double xp,yp;
+    // 	  grPwrEnvOriginal->GetPoint(isample,xp,yp);
+    // 	  if(isample<PowerPeakBin[ipeak]-5 || isample>PowerPeakBin[ipeak]+5){
+    // 	    RefinePeak[0].push_back(xp);
+    // 	    RefinePeak[1].push_back(yp);
+    // 	    RefinePeak[2].push_back(isample);
+    // 	  }
+    // 	}
+    //   }
       
-      DummyBin=TMath::LocMax(RefinePeak[1].size(),RefinePeak[1].data());
-      PowerPeakAmp[ipeak+2]=RefinePeak[1][DummyBin];
-      PowerPeakTime[ipeak+2]=RefinePeak[0][DummyBin];
-      PowerPeakBin[ipeak+2]=RefinePeak[2][DummyBin];
-      RefinePeak[0].clear();
-      RefinePeak[1].clear();
-      RefinePeak[2].clear();   
+      // DummyBin=TMath::LocMax(RefinePeak[1].size(),RefinePeak[1].data());
+      // PowerPeakAmp[ipeak+2]=RefinePeak[1][DummyBin];
+      // PowerPeakTime[ipeak+2]=RefinePeak[0][DummyBin];
+      // PowerPeakBin[ipeak+2]=RefinePeak[2][DummyBin];
+      // RefinePeak[0].clear();
+      // RefinePeak[1].clear();
+      // RefinePeak[2].clear();   
     
       double LargePeak=PowerPeakAmp[ipeak+2];
       double SmallPeak=PowerPeakAmp[ipeak];
@@ -397,27 +398,27 @@ void PeakFinder(TGraph *grPwrEnvOriginal, TGraph *grPeakPoint){
     cout<<"We have one peak "<<endl;
 
     for(int ipeak=0;ipeak<1;ipeak++){
-      vector <double> RefinePeak[3];
+    //   vector <double> RefinePeak[3];
    
-      for(int isample=PowerPeakBin[ipeak]-20; isample<=PowerPeakBin[ipeak]+20; isample++){
-	if(isample>-1){
-	  double xp,yp;
-	  grPwrEnvOriginal->GetPoint(isample,xp,yp);
-	  if(isample<PowerPeakBin[ipeak]-5 || isample>PowerPeakBin[ipeak]+5){
-	    RefinePeak[0].push_back(xp);
-	    RefinePeak[1].push_back(yp);
-	    RefinePeak[2].push_back(isample);
-	  }
-	}
-      }
+    //   for(int isample=PowerPeakBin[ipeak]-20; isample<=PowerPeakBin[ipeak]+20; isample++){
+    // 	if(isample>-1){
+    // 	  double xp,yp;
+    // 	  grPwrEnvOriginal->GetPoint(isample,xp,yp);
+    // 	  if(isample<PowerPeakBin[ipeak]-5 || isample>PowerPeakBin[ipeak]+5){
+    // 	    RefinePeak[0].push_back(xp);
+    // 	    RefinePeak[1].push_back(yp);
+    // 	    RefinePeak[2].push_back(isample);
+    // 	  }
+    // 	}
+    //   }
       
-      DummyBin=TMath::LocMax(RefinePeak[1].size(),RefinePeak[1].data());
-      PowerPeakAmp[ipeak+2]=RefinePeak[1][DummyBin];
-      PowerPeakTime[ipeak+2]=RefinePeak[0][DummyBin];
-      PowerPeakBin[ipeak+2]=RefinePeak[2][DummyBin];
-      RefinePeak[0].clear();
-      RefinePeak[1].clear();
-      RefinePeak[2].clear(); 
+      // DummyBin=TMath::LocMax(RefinePeak[1].size(),RefinePeak[1].data());
+      // PowerPeakAmp[ipeak+2]=RefinePeak[1][DummyBin];
+      // PowerPeakTime[ipeak+2]=RefinePeak[0][DummyBin];
+      // PowerPeakBin[ipeak+2]=RefinePeak[2][DummyBin];
+      // RefinePeak[0].clear();
+      // RefinePeak[1].clear();
+      // RefinePeak[2].clear(); 
     
       double LargePeak=PowerPeakAmp[ipeak+2];
       double SmallPeak=PowerPeakAmp[ipeak];
@@ -587,7 +588,11 @@ void ReconstructARAevents(Int_t StationId, char const *InputFileName, int Run, i
   int IgnorePeakCount=0;
 
   double CutCh[16]={-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1};
+  double FaultyCh[16]={-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,1};
   int NumChAvailable=0;
+  int NumChAvailableV=0;
+  int NumChAvailableH=0;
+  
   for(int ich=0; ich<MCH; ich++){
     ///Get the Waveform from the data file for each channel
     TGraph *grdum=realAtriEvPtr->getGraphFromRFChan(ich);
@@ -597,15 +602,42 @@ void ReconstructARAevents(Int_t StationId, char const *InputFileName, int Run, i
     delete grdum;
 
     VoltageSNR[ich]=getmyWaveformSNR(gr);
-    if(VoltageSNR[ich]<6 || ich==15){
+    if(VoltageSNR[ich]<6 || FaultyCh[ich]==1){
       //cout<<ich<<" channel cut "<<VoltageSNR[ich]<<endl;
       CutCh[ich]=1;
     }else{
       NumChAvailable++;
+      if(ich<8){
+	NumChAvailableV++;
+      }else{
+	NumChAvailableH++;
+      }
     }
     
     delete gr;
   }
+
+  
+  if(NumChAvailableV>=6){
+    for(int ich=0; ich<8; ich++){
+      if(CutCh[ich]==1 && FaultyCh[ich]!=1){
+  	CutCh[ich]=-1;
+  	NumChAvailableV++;
+  	NumChAvailable++;
+      }
+    }
+  }
+
+  if(NumChAvailableH>=6){
+    for(int ich=8; ich<16; ich++){
+      if(CutCh[ich]==1 && FaultyCh[ich]!=1){
+  	CutCh[ich]=-1;
+  	NumChAvailableH++;
+  	NumChAvailable++;
+      }
+    }
+  }
+ 
   
   for(int ich=0; ich<MCH; ich++){
     CorScore[ich]=0;
