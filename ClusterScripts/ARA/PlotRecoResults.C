@@ -7,13 +7,17 @@ void PlotRecoResults(){
   double firstUnixTime;
   double timeStamp;
   int runNum;
-  double Duration;
+  double DurationTotal;
+  double DurationReconstruction;
+  double DurationInitialCondition;
   double FinalMinValue;
   int Iterations;
   bool isCalpulserTrig;
   bool isSoftwareTrig;
   double FinalTxCor_XYZ[3];
   double FinalTxCor_ThPhR[3];
+  double FinalTxCor_XYZ_fR[3];
+  double FinalTxCor_ThPhR_fR[3];
   double InitialTxCor_XYZ[3];
   double InitialTxCor_ThPhR[3];
   double VoltageSNR[16]; 
@@ -21,8 +25,11 @@ void PlotRecoResults(){
   int VoltageSNRV_Ch[3];
   double VoltageSNRH[3]; 
   int VoltageSNRH_Ch[3];
+  
   double CorScore[16];
-  double PowerSNR[16];  
+  double ChHitTime[2][16];
+  int IgnoreCh[2][16];
+ 
  
   TString InputFileName="Run";
   InputFileName+=Run;
@@ -37,18 +44,23 @@ void PlotRecoResults(){
   TFile *OutputFile=new TFile(OutputFileName,"RECREATE");  
   
   TTree *RecoTree =(TTree*)InputFile->Get("RecoTree");
+
   RecoTree->SetBranchAddress("eventNum",&eventNum);
   RecoTree->SetBranchAddress("unixTime",&unixTime);
   RecoTree->SetBranchAddress("firstUnixTime",&firstUnixTime);
   RecoTree->SetBranchAddress("timeStamp",&timeStamp);  
   RecoTree->SetBranchAddress("runNum",&runNum);
-  RecoTree->SetBranchAddress("Duration",&Duration);
+  RecoTree->SetBranchAddress("DurationTotal",&DurationTotal);
+  RecoTree->SetBranchAddress("DurationReconstruction",&DurationReconstruction);
+  RecoTree->SetBranchAddress("DurationInitialCondition",&DurationInitialCondition);
   RecoTree->SetBranchAddress("FinalMinValue",&FinalMinValue);
   RecoTree->SetBranchAddress("Iterations",&Iterations);
   RecoTree->SetBranchAddress("isCalpulserTrig",&isCalpulserTrig);
   RecoTree->SetBranchAddress("isSoftwareTrig",&isSoftwareTrig);
   RecoTree->SetBranchAddress("FinalTxCor_XYZ",FinalTxCor_XYZ);
   RecoTree->SetBranchAddress("FinalTxCor_ThPhR",FinalTxCor_ThPhR);
+  RecoTree->SetBranchAddress("FinalTxCor_XYZ_fR",FinalTxCor_XYZ_fR);
+  RecoTree->SetBranchAddress("FinalTxCor_ThPhR_fR",FinalTxCor_ThPhR_fR);
   RecoTree->SetBranchAddress("InitialTxCor_XYZ",InitialTxCor_XYZ);
   RecoTree->SetBranchAddress("InitialTxCor_ThPhR",InitialTxCor_ThPhR);  
   RecoTree->SetBranchAddress("VoltageSNR",VoltageSNR); 
@@ -57,8 +69,9 @@ void PlotRecoResults(){
   // RecoTree->SetBranchAddress("VoltageSNRH",VoltageSNRH);
   // RecoTree->SetBranchAddress("VoltageSNRH_Ch",VoltageSNRH_Ch);
   RecoTree->SetBranchAddress("CorScore",CorScore);
-  RecoTree->SetBranchAddress("PowerSNR",PowerSNR);
-
+  RecoTree->SetBranchAddress("ChHitTime",ChHitTime);
+  RecoTree->SetBranchAddress("IgnoreCh",IgnoreCh); 
+  
   double numEntries=RecoTree->GetEntries();
 
   RecoTree->GetEntry(0);
