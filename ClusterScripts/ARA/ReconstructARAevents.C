@@ -1,15 +1,14 @@
 const int MCH=16;
 
 #include "FFTtools.h"
-#include "../../RET_int/Interferometer/Interferometer.cc"
-#include <gsl/gsl_math.h>
+#include "../Interferometer/Interferometer.cc"
 
 TGraph *gCPtemp[2][16];
 
 void ReadCPTemp(){
 
   {
-    TString filename="../MyCorrCode/";
+    TString filename="../Interferometer/";
     filename+="CP_D6VPol_A2.root";
     TFile *f = TFile::Open(filename, "READ");
     for(int ich=0;ich<MCH;ich++){
@@ -20,7 +19,7 @@ void ReadCPTemp(){
     delete f;
   }
   {
-    TString filename="../MyCorrCode/";
+    TString filename="../Interferometer/";
     filename+="CP_D6HPol_A2.root";
     TFile *f = TFile::Open(filename, "READ");
     for(int ich=0;ich<MCH;ich++){
@@ -33,13 +32,13 @@ void ReadCPTemp(){
 
 }
 
-void GetCPCor(Int_t iStation, vector <double> CalPulCor[3]){
+void GetCPCor(Int_t iStation, vector <double> CalPulCor[3],double year){
 
   ///////////////////////////////////////////////////////////////
   Double_t antLocD5[2][3];
   Double_t antLocD6[2][3];
   
-  AraStationInfo *stationInfo=new AraStationInfo(iStation,2019);
+  AraStationInfo *stationInfo=new AraStationInfo(iStation,year);
   AraGeomTool *geom = AraGeomTool::Instance();;
   
   Int_t numCalAnts=stationInfo->getNumCalAnts();
@@ -459,23 +458,23 @@ void ReconstructARAevents(Int_t StationId, char const *InputFileName, int Run, i
 //   int Run=9129;
 //   int Event=1301;
 
-  TString OutputFileName="";
+  DeclareAntennaConfigARA(StationId);
+  ReadCPTemp();
+  
+  TString OutputFileName="./output/";
   OutputFileName+="Run";
   OutputFileName+=Run;
   OutputFileName+="Event";
   OutputFileName+=Event;
   OutputFileName+=".root";   
   
-  double ExpectedPositionUncertainty=5;//in m
-  
-  DeclareAntennaConfigARA(StationId);
-  ReadCPTemp();
+  double ExpectedPositionUncertainty=5;//in m 
   
   ////initialise the event pointer to take data from the event tree
   RawAtriStationEvent *rawAtriEvPtr=0;
 
   ////initialise the AraEventCalibrator class  
-  AraEventCalibrator *calib = AraEventCalibrator::Instance();
+  // AraEventCalibrator *calib = AraEventCalibrator::Instance();
   
   ///Open the ARA root file that contains the data
   TFile *InputFile=new TFile(InputFileName);
@@ -569,6 +568,7 @@ void ReconstructARAevents(Int_t StationId, char const *InputFileName, int Run, i
 
   ///Initialise the Useful event pointer to load the ARA event waveforms with the right calibration
   UsefulAtriStationEvent *realAtriEvPtr=new UsefulAtriStationEvent(rawAtriEvPtr, AraCalType::kLatestCalib);
+  
   isCalpulserTrig=rawAtriEvPtr->isCalpulserEvent();
   isSoftwareTrig=rawAtriEvPtr->isSoftwareTrigger();
 
@@ -618,7 +618,7 @@ void ReconstructARAevents(Int_t StationId, char const *InputFileName, int Run, i
   }
 
   
-  if(NumChAvailableV>=6){
+  if(NumChAvailableV>=6 && isCalpulserTrig==false){
     for(int ich=0; ich<8; ich++){
       if(CutCh[ich]==1 && FaultyCh[ich]!=1){
   	CutCh[ich]=-1;
@@ -628,12 +628,46 @@ void ReconstructARAevents(Int_t StationId, char const *InputFileName, int Run, i
     }
   }
 
-  if(NumChAvailableH>=6){
+  if(NumChAvailableV>=6 && isCalpulserTrig==true){
+    for(int ich=0; ich<8; ich++){
+      if(CutCh[ich]==1 && FaultyCh[ich]!=1){
+  	CutCh[ich]=-1;
+  	NumChAvailableV++;
+  	NumChAvailable++;
+      }
+    }
+    for(int ich=8; ich<16; ich++){
+      if(CutCh[ich]==-1){
+  	CutCh[ich]=1;
+  	NumChAvailableV--;
+  	NumChAvailable--;
+      }
+    }
+  }
+
+  if(NumChAvailableH>=6 && isCalpulserTrig==false){
     for(int ich=8; ich<16; ich++){
       if(CutCh[ich]==1 && FaultyCh[ich]!=1){
   	CutCh[ich]=-1;
   	NumChAvailableH++;
   	NumChAvailable++;
+      }
+    }
+  }
+
+  if(NumChAvailableH>=6 && isCalpulserTrig==true){
+    for(int ich=8; ich<16; ich++){
+      if(CutCh[ich]==1 && FaultyCh[ich]!=1){
+  	CutCh[ich]=-1;
+  	NumChAvailableH++;
+  	NumChAvailable++;
+      }
+    }
+    for(int ich=0; ich<8; ich++){
+      if(CutCh[ich]==-1){
+  	CutCh[ich]=1;
+  	NumChAvailableH--;
+  	NumChAvailable--;
       }
     }
   }
@@ -815,7 +849,7 @@ void ReconstructARAevents(Int_t StationId, char const *InputFileName, int Run, i
     auto t1 = std::chrono::high_resolution_clock::now();
     if(rawAtriEvPtr->isCalpulserEvent()==true){
       vector <double> CalPulCor[3];
-      GetCPCor(StationId, CalPulCor);
+      GetCPCor(StationId, CalPulCor,firstUnixTime);
       Interferometer::GetApproximateMinUserCor(CalPulCor,GuessResultCor,ExpectedPositionUncertainty,ChHitTime,IgnoreCh,ChSNR);
       MinimizerRadialWidth=20;
     }else{
