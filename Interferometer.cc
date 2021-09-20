@@ -862,15 +862,15 @@ void Interferometer::RootThPhR(double InitialTxCor_XYZ[3], double InitialTxCor_T
  
 }
 
-void Interferometer::SearchApproxiMin(int C_nz, double StartCor[3],double GuessResultCor[3][3],double ParameterArray[7*TotalAntennasRx+12],int &iEnt){
+void Interferometer::SearchApproxiMin(int C_nz, double StartCor[3],double GuessResultCor[3][3],double ParameterArray[7*TotalAntennasRx+12],int &iEnt, double StartDistance){
 
   Double_t NumBinsTh=10,NumBinsPh=10,NumBinsR=4;
-  Double_t StartTh=1,StartPh=-179,StartR=20;
-  Double_t StopTh=179,StopPh=180,StopR=100;
+  Double_t StartTh=1,StartPh=-179,StartR=StartDistance+20;
+  Double_t StopTh=179,StopPh=180,StopR=StartDistance+100;
   if(C_nz==0){
     NumBinsTh=5,NumBinsPh=5,NumBinsR=4;
-    StartTh=StartCor[0]-20,StartPh=StartCor[1]-20,StartR=20;
-    StopTh=StartCor[0]+20,StopPh=StartCor[1]+20,StopR=100;
+    StartTh=StartCor[0]-20,StartPh=StartCor[1]-20,StartR=StartDistance+20;
+    StopTh=StartCor[0]+20,StopPh=StartCor[1]+20,StopR=StartDistance+100;
   }
   if(StartTh<=0){
     StartTh=1;
@@ -1050,7 +1050,7 @@ void Interferometer::GetApproximateMinUserCor(vector <double> UserCor[3] ,double
   }
 }
 
-void Interferometer::GetApproximateMinThPhR(double GuessResultCor[3][3], double ExpectedUncertainty, double ChHitTime[2][TotalAntennasRx], int IgnoreCh[2][TotalAntennasRx], double ChSNR[2][TotalAntennasRx]){
+void Interferometer::GetApproximateMinThPhR(double GuessResultCor[3][3], double ExpectedUncertainty, double ChHitTime[2][TotalAntennasRx], int IgnoreCh[2][TotalAntennasRx], double ChSNR[2][TotalAntennasRx], double StartDistance){
     
   double ChDRTime[TotalAntennasRx];
   int ChHitOrder[TotalAntennasRx];
@@ -1094,9 +1094,9 @@ void Interferometer::GetApproximateMinThPhR(double GuessResultCor[3][3], double 
   ParameterArray[iEnt+11]=0;
   
   double StartCor[3];
-  Interferometer::SearchApproxiMin(1,StartCor,GuessResultCor,ParameterArray,iEnt);
+  Interferometer::SearchApproxiMin(1,StartCor,GuessResultCor,ParameterArray,iEnt,StartDistance);
 
-  Interferometer::SearchApproxiMin(0,StartCor,GuessResultCor,ParameterArray,iEnt);
+  Interferometer::SearchApproxiMin(0,StartCor,GuessResultCor,ParameterArray,iEnt,StartDistance);
   
 }
 

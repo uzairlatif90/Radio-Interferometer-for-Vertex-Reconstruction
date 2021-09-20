@@ -1,7 +1,7 @@
 const int MCH=16;
 
 #include "FFTtools.h"
-#include "../../../RET_int/Interferometer/Interferometer.cc"
+#include "../Interferometer/Interferometer.cc"
 #include <gsl/gsl_math.h>
 #include <gsl/gsl_spline.h>
 
@@ -39,6 +39,35 @@ void LoadDepthFile(){
   spline_acc = gsl_interp_accel_alloc();
   spline_steffen = gsl_spline_alloc(gsl_interp_steffen, Time[0].size());
   gsl_spline_init(spline_steffen, Time[2].data(), Depth.data(), Time[0].size());
+
+}
+
+TGraph *gCPtemp[2][16];
+
+void ReadCPTemp(){
+
+  {
+    TString filename="../Interferometer/";
+    filename+="CP_D6VPol_A2.root";
+    TFile *f = TFile::Open(filename, "READ");
+    for(int ich=0;ich<MCH;ich++){
+      TString GetGraph="gr";
+      GetGraph+=ich;
+      f->GetObject(GetGraph, gCPtemp[0][ich]);
+    }
+    delete f;
+  }
+  {
+    TString filename="../Interferometer/";
+    filename+="CP_D6HPol_A2.root";
+    TFile *f = TFile::Open(filename, "READ");
+    for(int ich=0;ich<MCH;ich++){
+      TString GetGraph="gr";
+      GetGraph+=ich;
+      f->GetObject(GetGraph, gCPtemp[1][ich]);
+    }
+    delete f;
+  }
 
 }
 
@@ -178,24 +207,24 @@ void PeakFinder(TGraph *grPwrEnvOriginal, TGraph *grPeakPoint){
   PowerPeakTime[1]=Peaks[0][DummyBin];
   PowerPeakBin[1]=Peaks[2][DummyBin];
 
-  for(int ipeak=0;ipeak<2;ipeak++){
-    vector <double> RefinePeak[3];
-    for(int isample=PowerPeakBin[ipeak]-DeltaSamples; isample<=PowerPeakBin[ipeak]+DeltaSamples; isample++){
-      double xp,yp;
-      grPwrEnvOriginal->GetPoint(isample,xp,yp);
-      RefinePeak[0].push_back(xp);
-      RefinePeak[1].push_back(yp);
-      RefinePeak[2].push_back(isample);
-    }
+  // for(int ipeak=0;ipeak<2;ipeak++){
+  //   vector <double> RefinePeak[3];
+  //   for(int isample=PowerPeakBin[ipeak]-DeltaSamples; isample<=PowerPeakBin[ipeak]+DeltaSamples; isample++){
+  //     double xp,yp;
+  //     grPwrEnvOriginal->GetPoint(isample,xp,yp);
+  //     RefinePeak[0].push_back(xp);
+  //     RefinePeak[1].push_back(yp);
+  //     RefinePeak[2].push_back(isample);
+  //   }
       
-    DummyBin=TMath::LocMax(RefinePeak[1].size(),RefinePeak[1].data());
-    PowerPeakAmp[ipeak]=RefinePeak[1][DummyBin];
-    PowerPeakTime[ipeak]=RefinePeak[0][DummyBin];
-    PowerPeakBin[ipeak]=RefinePeak[2][DummyBin];
-    RefinePeak[0].clear();
-    RefinePeak[1].clear();
-    RefinePeak[2].clear();
-  }  
+  //   DummyBin=TMath::LocMax(RefinePeak[1].size(),RefinePeak[1].data());
+  //   PowerPeakAmp[ipeak]=RefinePeak[1][DummyBin];
+  //   PowerPeakTime[ipeak]=RefinePeak[0][DummyBin];
+  //   PowerPeakBin[ipeak]=RefinePeak[2][DummyBin];
+  //   RefinePeak[0].clear();
+  //   RefinePeak[1].clear();
+  //   RefinePeak[2].clear();
+  // }  
 
   double NoiseRMS=GetNoiseRMS(grPwrEnvOriginal);
   int IgnorePeak[2]={1,1};
@@ -215,27 +244,27 @@ void PeakFinder(TGraph *grPwrEnvOriginal, TGraph *grPeakPoint){
     }
 
     for(int ipeak=0;ipeak<2;ipeak++){
-      vector <double> RefinePeak[3];
+      // vector <double> RefinePeak[3];
    
-      for(int isample=PowerPeakBin[ipeak]-20; isample<=PowerPeakBin[ipeak]+20; isample++){
-	if(isample>-1){
-	  double xp,yp;
-	  grPwrEnvOriginal->GetPoint(isample,xp,yp);
-	  if(isample<PowerPeakBin[ipeak]-5 || isample>PowerPeakBin[ipeak]+5){
-	    RefinePeak[0].push_back(xp);
-	    RefinePeak[1].push_back(yp);
-	    RefinePeak[2].push_back(isample);
-	  }
-	}
-      }
+      // for(int isample=PowerPeakBin[ipeak]-20; isample<=PowerPeakBin[ipeak]+20; isample++){
+      // 	if(isample>-1){
+      // 	  double xp,yp;
+      // 	  grPwrEnvOriginal->GetPoint(isample,xp,yp);
+      // 	  if(isample<PowerPeakBin[ipeak]-5 || isample>PowerPeakBin[ipeak]+5){
+      // 	    RefinePeak[0].push_back(xp);
+      // 	    RefinePeak[1].push_back(yp);
+      // 	    RefinePeak[2].push_back(isample);
+      // 	  }
+      // 	}
+      // }
       
-      DummyBin=TMath::LocMax(RefinePeak[1].size(),RefinePeak[1].data());
-      PowerPeakAmp[ipeak+2]=RefinePeak[1][DummyBin];
-      PowerPeakTime[ipeak+2]=RefinePeak[0][DummyBin];
-      PowerPeakBin[ipeak+2]=RefinePeak[2][DummyBin];
-      RefinePeak[0].clear();
-      RefinePeak[1].clear();
-      RefinePeak[2].clear();   
+      // DummyBin=TMath::LocMax(RefinePeak[1].size(),RefinePeak[1].data());
+      // PowerPeakAmp[ipeak+2]=RefinePeak[1][DummyBin];
+      // PowerPeakTime[ipeak+2]=RefinePeak[0][DummyBin];
+      // PowerPeakBin[ipeak+2]=RefinePeak[2][DummyBin];
+      // RefinePeak[0].clear();
+      // RefinePeak[1].clear();
+      // RefinePeak[2].clear();   
     
       double LargePeak=PowerPeakAmp[ipeak+2];
       double SmallPeak=PowerPeakAmp[ipeak];
@@ -287,27 +316,27 @@ void PeakFinder(TGraph *grPwrEnvOriginal, TGraph *grPeakPoint){
     //cout<<"We have one peak "<<endl;
 
     for(int ipeak=0;ipeak<1;ipeak++){
-      vector <double> RefinePeak[3];
+      // vector <double> RefinePeak[3];
    
-      for(int isample=PowerPeakBin[ipeak]-20; isample<=PowerPeakBin[ipeak]+20; isample++){
-	if(isample>-1){
-	  double xp,yp;
-	  grPwrEnvOriginal->GetPoint(isample,xp,yp);
-	  if(isample<PowerPeakBin[ipeak]-5 || isample>PowerPeakBin[ipeak]+5){
-	    RefinePeak[0].push_back(xp);
-	    RefinePeak[1].push_back(yp);
-	    RefinePeak[2].push_back(isample);
-	  }
-	}
-      }
+      // for(int isample=PowerPeakBin[ipeak]-20; isample<=PowerPeakBin[ipeak]+20; isample++){
+      // 	if(isample>-1){
+      // 	  double xp,yp;
+      // 	  grPwrEnvOriginal->GetPoint(isample,xp,yp);
+      // 	  if(isample<PowerPeakBin[ipeak]-5 || isample>PowerPeakBin[ipeak]+5){
+      // 	    RefinePeak[0].push_back(xp);
+      // 	    RefinePeak[1].push_back(yp);
+      // 	    RefinePeak[2].push_back(isample);
+      // 	  }
+      // 	}
+      // }
       
-      DummyBin=TMath::LocMax(RefinePeak[1].size(),RefinePeak[1].data());
-      PowerPeakAmp[ipeak+2]=RefinePeak[1][DummyBin];
-      PowerPeakTime[ipeak+2]=RefinePeak[0][DummyBin];
-      PowerPeakBin[ipeak+2]=RefinePeak[2][DummyBin];
-      RefinePeak[0].clear();
-      RefinePeak[1].clear();
-      RefinePeak[2].clear(); 
+      // DummyBin=TMath::LocMax(RefinePeak[1].size(),RefinePeak[1].data());
+      // PowerPeakAmp[ipeak+2]=RefinePeak[1][DummyBin];
+      // PowerPeakTime[ipeak+2]=RefinePeak[0][DummyBin];
+      // PowerPeakBin[ipeak+2]=RefinePeak[2][DummyBin];
+      // RefinePeak[0].clear();
+      // RefinePeak[1].clear();
+      // RefinePeak[2].clear(); 
     
       double LargePeak=PowerPeakAmp[ipeak+2];
       double SmallPeak=PowerPeakAmp[ipeak];
@@ -340,8 +369,12 @@ void PeakFinder(TGraph *grPwrEnvOriginal, TGraph *grPeakPoint){
   
 }
 
-void ReconstructSPICEevents(char const *InputFileName, int Run, int Event){
+void ReconstructSPICEevents(int StationId,char const *InputFileName, int Run, int Event){
 
+  DeclareAntennaConfigARA(StationId);
+  LoadDepthFile();
+  ReadCPTemp();
+  
   TString OutputFileName="./output/";
   OutputFileName+="Run";
   OutputFileName+=Run;
@@ -349,27 +382,22 @@ void ReconstructSPICEevents(char const *InputFileName, int Run, int Event){
   OutputFileName+=Event;
   OutputFileName+=".root";
 
-  int StationId=2;
-  const int NumCutCh=4;
-  double CutCh[NumCutCh]={8,15,11,13};
   double TrueX=-456.721;
   double TrueY=-2353;
   double ExpectedPositionUncertainty=5;//in m
-  
-  DeclareAntennaConfigARA(StationId);
-  LoadDepthFile();
+  double GetActualInitialCondition=true;
   
   ////initialise the event pointer to take data from the event tree
   RawAtriStationEvent *rawAtriEvPtr=0;
 
   ////initialise the AraEventCalibrator class  
-  AraEventCalibrator *calib = AraEventCalibrator::Instance();
+  //AraEventCalibrator *calib = AraEventCalibrator::Instance();
   
   ///Open the ARA root file that contains the data
-  // TFile *newfile=new TFile("../run_012576/event012576.root");
-  // TFile *ResultFile=new TFile("Reco12576_results.root","RECREATE");
-
   TFile *InputFile=new TFile(InputFileName);
+
+  ///Create the output root file
+  TFile *OutputFile=new TFile(OutputFileName,"RECREATE");
   
   ///Open the Tree in the file that contains data from all of the events
   TTree *ceventTree = (TTree*)InputFile->Get("eventTree");
@@ -399,23 +427,37 @@ void ReconstructSPICEevents(char const *InputFileName, int Run, int Event){
 
   TGraph *gr[MCH];
   TGraph *grPwrEnv[MCH];
+  TGraph *grCor[MCH];  
 
   double eventNum;
   double unixTime;
   double firstUnixTime;
   double timeStamp;
   int runNum;
-  double Duration;
+  double DurationTotal;
+  double DurationReconstruction;
+  double DurationInitialCondition;
   double FinalMinValue;
   int Iterations;
+  bool isCalpulserTrig;
+  bool isSoftwareTrig;
   double FinalTxCor_XYZ[3];
   double FinalTxCor_ThPhR[3];
+  double FinalTxCor_XYZ_fR[3];
+  double FinalTxCor_ThPhR_fR[3];
   double InitialTxCor_XYZ[3];
   double InitialTxCor_ThPhR[3];
-  double dX,dY,dZ;
-  double dTh,dPh,dR;
-  
-  TFile *OutputFile=new TFile(OutputFileName,"RECREATE");  
+  double VoltageSNR[16]; 
+  double VoltageSNRV[3]; 
+  int VoltageSNRV_Ch[3];
+  double VoltageSNRH[3]; 
+  int VoltageSNRH_Ch[3];
+  double CorScore[16];
+
+  double ChHitTime[2][16];
+  int IgnoreCh[2][16];
+  double dXYZ[3];
+  double dThPhR[3];
 
   TTree *RecoTree = new TTree("RecoTree","Reco info about Event");
   RecoTree->Branch("eventNum",&eventNum,"eventNum/D");
@@ -423,19 +465,30 @@ void ReconstructSPICEevents(char const *InputFileName, int Run, int Event){
   RecoTree->Branch("firstUnixTime",&firstUnixTime,"firstUnixTime/D");
   RecoTree->Branch("timeStamp",&timeStamp,"timeStamp/D");  
   RecoTree->Branch("runNum",&runNum,"runNum/I");
-  RecoTree->Branch("Duration",&Duration,"Duration/D");
+  RecoTree->Branch("DurationTotal",&DurationTotal,"DurationTotal/D");
+  RecoTree->Branch("DurationReconstruction",&DurationReconstruction,"DurationReconstruction/D");
+  RecoTree->Branch("DurationInitialCondition",&DurationInitialCondition,"DurationInitialCondition/D");
   RecoTree->Branch("FinalMinValue",&FinalMinValue,"FinalMinValue/D");
   RecoTree->Branch("Iterations",&Iterations,"Iterations/I");
+  RecoTree->Branch("isCalpulserTrig",&isCalpulserTrig,"isCalpulserTrig/O");
+  RecoTree->Branch("isSoftwareTrig",&isSoftwareTrig,"isSoftwareTrig/O");
+
   RecoTree->Branch("FinalTxCor_XYZ",FinalTxCor_XYZ,"FinalTxCor_XYZ[3]/D");
   RecoTree->Branch("FinalTxCor_ThPhR",FinalTxCor_ThPhR,"FinalTxCor_ThPhR[3]/D");
+  RecoTree->Branch("FinalTxCor_XYZ_fR",FinalTxCor_XYZ_fR,"FinalTxCor_XYZ_fR[3]/D");
+  RecoTree->Branch("FinalTxCor_ThPhR_fR",FinalTxCor_ThPhR_fR,"FinalTxCor_ThPhR_fR[3]/D");
   RecoTree->Branch("InitialTxCor_XYZ",InitialTxCor_XYZ,"InitialTxCor_XYZ[3]/D");
   RecoTree->Branch("InitialTxCor_ThPhR",InitialTxCor_ThPhR,"InitialTxCor_ThPhR[3]/D");  
-  RecoTree->Branch("dX",&dX,"dX/D");
-  RecoTree->Branch("dY",&dY,"dY/D");
-  RecoTree->Branch("dZ",&dZ,"dZ/D");
-  RecoTree->Branch("dTh",&dTh,"dTh/D");
-  RecoTree->Branch("dPh",&dPh,"dPh/D");
-  RecoTree->Branch("dR",&dR,"dR/D");
+  RecoTree->Branch("VoltageSNR",VoltageSNR,"VoltageSNR[16]/D"); 
+  // RecoTree->Branch("VoltageSNRV",VoltageSNRV,"VoltageSNRV[3]/D");
+  // RecoTree->Branch("VoltageSNRV_Ch",VoltageSNRV_Ch,"VoltageSNRV_Ch[3]/I");
+  // RecoTree->Branch("VoltageSNRH",VoltageSNRH,"VoltageSNRH[3]/D");
+  // RecoTree->Branch("VoltageSNRH_Ch",VoltageSNRH_Ch,"VoltageSNRH_Ch[3]/I");
+  RecoTree->Branch("CorScore",CorScore,"CorScore[16]/D");
+  RecoTree->Branch("ChHitTime",ChHitTime,"ChHitTime[2][16]/D");
+  RecoTree->Branch("IgnoreCh",IgnoreCh,"IgnoreCh[2][16]/I");  
+  RecoTree->Branch("dXYZ",dXYZ,"dXYZ[3]/D");
+  RecoTree->Branch("dThPhR",dThPhR,"dThPhR[3]/D");
   
   ceventTree->GetEntry(5);
   firstUnixTime=rawAtriEvPtr->unixTime;
@@ -447,28 +500,55 @@ void ReconstructSPICEevents(char const *InputFileName, int Run, int Event){
   if(rawAtriEvPtr->isCalpulserEvent()==false && rawAtriEvPtr->timeStamp>1000 && rawAtriEvPtr->isSoftwareTrigger()==false){
     ///Initialise the Useful event pointer to load the ARA event waveforms with the right calibration
     UsefulAtriStationEvent *realAtriEvPtr=new UsefulAtriStationEvent(rawAtriEvPtr, AraCalType::kLatestCalib);
-      
+    isCalpulserTrig=rawAtriEvPtr->isCalpulserEvent();
+    isSoftwareTrig=rawAtriEvPtr->isSoftwareTrigger();
+
     eventNum=rawAtriEvPtr->eventNumber;
     unixTime=rawAtriEvPtr->unixTime;
     timeStamp=rawAtriEvPtr->timeStamp;   
     runNum=Run;
     
-    //cout<<ievt<<" "<<V2nSum/(MCH-NumCutCh)<<" "<<CorScoreSum/(MCH-NumCutCh)<<endl;
-    double ChHitTime[2][TotalAntennasRx];
-    int IgnoreCh[2][TotalAntennasRx];
     double ChSNR[2][TotalAntennasRx];	
     double ChAmp[2][TotalAntennasRx];
 
     double dtDR_Avg=0;
     int IgnorePeakCount=0;
+
+    double CutCh[16]={-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1};
+    double FaultyCh[16]={-1,-1,-1,-1,-1,-1,-1,-1,1,-1,-1,1,-1,1,-1,1};
+    int NumChAvailable=0;
+    int NumChAvailableV=0;
+    int NumChAvailableH=0;
+     
     for(int ich=0; ich<MCH; ich++){
-      Bool_t SkipCh=false;
-      for(int icut=0; icut<NumCutCh; icut++){
-	if(ich==CutCh[icut]){
-	  SkipCh=true;
+      ///Get the Waveform from the data file for each channel
+      TGraph *grdum=realAtriEvPtr->getGraphFromRFChan(ich);
+       
+      ///Interpolate the waveforms to ensure equal spacing between the samples
+      TGraph *gr=FFTtools::getInterpolatedGraph(grdum,0.6);
+      delete grdum;
+       
+      VoltageSNR[ich]=getmyWaveformSNR(gr);
+      //if(VoltageSNR[ich]<6 || FaultyCh[ich]==1){
+      if(FaultyCh[ich]==1){
+	//cout<<ich<<" channel cut "<<VoltageSNR[ich]<<endl;
+	CutCh[ich]=1;
+      }else{
+	NumChAvailable++;
+	if(ich<8){
+	  NumChAvailableV++;
+	}else{
+	  NumChAvailableH++;
 	}
       }
-      if(SkipCh==false){
+       
+      delete gr;
+    }
+    
+    for(int ich=0; ich<MCH; ich++){
+      CorScore[ich]=0;
+      
+      if(CutCh[ich]==-1){
 	///Get the Waveform from the data file for each channel
 	TGraph *grdum=realAtriEvPtr->getGraphFromRFChan(ich);
 
@@ -555,84 +635,194 @@ void ReconstructSPICEevents(char const *InputFileName, int Run, int Event){
 	  ChAmp[0][ich]=DAmp;
 	  ChAmp[1][ich]=0;
 	}
-	  
+
+	if(ich<8){
+	  grCor[ich]=FFTtools::getCorrelationGraph(gCPtemp[0][ich],gr);
+	}else{
+	  grCor[ich]=FFTtools::getCorrelationGraph(gCPtemp[1][ich],gr); 
+	}
+	
+	Int_t nBins = grCor[ich]->GetN();
+	Double_t *yVals = grCor[ich]->GetY();
+	Double_t *xVals = grCor[ich]->GetX();
+	
+	Double_t MaxCorScore=TMath::MaxElement(nBins,yVals);
+	Int_t CorTimeBin=TMath::LocMax(nBins,yVals);
+	Double_t CorTimeVal=xVals[CorTimeBin];
+	CorScore[ich]=MaxCorScore;
+	
 	delete gr;
 	delete grPeakPoint;
       }
     }////channel loop
 
-
-    for(int ich=0;ich<TotalAntennasRx;ich++){
-      Bool_t SkipCh=false;
-      for(int icut=0; icut<NumCutCh; icut++){
-	if(ich==CutCh[icut]){
-	  SkipCh=true;
-	}
+     ///separate out the V and H SNRs for voltage 
+  for(Int_t cho=0; cho<8; cho++){
+    SNRV[cho]= VoltageSNR[cho];
+  }     
+  for(Int_t ch=8; ch<16; ch++){
+    SNRH[ch-8]=VoltageSNR[ch];
+  }
+  
+  int nr=0;
+  while(nr<3){
+    VoltageSNRV[nr]=TMath::MaxElement(8,SNRV);
+    VoltageSNRV_Ch[nr]=TMath::LocMax(8,SNRV);
+    const Int_t dummy1=VoltageSNRV_Ch[nr];
+    SNRV[dummy1]=0;
+	    
+    VoltageSNRH[nr]=TMath::MaxElement(8,SNRH);
+    VoltageSNRH_Ch[nr]=TMath::LocMax(8,SNRH);
+    const Int_t dummy2=VoltageSNRH_Ch[nr];
+    SNRH[dummy2]=0;
+    nr++;
+  }
+  
+  Double_t NumSinglePeak=0;
+  Double_t NumTotalChannels=0;
+  for(int ich=0;ich<TotalAntennasRx;ich++){
+    for(int iray=0;iray<2;iray++){
+      IgnoreCh[iray][ich]=1;
+      if(ChHitTime[iray][ich]==0 || CutCh[ich]==1){
+	IgnoreCh[iray][ich]=0;
       }
-      for(int iray=0;iray<2;iray++){
-	IgnoreCh[iray][ich]=1;
-	if(ChHitTime[iray][ich]==0 || SkipCh==true){
-	  IgnoreCh[iray][ich]=0;
-	}
-      }
+      
     }
+    if(IgnoreCh[0][ich]==1){
+      NumTotalChannels++;
+    }
+    if((IgnoreCh[0][ich]==1 && IgnoreCh[1][ich]==0)){
+      NumSinglePeak++;
+    }
+  } 
 
-    UnixTimeSelected.push_back(unixTime-firstUnixTime);
-    for(int ich=0; ich<MCH; ich++){
-      if(IgnoreCh[0][ich]!=0 && IgnoreCh[1][ich]!=0){
-	PwrSNR[0][ich].push_back(ChSNR[0][ich]);
-	PwrSNR[1][ich].push_back(ChSNR[1][ich]);
-	dtDR_Ch[ich].push_back(fabs(ChHitTime[0][ich]-ChHitTime[1][ich]));
-	DRAmpRatio_Ch[ich].push_back(ChAmp[0][ich]/ChAmp[1][ich]);
-      }else{
-	PwrSNR[0][ich].push_back(ChSNR[0][ich]);  
-	PwrSNR[1][ich].push_back(0);
-	dtDR_Ch[ich].push_back(0);
-	DRAmpRatio_Ch[ich].push_back(0);
+  Double_t FractionSinglePeak=NumSinglePeak/NumTotalChannels;
+  if(FractionSinglePeak>=0.90){
+    for(int ich=0;ich<TotalAntennasRx;ich++){
+      if(IgnoreCh[1][ich]==1){
+	IgnoreCh[1][ich]=0;
+	if(ChAmp[1][ich]>ChAmp[0][ich]){
+	  swap(ChHitTime[0][ich], ChHitTime[1][ich]);
+	  swap(ChSNR[0][ich], ChSNR[1][ich]);
+	}
       }
-    }    
+      
+    }
+  }
+  
+  UnixTimeSelected.push_back(unixTime-firstUnixTime);
+  for(int ich=0; ich<MCH; ich++){
+    if(IgnoreCh[0][ich]!=0 && IgnoreCh[1][ich]!=0){
+      PwrSNR[0][ich].push_back(ChSNR[0][ich]);
+      PwrSNR[1][ich].push_back(ChSNR[1][ich]);
+      dtDR_Ch[ich].push_back(fabs(ChHitTime[0][ich]-ChHitTime[1][ich]));
+      DRAmpRatio_Ch[ich].push_back(ChAmp[0][ich]/ChAmp[1][ich]);
+    }else{
+      PwrSNR[0][ich].push_back(ChSNR[0][ich]);  
+      PwrSNR[1][ich].push_back(0);
+      dtDR_Ch[ich].push_back(0);
+      DRAmpRatio_Ch[ich].push_back(0);
+    }
+  }    
 
+  if(NumChAvailable>=4){
+  
+    double GuessResultCor[3][3]; 
+    double MinimizerRadialWidth;
+
+    auto t1 = std::chrono::high_resolution_clock::now();
     double SPICE_Depth = gsl_spline_eval(spline_steffen, unixTime, spline_acc);
-    InitialTxCor_XYZ[0]=TrueX;
-    InitialTxCor_XYZ[1]=TrueY;
-    InitialTxCor_XYZ[2]=-SPICE_Depth;
+    
+    if(GetActualInitialCondition==true){  
+      InitialTxCor_XYZ[0]=TrueX;
+      InitialTxCor_XYZ[1]=TrueY;
+      InitialTxCor_XYZ[2]=-SPICE_Depth;
+    
+      Interferometer::XYZtoThPhR(InitialTxCor_XYZ,InitialTxCor_ThPhR);
+      InitialTxCor_ThPhR[0]=InitialTxCor_ThPhR[0]*(180./Interferometer::pi);
+      InitialTxCor_ThPhR[1]=InitialTxCor_ThPhR[1]*(180./Interferometer::pi); 
 
+      GuessResultCor[0][0]=InitialTxCor_ThPhR[0];
+      GuessResultCor[0][1]=InitialTxCor_ThPhR[1];
+      GuessResultCor[0][2]=InitialTxCor_ThPhR[2];
+      
+      MinimizerRadialWidth=100;
+    }else{
+      double StartDistance=sqrt(SPICE_Depth*SPICE_Depth+ TrueX*TrueX + TrueY*TrueY)-100;
+      Interferometer::GetApproximateMinThPhR(GuessResultCor,ExpectedPositionUncertainty,ChHitTime,IgnoreCh,ChSNR,StartDistance);
+      Interferometer::GetApproximateDistance(GuessResultCor,ExpectedPositionUncertainty,ChHitTime,IgnoreCh,ChSNR);
+      MinimizerRadialWidth=100;
+    }
+    auto t2 = std::chrono::high_resolution_clock::now();
+    auto duration = std::chrono::duration_cast<std::chrono::microseconds>( t2 - t1 ).count();
+    DurationInitialCondition=duration/1000;
+    
+    InitialTxCor_ThPhR[0]=GuessResultCor[0][0]*(Interferometer::pi/180);
+    InitialTxCor_ThPhR[1]=GuessResultCor[0][1]*(Interferometer::pi/180);
+    InitialTxCor_ThPhR[2]=GuessResultCor[0][2];
+ 
+    Interferometer::DoInterferometery(InitialTxCor_ThPhR, FinalTxCor_ThPhR, ExpectedPositionUncertainty, ChHitTime, IgnoreCh, ChSNR, FinalMinValue, DurationReconstruction, Iterations,MinimizerRadialWidth); 
+    
+    double FixedR=sqrt(SPICE_Depth*SPICE_Depth+ TrueX*TrueX + TrueY*TrueY);
+    Interferometer::GetRecoFixedR(GuessResultCor[0], FinalTxCor_ThPhR_fR,ExpectedPositionUncertainty,ChHitTime, IgnoreCh, ChSNR, FixedR);
+    
+    DurationTotal=DurationInitialCondition+DurationReconstruction;
+
+    InitialTxCor_ThPhR[0]=InitialTxCor_ThPhR[0]*(180./Interferometer::pi);
+    InitialTxCor_ThPhR[1]=InitialTxCor_ThPhR[1]*(180./Interferometer::pi); 
+    
     FinalTxCor_XYZ[0]=0;
     FinalTxCor_XYZ[1]=0;
     FinalTxCor_XYZ[2]=0;
+    FinalTxCor_ThPhR[0]=FinalTxCor_ThPhR[0]*(Interferometer::pi/180);
+    FinalTxCor_ThPhR[1]=FinalTxCor_ThPhR[1]*(Interferometer::pi/180); 
+    Interferometer::ThPhRtoXYZ(FinalTxCor_ThPhR, FinalTxCor_XYZ);
+    FinalTxCor_ThPhR[0]=FinalTxCor_ThPhR[0]*(180./Interferometer::pi);
+    FinalTxCor_ThPhR[1]=FinalTxCor_ThPhR[1]*(180./Interferometer::pi);
+
+    FinalTxCor_XYZ_fR[0]=0;
+    FinalTxCor_XYZ_fR[1]=0;
+    FinalTxCor_XYZ_fR[2]=0;
+    FinalTxCor_ThPhR_fR[0]=FinalTxCor_ThPhR_fR[0]*(Interferometer::pi/180);
+    FinalTxCor_ThPhR_fR[1]=FinalTxCor_ThPhR_fR[1]*(Interferometer::pi/180); 
+    Interferometer::ThPhRtoXYZ(FinalTxCor_ThPhR_fR, FinalTxCor_XYZ_fR);
+    FinalTxCor_ThPhR_fR[0]=FinalTxCor_ThPhR_fR[0]*(180./Interferometer::pi);
+    FinalTxCor_ThPhR_fR[1]=FinalTxCor_ThPhR_fR[1]*(180./Interferometer::pi);
+
+    for(int i=0;i<3;i++){
+      dXYZ[i]=InitialTxCor_XYZ[i]-FinalTxCor_XYZ[i]; 
+      dThPhR[i]=InitialTxCor_ThPhR[i]-FinalTxCor_ThPhR[i]; 
+    }
     
-    DoInterferometery(InitialTxCor_XYZ, FinalTxCor_XYZ, InitialTxCor_XYZ, ExpectedPositionUncertainty, ChHitTime, IgnoreCh, ChSNR, FinalMinValue, Duration, Iterations);      
-      
-    dX=InitialTxCor_XYZ[0]-FinalTxCor_XYZ[0];
-    dY=InitialTxCor_XYZ[1]-FinalTxCor_XYZ[1];
-    dZ=InitialTxCor_XYZ[2]-FinalTxCor_XYZ[2];
-    
-    InitialTxCor_ThPhR[0]=0;
-    InitialTxCor_ThPhR[1]=0;
-    InitialTxCor_ThPhR[2]=0;
-    Interferometer::XYZtoThPhR(InitialTxCor_XYZ,InitialTxCor_ThPhR);
-    InitialTxCor_ThPhR[0]=InitialTxCor_ThPhR[0]*(180./Interferometer::pi);
-    InitialTxCor_ThPhR[1]=InitialTxCor_ThPhR[1]*(180./Interferometer::pi); 
+    cout<<"Final Reco Results are: dX="<<dXYZ[0]<<" ,dY="<<dXYZ[1]<<" ,dZ="<<dXYZ[2]<<" |  Xtrue="<<InitialTxCor_XYZ[0]<<" ,Ytrue="<<InitialTxCor_XYZ[1]<<" ,Ztrue="<<InitialTxCor_XYZ[2]<<" | Xreco="<<FinalTxCor_XYZ[0]<<" ,Yreco="<<FinalTxCor_XYZ[1]<<" ,Zreco="<<FinalTxCor_XYZ[2]<<endl;
+    cout<<"Final Reco Results are: dTh="<<dThPhR[0]<<" ,dPh="<<dThPhR[1]<<" ,dR="<<dThPhR[2]<<" |  Thtrue="<<InitialTxCor_ThPhR[0]<<" ,Phtrue="<<InitialTxCor_ThPhR[1]<<" ,Rtrue="<<InitialTxCor_ThPhR[2]<<" | Threco="<<FinalTxCor_ThPhR[0]<<" ,Phreco="<<FinalTxCor_ThPhR[1]<<" ,Rreco="<<FinalTxCor_ThPhR[2]<<endl;
+    cout<<"Final Reco Results for fixed R are: |  Th_initial="<<InitialTxCor_ThPhR[0]<<" ,Ph_initial="<<InitialTxCor_ThPhR[1]<<" ,R_initial="<<FixedR<<" | Th_reco="<<FinalTxCor_ThPhR_fR[0]<<" ,Ph_reco="<<FinalTxCor_ThPhR_fR[1]<<" ,R_reco="<<FixedR<<endl;
+    cout<<"Fn Min Value:"<<FinalMinValue<<", Total Minimizer Iterations: "<<Iterations<<", Total Reco Duration (ms): "<<DurationTotal<<endl;
+  }else{
+    FinalTxCor_XYZ[0]=0;
+    FinalTxCor_XYZ[1]=0;
+    FinalTxCor_XYZ[2]=0;
+
+    InitialTxCor_XYZ[0]=0;
+    InitialTxCor_XYZ[1]=0;
+    InitialTxCor_XYZ[2]=0;
 
     FinalTxCor_ThPhR[0]=0;
     FinalTxCor_ThPhR[1]=0;
     FinalTxCor_ThPhR[2]=0;
-    Interferometer::XYZtoThPhR(FinalTxCor_XYZ, FinalTxCor_ThPhR);
-    FinalTxCor_ThPhR[0]=FinalTxCor_ThPhR[0]*(180./Interferometer::pi);
-    FinalTxCor_ThPhR[1]=FinalTxCor_ThPhR[1]*(180./Interferometer::pi); 
 
-    dTh=InitialTxCor_ThPhR[0]-FinalTxCor_ThPhR[0];
-    dPh=InitialTxCor_ThPhR[1]-FinalTxCor_ThPhR[1];
-    dR=InitialTxCor_ThPhR[2]-FinalTxCor_ThPhR[2];
-      
-    cout<<"Final Reco Results are: dX="<<dX<<" ,dY="<<dY<<" ,dZ="<<dZ<<" |  Xtrue="<<InitialTxCor_XYZ[0]<<" ,Ytrue="<<InitialTxCor_XYZ[1]<<" ,Ztrue="<<InitialTxCor_XYZ[2]<<" | Xreco="<<FinalTxCor_XYZ[0]<<" ,Yreco="<<FinalTxCor_XYZ[1]<<" ,Zreco="<<FinalTxCor_XYZ[2]<<endl;
-    cout<<"Final Reco Results are: dTh="<<dTh<<" ,dPh="<<dPh<<" ,dR="<<dR<<" |  Thtrue="<<InitialTxCor_ThPhR[0]<<" ,Phtrue="<<InitialTxCor_ThPhR[1]<<" ,Rtrue="<<InitialTxCor_ThPhR[2]<<" | Threco="<<FinalTxCor_ThPhR[0]<<" ,Phreco="<<FinalTxCor_ThPhR[1]<<" ,Rreco="<<FinalTxCor_ThPhR[2]<<endl;
-    cout<<"Fn Min Value:"<<FinalMinValue<<", Total Minimizer Iterations: "<<Iterations<<", Total Reco Duration (ms): "<<Duration<<endl;
+    InitialTxCor_ThPhR[0]=0;
+    InitialTxCor_ThPhR[1]=0;
+    InitialTxCor_ThPhR[2]=0;
 
-     RecoTree->Fill();
+    cout<<" Number of hit channels is less than 3 so no reconstruction was performed!!!"<<endl;
+  }  
+
+  RecoTree->Fill();
+  RecoTree->Write();
     
-    ///Delete the event pointer so we get a new pointer for the next event and there is no memory
-    delete realAtriEvPtr;
+  ///Delete the event pointer so we get a new pointer for the next event and there is no memory
+  delete realAtriEvPtr;
       
   }////if condition for the single event  
 

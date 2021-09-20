@@ -127,7 +127,8 @@ void RunInterferometerARA(){
     //if(CheckStationTrigger==true){
    
       double GuessResultCor[3][3];
-      Interferometer::GetApproximateMinThPhR(GuessResultCor,ExpectedPositionUncertainty,ChHitTime,IgnoreCh,ChSNR);
+      double StartDistance=0;
+      Interferometer::GetApproximateMinThPhR(GuessResultCor,ExpectedPositionUncertainty,ChHitTime,IgnoreCh,ChSNR,StartDistance);
       Interferometer::GetApproximateDistance(GuessResultCor,ExpectedPositionUncertainty,ChHitTime,IgnoreCh,ChSNR);
       
       InitialTxCor_ThPhR[0]=GuessResultCor[0][0]*(Interferometer::pi/180);

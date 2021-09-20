@@ -3,7 +3,7 @@
 void RunInterferometer(){
   DeclareAntennaConfig();
 
-  double DummyTxCor[3]={-500,505,200};
+  double DummyTxCor[3]={-500,505,-200};
   //double DummyTxCor[3]={3,4,20};
   //double DummyTxCor[3]={0.02,3,370};
   //double DummyTxCor[3]={-500,-500,-151};
@@ -61,7 +61,8 @@ void RunInterferometer(){
   bool CheckStationTrigger=Interferometer::CheckTrigger(IgnoreCh);
   if(CheckStationTrigger==true){
     double GuessResultCor[3][3];
-    Interferometer::GetApproximateMinThPhR(GuessResultCor,ExpectedPositionUncertainty,ChHitTime,IgnoreCh,ChSNR);
+    double StartDistance=0;
+    Interferometer::GetApproximateMinThPhR(GuessResultCor,ExpectedPositionUncertainty,ChHitTime,IgnoreCh,ChSNR,StartDistance);
     Interferometer::GetApproximateDistance(GuessResultCor,ExpectedPositionUncertainty,ChHitTime,IgnoreCh,ChSNR);
   
     InitialTxCor_ThPhR[0]=GuessResultCor[0][0]*(Interferometer::pi/180);
@@ -71,8 +72,8 @@ void RunInterferometer(){
      
     double Duration=0;
     int Iterations=0;
-    
-    Interferometer::DoInterferometery(InitialTxCor_ThPhR, FinalTxCor_ThPhR, ExpectedPositionUncertainty, ChHitTime, IgnoreCh, ChSNR, FinalMinValue, Duration, Iterations);
+    double MinimizerRadialWidth=100;
+    Interferometer::DoInterferometery(InitialTxCor_ThPhR, FinalTxCor_ThPhR, ExpectedPositionUncertainty, ChHitTime, IgnoreCh, ChSNR, FinalMinValue, Duration, Iterations, MinimizerRadialWidth);
     
     double dX=TrueTxCor_XYZ[0]-FinalTxCor_XYZ[0];
     double dY=TrueTxCor_XYZ[1]-FinalTxCor_XYZ[1];

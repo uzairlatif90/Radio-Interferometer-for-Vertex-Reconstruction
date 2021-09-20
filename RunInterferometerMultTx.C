@@ -76,7 +76,8 @@ void RunInterferometerMultTx(){
 	  if(CheckStationTrigger==true){
 	    cout<<"XYZ Tx coordinates are  "<<i<<" "<<j<<" "<<k<<endl;
 	    double GuessResultCor[3][3];
-	    Interferometer::GetApproximateMinThPhR(GuessResultCor,ExpectedPositionUncertainty,ChHitTime,IgnoreCh,ChSNR);
+	    double StartDistance=0;
+	    Interferometer::GetApproximateMinThPhR(GuessResultCor,ExpectedPositionUncertainty,ChHitTime,IgnoreCh,ChSNR,StartDistance);
 	    Interferometer::GetApproximateDistance(GuessResultCor,ExpectedPositionUncertainty,ChHitTime,IgnoreCh,ChSNR);
 	    
 	    InitialTxCor_ThPhR[0]=GuessResultCor[0][0]*(Interferometer::pi/180);
@@ -86,7 +87,8 @@ void RunInterferometerMultTx(){
 	    
 	    double Duration=0;
 	    int Iterations=0;  
-	    Interferometer::DoInterferometery(InitialTxCor_ThPhR, FinalTxCor_ThPhR, ExpectedPositionUncertainty, ChHitTime, IgnoreCh, ChSNR, FinalMinValue, Duration, Iterations);
+	    double MinimizerRadialWidth=100;
+	    Interferometer::DoInterferometery(InitialTxCor_ThPhR, FinalTxCor_ThPhR, ExpectedPositionUncertainty, ChHitTime, IgnoreCh, ChSNR, FinalMinValue, Duration, Iterations,MinimizerRadialWidth);
 	    
 	    Interferometer::XYZtoThPhR(InitialTxCor_XYZ,InitialTxCor_ThPhR);
 	    InitialTxCor_ThPhR[0]=InitialTxCor_ThPhR[0]*(180./Interferometer::pi);

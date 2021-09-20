@@ -616,7 +616,6 @@ void ReconstructARAevents(Int_t StationId, char const *InputFileName, int Run, i
     
     delete gr;
   }
-
   
   if(NumChAvailableV>=6 && isCalpulserTrig==false){
     for(int ich=0; ich<8; ich++){
@@ -683,8 +682,6 @@ void ReconstructARAevents(Int_t StationId, char const *InputFileName, int Run, i
       ///Interpolate the waveforms to ensure equal spacing between the samples
       TGraph *gr=FFTtools::getInterpolatedGraph(grdum,0.6);
       delete grdum;
-
-      //VoltageSNR[ich]=getmyWaveformSNR(gr);
 	
       grPwrEnv[ich]=FFTtools::getSimplePowerEnvelopeGraph(gr);
       TGraph *grPeakPoint=new TGraph();
@@ -771,7 +768,7 @@ void ReconstructARAevents(Int_t StationId, char const *InputFileName, int Run, i
       }else{
 	grCor[ich]=FFTtools::getCorrelationGraph(gCPtemp[1][ich],gr); 
       }
-                                                                                                                                                        
+      
       Int_t nBins = grCor[ich]->GetN();
       Double_t *yVals = grCor[ich]->GetY();
       Double_t *xVals = grCor[ich]->GetX();
@@ -784,7 +781,6 @@ void ReconstructARAevents(Int_t StationId, char const *InputFileName, int Run, i
       delete gr;
       delete grPeakPoint;
     }
-
   }////channel loop
   
   ///separate out the V and H SNRs for voltage 
@@ -853,7 +849,8 @@ void ReconstructARAevents(Int_t StationId, char const *InputFileName, int Run, i
       Interferometer::GetApproximateMinUserCor(CalPulCor,GuessResultCor,ExpectedPositionUncertainty,ChHitTime,IgnoreCh,ChSNR);
       MinimizerRadialWidth=20;
     }else{
-      Interferometer::GetApproximateMinThPhR(GuessResultCor,ExpectedPositionUncertainty,ChHitTime,IgnoreCh,ChSNR);
+      double StartDistance=0;
+      Interferometer::GetApproximateMinThPhR(GuessResultCor,ExpectedPositionUncertainty,ChHitTime,IgnoreCh,ChSNR,StartDistance);
       Interferometer::GetApproximateDistance(GuessResultCor,ExpectedPositionUncertainty,ChHitTime,IgnoreCh,ChSNR);
       MinimizerRadialWidth=100;
     }
