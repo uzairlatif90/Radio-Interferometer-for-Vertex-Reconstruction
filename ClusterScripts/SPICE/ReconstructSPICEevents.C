@@ -103,6 +103,85 @@ double GetNoiseRMS(TGraph *gr){
   return newRMS;
 }
 
+//this function calculates the SNR, signal amplitudes and noise RMSs of the voltage waveforms
+Double_t getmyWaveformSNR(TGraph *gr){
+
+  Int_t nBins = gr->GetN();
+  Double_t *yVals = gr->GetY();
+  
+  double RMS=GetNoiseRMS(gr);
+  
+  ///find the signal amplitude
+  Int_t trending=3;
+  Double_t p2p=0;
+  Int_t firstBin=0;
+  Double_t y;
+
+  Double_t newp2p=0;
+  Int_t maxbin=0;
+  for(Int_t i=0;i<nBins;i++){
+    y=yVals[i];
+    //cout<<i<<" "<<yVals[i]<<endl;
+    if(i>0){
+      if(y<yVals[i-1] && trending==0){
+        if(TMath::Abs(y-yVals[firstBin]>p2p)){
+          p2p=TMath::Abs(y-yVals[firstBin]);
+        }
+      }
+      else if(y<yVals[i-1] && (trending==1 || trending==2)){
+        trending=0;
+        firstBin=i-1;
+        if(TMath::Abs(y-yVals[firstBin]>p2p)){
+          p2p=TMath::Abs(y-yVals[firstBin]);
+        }
+      }
+      else if(y>yVals[i-1] && (trending==0 || trending==2)){
+        trending=1;
+        firstBin=i-1;
+        if(TMath::Abs(y-yVals[firstBin]>p2p)){
+          p2p=TMath::Abs(y-yVals[firstBin]);
+	}
+      }
+      else if(y>yVals[i-1] && trending==1){
+        if(TMath::Abs(y-yVals[firstBin]>p2p)){
+          p2p=TMath::Abs(y-yVals[firstBin]);
+	}
+      }
+      else if(y==yVals[i-1]){
+	trending=2;
+      }
+      else if(trending==3){
+        if(y<yVals[i-1]){
+          trending=0;
+          firstBin=0;
+        }
+        if(y>yVals[i-1]){
+          trending=1;
+          firstBin=0;
+	}
+      }
+      else{
+	std::cout << "trending cock up!" << std::endl;
+	std::cout << "y " << y << " yVals[i] " << yVals[i] << " yVals[i-1] " << yVals[i-1] << std::endl;
+        //return -1;
+      }
+      // if(p2p>newp2p){
+      //   //cout<<"The value of firstbin is "<<firstBin<<" "<<p2p<<endl;
+      // newp2p=p2p;
+      //   maxbin=firstBin;
+      // }
+    }
+  }
+  
+  //cout<<"The value of firstbin is "<<firstBin<<endl;
+  p2p/=2.;
+  Double_t SNR = p2p/RMS;
+
+  //delete []yVals;
+  
+  return SNR;
+}
+
 void PeakFinder(TGraph *grPwrEnvOriginal, TGraph *grPeakPoint){
 
   TGraph *grPwrEnvSmooth=FFTtools::getBoxCar(grPwrEnvOriginal,7); 
@@ -429,6 +508,9 @@ void ReconstructSPICEevents(int StationId,char const *InputFileName, int Run, in
   TGraph *grPwrEnv[MCH];
   TGraph *grCor[MCH];  
 
+  double SNRV[8];
+  double SNRH[8];
+  
   double eventNum;
   double unixTime;
   double firstUnixTime;
@@ -533,6 +615,7 @@ void ReconstructSPICEevents(int StationId,char const *InputFileName, int Run, in
       if(FaultyCh[ich]==1){
 	//cout<<ich<<" channel cut "<<VoltageSNR[ich]<<endl;
 	CutCh[ich]=1;
+	VoltageSNR[ich]=0;
       }else{
 	NumChAvailable++;
 	if(ich<8){
