@@ -69,21 +69,16 @@ void Interferometer::GenerateChHitTimeAndCheckHits(double TxCor[3],double timeRa
       timeRay[1][iRx]=timeR[iRx];
       RangRay[1][iRx]=RangR[iRx];
     }
-
-    if(RangRa[0][iRx]!=-1000 && RangD[iRx]==-1000 && RangR[iRx]==-1000){
-      timeRay[0][iRx]=timeRa[0][iRx];
-      RangRay[0][iRx]=RangRa[0][iRx];
-    }
-
-    if(RangRa[0][iRx]!=-1000 && RangD[iRx]==-1000){
-      timeRay[0][iRx]=timeRa[0][iRx];
-      RangRay[0][iRx]=RangRa[0][iRx];
-    }
-
-    if(RangRa[0][iRx]!=-1000 && RangR[iRx]==-1000){
+    
+    if(RangRa[0][iRx]!=-1000 && RangD[iRx]!=-1000){
       timeRay[1][iRx]=timeRa[0][iRx];
       RangRay[1][iRx]=RangRa[0][iRx];
-    }  
+    }
+
+    if(RangRa[0][iRx]!=-1000 && RangR[iRx]!=-1000){
+      timeRay[0][iRx]=timeRa[0][iRx];
+      RangRay[0][iRx]=RangRa[0][iRx];
+    }
     
     if(RangRa[0][iRx]!=-1000 && RangD[iRx]==-1000 && RangR[iRx]==-1000){
       timeRay[0][iRx]=timeRa[0][iRx];
@@ -94,40 +89,10 @@ void Interferometer::GenerateChHitTimeAndCheckHits(double TxCor[3],double timeRa
       timeRay[1][iRx]=timeRa[1][iRx];
       RangRay[1][iRx]=RangRa[1][iRx];
     }
-    
-    if(RangD[iRx]!=-1000 && RangRa[0][iRx]!=-1000){
-      timeRay[0][iRx]=timeD[iRx];
-      RangRay[0][iRx]=RangD[iRx];
-      timeRay[1][iRx]=timeRa[0][iRx];
-      RangRay[1][iRx]=RangRa[0][iRx];
-    }
 
-    if(RangD[iRx]!=-1000 && RangRa[1][iRx]!=-1000){
-      timeRay[0][iRx]=timeD[iRx];
-      RangRay[0][iRx]=RangD[iRx];
-      timeRay[1][iRx]=timeRa[1][iRx];
-      RangRay[1][iRx]=RangRa[1][iRx];
-    }    
-
-    if(RangR[iRx]!=-1000 && RangRa[0][iRx]!=-1000){
-      timeRay[1][iRx]=timeR[iRx];
-      RangRay[1][iRx]=RangR[iRx];
-      timeRay[0][iRx]=timeRa[0][iRx];
-      RangRay[0][iRx]=RangRa[0][iRx];
-    }
-
-    if(RangR[iRx]!=-1000 && RangRa[1][iRx]!=-1000){
-      timeRay[1][iRx]=timeR[iRx];
-      RangRay[1][iRx]=RangR[iRx];
-      timeRay[0][iRx]=timeRa[1][iRx];
-      RangRay[0][iRx]=RangRa[1][iRx];
-    }
-
-    if(RangRa[0][iRx]!=-1000 && RangRa[1][iRx]!=-1000){
-      timeRay[0][iRx]=timeRa[0][iRx];
-      RangRay[0][iRx]=RangRa[0][iRx];
-      timeRay[1][iRx]=timeRa[1][iRx];
-      RangRay[1][iRx]=RangRa[1][iRx];
+    if(timeRay[0][iRx]>timeRay[1][iRx]){
+      swap(timeRay[0][iRx],timeRay[1][iRx]);
+      swap(RangRay[0][iRx],RangRay[1][iRx]);
     }
     
     if(RangRay[0][iRx]==-1000){
@@ -976,7 +941,7 @@ void Interferometer::SearchApproxiMin(int C_nz, double StartCor[3],double GuessR
     GuessResultCor[Nmin][0]=RecoPar[0][FinalMinValueBin];
     GuessResultCor[Nmin][1]=RecoPar[1][FinalMinValueBin];
     GuessResultCor[Nmin][2]=RecoPar[2][FinalMinValueBin];
-    cout<<"Guess Minimas: Tht "<<GuessResultCor[Nmin][0]<<" Pht "<<GuessResultCor[Nmin][1]<<" Rt "<<GuessResultCor[Nmin][2]<<" min "<<FinalMinValue<<endl;
+    //cout<<"Guess Minimas: Tht "<<GuessResultCor[Nmin][0]<<" Pht "<<GuessResultCor[Nmin][1]<<" Rt "<<GuessResultCor[Nmin][2]<<" min "<<FinalMinValue<<endl;
     RecoPar[3][FinalMinValueBin]=10000000000;    
     Nmin++;
   }
@@ -1079,7 +1044,7 @@ void Interferometer::GetApproximateMinUserCor(vector <double> UserCor[3] ,double
     GuessResultCor[Nmin][0]=RecoPar[0][FinalMinValueBin];
     GuessResultCor[Nmin][1]=RecoPar[1][FinalMinValueBin];
     GuessResultCor[Nmin][2]=RecoPar[2][FinalMinValueBin];
-    cout<<"Guess Minimas: Tht "<<GuessResultCor[Nmin][0]<<" Pht "<<GuessResultCor[Nmin][1]<<" Rt "<<GuessResultCor[Nmin][2]<<" min "<<FinalMinValue<<endl;
+    //cout<<"Guess Minimas: Tht "<<GuessResultCor[Nmin][0]<<" Pht "<<GuessResultCor[Nmin][1]<<" Rt "<<GuessResultCor[Nmin][2]<<" min "<<FinalMinValue<<endl;
     RecoPar[3][FinalMinValueBin]=10000000000;    
     Nmin++;
   }
@@ -1277,7 +1242,7 @@ void Interferometer::GetApproximateDistance(double GuessResultCor[3][3], double 
     GuessResultCor[Nmin][0]=RecoPar[0][FinalMinValueBin];
     GuessResultCor[Nmin][1]=RecoPar[1][FinalMinValueBin];
     GuessResultCor[Nmin][2]=RecoPar[2][FinalMinValueBin];
-    cout<<"Guess Minimas 1st : Tht "<<GuessResultCor[Nmin][0]<<" Pht "<<GuessResultCor[Nmin][1]<<" Rt "<<GuessResultCor[Nmin][2]<<" min "<<FinalMinValue<<endl;
+    //cout<<"Guess Minimas 1st : Tht "<<GuessResultCor[Nmin][0]<<" Pht "<<GuessResultCor[Nmin][1]<<" Rt "<<GuessResultCor[Nmin][2]<<" min "<<FinalMinValue<<endl;
     RecoPar[3][FinalMinValueBin]=10000000000;    
     Nmin++;
   }  
@@ -1351,7 +1316,7 @@ void Interferometer::GetApproximateDistance(double GuessResultCor[3][3], double 
     GuessResultCor[Nmin][0]=RecoPar[0][FinalMinValueBin];
     GuessResultCor[Nmin][1]=RecoPar[1][FinalMinValueBin];
     GuessResultCor[Nmin][2]=RecoPar[2][FinalMinValueBin];
-    cout<<"Guess Minimas 2nd: Tht "<<GuessResultCor[Nmin][0]<<" Pht "<<GuessResultCor[Nmin][1]<<" Rt "<<GuessResultCor[Nmin][2]<<" min "<<FinalMinValue<<endl;
+    //cout<<"Guess Minimas 2nd: Tht "<<GuessResultCor[Nmin][0]<<" Pht "<<GuessResultCor[Nmin][1]<<" Rt "<<GuessResultCor[Nmin][2]<<" min "<<FinalMinValue<<endl;
     RecoPar[3][FinalMinValueBin]=10000000000;    
     Nmin++;
   }
