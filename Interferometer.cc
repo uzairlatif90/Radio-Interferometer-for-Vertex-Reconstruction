@@ -202,10 +202,10 @@ bool Interferometer::CheckTrigger(int IgnoreCh[2][TotalAntennasRx]){
 
   for(int iray=0;iray<2;iray++){
     if(count[iray][0]+count[iray][1]>=3){
-      if(count[iray][0]>=5){
+      if(count[iray][0]>=4){
 	RayTrigger[iray]=true;
       } 
-      if(count[iray][1]>=5){
+      if(count[iray][1]>=4){
 	RayTrigger[iray]=true;
       }
     }
@@ -353,7 +353,8 @@ double Interferometer::Minimizer_f(const gsl_vector *v, void *params){
   Interferometer::ThPhRtoXYZ(ThPhR,XYZ);
 
   double output=0;
-  
+  double chi2=0,chi2d=0;
+
   double AntennaCoordTx[3]={0,0,0};
   for(int ixyz=0;ixyz<3;ixyz++){
     AntennaCoordTx[ixyz]=XYZ[ixyz];
@@ -412,7 +413,7 @@ double Interferometer::Minimizer_f(const gsl_vector *v, void *params){
     }
   }
   SumSNR=SumSNRD+SumSNRR;
-    
+ 
   // double ChHitOrderDiff=0;
   // double ChHitOrderDiffTot=0;
   // for(int iRx=0;iRx<TotalAntennasRx;iRx++){
@@ -424,25 +425,30 @@ double Interferometer::Minimizer_f(const gsl_vector *v, void *params){
   //   }
   // }
   //ChHitOrderDiff=ChHitOrderDiff/ChHitOrderDiffTot;
-    
-  if(chanD[1]>=chanDsame && chanR[1]>=chanRsame && chanDsame>=chanD[0] && chanRsame>=chanR[0]){
-    double chi2=0,chi2d=0;
-    for(int iRx=0;iRx<TotalAntennasRx;iRx++){ 
-      if(p[2*TotalAntennasRx +iRx]!=0 && IgnoreCh[0][iRx]!=0){
-	//chi2+=pow((p[4*TotalAntennasRx +iRx]*(timeRay[0][iRx] - p[0+iRx] +  pow(std::max(0.0, fabs(timeRay[0][iRx] - p[0+iRx]) - 1),2) ) )/SumSNR,2)   ;
-	chi2+=pow((p[4*TotalAntennasRx +iRx]*(timeRay[0][iRx] - p[0+iRx]))/SumSNR,2);
-	chi2d+=pow(p[4*TotalAntennasRx +iRx]/SumSNR,2);
-      }
-      if(p[3*TotalAntennasRx +iRx]!=0 && IgnoreCh[1][iRx]!=0){
-	//chi2+=pow((p[5*TotalAntennasRx +iRx]*(timeRay[1][iRx] - p[1*TotalAntennasRx+iRx]   + pow(std::max(0.0,fabs(timeRay[1][iRx] - p[1*TotalAntennasRx+iRx]) - 1),2) ) )/SumSNR,2) ;
-	chi2+=pow((p[5*TotalAntennasRx +iRx]*(timeRay[1][iRx] - p[1*TotalAntennasRx+iRx]))/SumSNR,2);
-	chi2d+=pow(p[5*TotalAntennasRx +iRx]/SumSNR,2);
-      }
+
+  for(int iRx=0;iRx<TotalAntennasRx;iRx++){ 
+    if(p[2*TotalAntennasRx +iRx]!=0 && IgnoreCh[0][iRx]!=0){
+      //chi2+=pow((p[4*TotalAntennasRx +iRx]*(timeRay[0][iRx] - p[0+iRx] +  pow(std::max(0.0, fabs(timeRay[0][iRx] - p[0+iRx]) - 1),2) ) )/SumSNR,2)   ;
+      chi2+=pow((p[4*TotalAntennasRx +iRx]*(timeRay[0][iRx] - p[0+iRx]))/SumSNR,2);
+      chi2d+=pow(p[4*TotalAntennasRx +iRx]/SumSNR,2);
     }
-    
+    if(p[3*TotalAntennasRx +iRx]!=0 && IgnoreCh[1][iRx]!=0){
+      //chi2+=pow((p[5*TotalAntennasRx +iRx]*(timeRay[1][iRx] - p[1*TotalAntennasRx+iRx]   + pow(std::max(0.0,fabs(timeRay[1][iRx] - p[1*TotalAntennasRx+iRx]) - 1),2) ) )/SumSNR,2) ;
+      chi2+=pow((p[5*TotalAntennasRx +iRx]*(timeRay[1][iRx] - p[1*TotalAntennasRx+iRx]))/SumSNR,2);
+      chi2d+=pow(p[5*TotalAntennasRx +iRx]/SumSNR,2);
+    }
+  }
+   
+  
+  if(chanD[1]>=chanDsame && chanR[1]>=chanRsame && chanDsame>=chanD[0] && chanRsame>=chanR[0]){   
     output=(chi2/chi2d);
+
+    if(std::isnan(output)){
+      output=1e9;
+    }
+   
   }else{
-    output=GSL_NAN; 
+    output=1e9+(chi2/chi2d); 
   }
   
   return output;
@@ -467,7 +473,8 @@ double Interferometer::Minimizer_fCnz(const gsl_vector *v, void *params){
   Interferometer::ThPhRtoXYZ(ThPhR,XYZ);
   
   double output=0;
-
+  double chi2=0,chi2d=0;
+  
   double AntennaCoordTx[3]={0,0,0};
   for(int ixyz=0;ixyz<3;ixyz++){
     AntennaCoordTx[ixyz]=XYZ[ixyz];
@@ -527,9 +534,8 @@ double Interferometer::Minimizer_fCnz(const gsl_vector *v, void *params){
     }
   }
   SumSNR=SumSNRD+SumSNRR;
-  if(chanD[1]>=chanDsame && chanR[1]>=chanRsame && chanDsame>=chanD[0] && chanRsame>=chanR[0]){
-    double chi2=0,chi2d=0;
-    for(int iRx=0;iRx<TotalAntennasRx;iRx++){
+
+  for(int iRx=0;iRx<TotalAntennasRx;iRx++){
 
       if(p[2*TotalAntennasRx +iRx]!=0 && IgnoreCh[0][iRx]!=0){
 	// chi2+=pow((timeRay[0][iRx] - p[0+iRx]),2);
@@ -549,20 +555,24 @@ double Interferometer::Minimizer_fCnz(const gsl_vector *v, void *params){
       //   chi2+=pow((p[4*TotalAntennasRx +iRx]*p[5*TotalAntennasRx +iRx]*(ChDRTime[iRx]- (p[1*TotalAntennasRx+iRx] - p[0+iRx])))/(SumSNR*SumSNR) ,2);
       // }   
     }
-
+  
+  if(chanD[1]>=chanDsame && chanR[1]>=chanRsame && chanDsame>=chanD[0] && chanRsame>=chanR[0]){ 
+    
     output=(chi2/chi2d);
-  
+    
+    if(std::isnan(output)){
+      output=1e9;
+    }
+    
   }else{
-    output=1e9; 
-  }
-  
+    output=1e9+(chi2/chi2d); 
+  }  
 
   return output;
 }
 
 double Interferometer::MinimizerThPh(double x, void * params)
 {
-
  
   double *p = (double *)params;
   
@@ -602,7 +612,7 @@ double Interferometer::MinimizerThPh(double x, void * params)
   double FinalMinValue=0;
   double FinalTxCor[2]; 
   int Iterations=0;
-
+  int Max_Iter=50;
   do
     {
       Iter++;
@@ -625,15 +635,16 @@ double Interferometer::MinimizerThPh(double x, void * params)
       //         gsl_vector_get (MinimizerWorkSpace->x, 0),
       //         gsl_vector_get (MinimizerWorkSpace->x, 1),
       //         MinimizerWorkSpace->fval,Size);
-
+     
       //cout<<Iter<<" "<<gsl_vector_get (MinimizerWorkSpace->x, 0)<<" "<<gsl_vector_get (MinimizerWorkSpace->x, 1) <<" "<<MinimizerWorkSpace->fval<<" "<<Size<<" "<<(*((MultiDimMinFunc).f))(XYZVec,(MultiDimMinFunc).params)<<endl;
       
       FinalMinValue=MinimizerWorkSpace->fval;
       FinalTxCor[0]=gsl_vector_get (MinimizerWorkSpace->x, 0);
       FinalTxCor[1]=gsl_vector_get (MinimizerWorkSpace->x, 1);
     }
-  while (Status == GSL_CONTINUE && Iter < 50);
-    
+  while (Status == GSL_CONTINUE && Iter < Max_Iter);
+
+  //printf ("error: %s\n", gsl_strerror (Status));
   p[7*TotalAntennasRx+11]=FinalMinValue;
   
   p[7*TotalAntennasRx+6]=FinalTxCor[0];
@@ -923,7 +934,7 @@ void Interferometer::SearchApproxiMin(int C_nz, double StartCor[3],double GuessR
   	  min=Interferometer::Minimizer_fCnz(ThPhRVec, ParameterArray);
   	}
 	
-  	if(std::isnan(min)==false && min!=1e9){
+  	if(std::isnan(min)==false && min!=1e9 && min<1e9){
   	  RecoPar[0].push_back(Tht);
   	  RecoPar[1].push_back(Pht);
   	  RecoPar[2].push_back(Rt);
@@ -1028,7 +1039,7 @@ void Interferometer::GetApproximateMinUserCor(vector <double> UserCor[3] ,double
     double min=0;
     min=Interferometer::Minimizer_f(ThPhRVec, ParameterArray);
     
-    if(std::isnan(min)==false && min!=1e9){
+    if(std::isnan(min)==false && min!=1e9 && min<1e9){
       RecoPar[0].push_back(Tht);
       RecoPar[1].push_back(Pht);
       RecoPar[2].push_back(Rt);
@@ -1212,7 +1223,7 @@ void Interferometer::GetApproximateDistance(double GuessResultCor[3][3], double 
       FinalTxCor[2]=testR;
     }
 
-    if(std::isnan(min)==false && min!=1e9){
+    if(std::isnan(min)==false && min!=1e9 && min<1e9){
       RecoPar[0].push_back(FinalTxCor[0]);
       RecoPar[1].push_back(FinalTxCor[1]);
       RecoPar[2].push_back(FinalTxCor[2]);
@@ -1225,7 +1236,7 @@ void Interferometer::GetApproximateDistance(double GuessResultCor[3][3], double 
       checkmincurve=true;
     }
      
-    if((std::isnan(min)==true || min==1e9) && iloop>=5 ){
+    if((std::isnan(min)==true || min==1e9 || min>1e9) && iloop>=5 ){
       checkmincurve=true;
     }
      
@@ -1282,7 +1293,7 @@ void Interferometer::GetApproximateDistance(double GuessResultCor[3][3], double 
     FinalTxCor[1]=ParameterArray[iEnt+7];
     FinalTxCor[2]=testR;
     
-    if(std::isnan(min)==false && min!=1e9){
+    if(std::isnan(min)==false && min!=1e9 && min<1e9){
       RecoPar[0].push_back(FinalTxCor[0]);
       RecoPar[1].push_back(FinalTxCor[1]);
       RecoPar[2].push_back(FinalTxCor[2]);
@@ -1295,7 +1306,7 @@ void Interferometer::GetApproximateDistance(double GuessResultCor[3][3], double 
       checkmincurve=true;
     }
 
-    if((std::isnan(min)==true || min==1e9) && iloop>=5 ){
+    if((std::isnan(min)==true || min==1e9 || min>1e9) && iloop>=5 ){
       checkmincurve=true;
     }
     
@@ -1420,7 +1431,7 @@ void Interferometer::DoInterferometery(double InitialTxCor[3], double FinalTxCor
   int ChHitOrder[TotalAntennasRx];
   //Interferometer::AddGaussianJitterToHitTimes(JitterNumber,ChHitTime);
   Interferometer::FindFirstHitAndNormalizeHitTime(ChHitTime,IgnoreCh,ChDRTime,ChHitOrder);
-  
+    
   int iInVal=0;
   while(iInVal<InitialValueNum){
     double DummyRecoCor[3];

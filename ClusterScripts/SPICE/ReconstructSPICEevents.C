@@ -12,7 +12,7 @@ void LoadDepthFile(){
   
   int StartTime=1545822000-13*60*60;
   ////Open the file
-  std::ifstream ain("../Depth26Dec.txt");
+  std::ifstream ain("Depth26Dec.txt");
   int n1=0;////variable for counting total number of data points
   std::string line;
   int dummy[2]={0,0};////temporary variable for storing data values from the file  
@@ -313,7 +313,7 @@ void PeakFinder(TGraph *grPwrEnvOriginal, TGraph *grPeakPoint){
     swap(SmallPeak,LargePeak);
   }
 
-  if(SmallPeak>=LargePeak*0.25 && fabs(PowerPeakTime[1]-PowerPeakTime[0])>40 ){
+  if(SmallPeak>=LargePeak*0.50 && fabs(PowerPeakTime[1]-PowerPeakTime[0])>40 ){
     //cout<<"We have two peaks "<<endl;
 
     if(PowerPeakTime[0]>PowerPeakTime[1]){
@@ -504,6 +504,8 @@ void ReconstructSPICEevents(int StationId,char const *InputFileName, int Run, in
   vector <double> V2nAvg;
   vector <double> CorScoreAvg;
 
+  TGraph *grWF[MCH];
+  
   TGraph *gr[MCH];
   TGraph *grPwrEnv[MCH];
   TGraph *grCor[MCH];  
@@ -605,14 +607,15 @@ void ReconstructSPICEevents(int StationId,char const *InputFileName, int Run, in
     for(int ich=0; ich<MCH; ich++){
       ///Get the Waveform from the data file for each channel
       TGraph *grdum=realAtriEvPtr->getGraphFromRFChan(ich);
-       
+
       ///Interpolate the waveforms to ensure equal spacing between the samples
       TGraph *gr=FFTtools::getInterpolatedGraph(grdum,0.6);
+      grWF[ich]=FFTtools::getInterpolatedGraph(grdum,0.6);
       delete grdum;
-       
+      
       VoltageSNR[ich]=getmyWaveformSNR(gr);
-      //if(VoltageSNR[ich]<6 || FaultyCh[ich]==1){
-      if(FaultyCh[ich]==1){
+      if(VoltageSNR[ich]<5 || FaultyCh[ich]==1){
+	//if(FaultyCh[ich]==1){
 	//cout<<ich<<" channel cut "<<VoltageSNR[ich]<<endl;
 	CutCh[ich]=1;
 	VoltageSNR[ich]=0;
@@ -695,6 +698,7 @@ void ReconstructSPICEevents(int StationId,char const *InputFileName, int Run, in
 	  ChSNR[1][ich]=RSNR;
 	  ChAmp[0][ich]=DAmp;
 	  ChAmp[1][ich]=RAmp;
+	  cout<<ich<<" two peaks "<<VoltageSNR[ich]<<endl;
 	}else{
 	  double xpeak,ypeak;
 	  grPeakPoint->GetPoint(0,xpeak,ypeak);
@@ -717,6 +721,7 @@ void ReconstructSPICEevents(int StationId,char const *InputFileName, int Run, in
 	  ChSNR[1][ich]=0;
 	  ChAmp[0][ich]=DAmp;
 	  ChAmp[1][ich]=0;
+	  cout<<ich<<" one peak "<<VoltageSNR[ich]<<endl;
 	}
 
 	if(ich<8){
@@ -740,172 +745,207 @@ void ReconstructSPICEevents(int StationId,char const *InputFileName, int Run, in
     }////channel loop
 
      ///separate out the V and H SNRs for voltage 
-  for(Int_t cho=0; cho<8; cho++){
-    SNRV[cho]= VoltageSNR[cho];
-  }     
-  for(Int_t ch=8; ch<16; ch++){
-    SNRH[ch-8]=VoltageSNR[ch];
-  }
+    for(Int_t cho=0; cho<8; cho++){
+      SNRV[cho]= VoltageSNR[cho];
+    }     
+    for(Int_t ch=8; ch<16; ch++){
+      SNRH[ch-8]=VoltageSNR[ch];
+    }
   
-  int nr=0;
-  while(nr<3){
-    VoltageSNRV[nr]=TMath::MaxElement(8,SNRV);
-    VoltageSNRV_Ch[nr]=TMath::LocMax(8,SNRV);
-    const Int_t dummy1=VoltageSNRV_Ch[nr];
-    SNRV[dummy1]=0;
+    int nr=0;
+    while(nr<3){
+      VoltageSNRV[nr]=TMath::MaxElement(8,SNRV);
+      VoltageSNRV_Ch[nr]=TMath::LocMax(8,SNRV);
+      const Int_t dummy1=VoltageSNRV_Ch[nr];
+      SNRV[dummy1]=0;
 	    
-    VoltageSNRH[nr]=TMath::MaxElement(8,SNRH);
-    VoltageSNRH_Ch[nr]=TMath::LocMax(8,SNRH);
-    const Int_t dummy2=VoltageSNRH_Ch[nr];
-    SNRH[dummy2]=0;
-    nr++;
-  }
+      VoltageSNRH[nr]=TMath::MaxElement(8,SNRH);
+      VoltageSNRH_Ch[nr]=TMath::LocMax(8,SNRH);
+      const Int_t dummy2=VoltageSNRH_Ch[nr];
+      SNRH[dummy2]=0;
+      nr++;
+    }
   
-  Double_t NumSinglePeak=0;
-  Double_t NumTotalChannels=0;
-  for(int ich=0;ich<TotalAntennasRx;ich++){
-    for(int iray=0;iray<2;iray++){
-      IgnoreCh[iray][ich]=1;
-      if(ChHitTime[iray][ich]==0 || CutCh[ich]==1){
-	IgnoreCh[iray][ich]=0;
-      }
-      
-    }
-    if(IgnoreCh[0][ich]==1){
-      NumTotalChannels++;
-    }
-    if((IgnoreCh[0][ich]==1 && IgnoreCh[1][ich]==0)){
-      NumSinglePeak++;
-    }
-  } 
-
-  Double_t FractionSinglePeak=NumSinglePeak/NumTotalChannels;
-  if(FractionSinglePeak>=0.90){
+    Double_t NumSinglePeak=0;
+    Double_t NumTotalChannels=0;
     for(int ich=0;ich<TotalAntennasRx;ich++){
-      if(IgnoreCh[1][ich]==1){
-	IgnoreCh[1][ich]=0;
-	if(ChAmp[1][ich]>ChAmp[0][ich]){
-	  swap(ChHitTime[0][ich], ChHitTime[1][ich]);
-	  swap(ChSNR[0][ich], ChSNR[1][ich]);
+      for(int iray=0;iray<2;iray++){
+	IgnoreCh[iray][ich]=1;
+	if(ChHitTime[iray][ich]==0 || CutCh[ich]==1){
+	  IgnoreCh[iray][ich]=0;
 	}
+      
       }
+      if(IgnoreCh[0][ich]==1){
+	NumTotalChannels++;
+      }
+      if((IgnoreCh[0][ich]==1 && IgnoreCh[1][ich]==0)){
+	NumSinglePeak++;
+      }
+    } 
+
+    // Double_t FractionSinglePeak=NumSinglePeak/NumTotalChannels;
+    // if(FractionSinglePeak>=0.90){
+    //   for(int ich=0;ich<TotalAntennasRx;ich++){
+    //     if(IgnoreCh[1][ich]==1){
+    // 	IgnoreCh[1][ich]=0;
+    // 	if(ChAmp[1][ich]>ChAmp[0][ich]){
+    // 	  swap(ChHitTime[0][ich], ChHitTime[1][ich]);
+    // 	  swap(ChSNR[0][ich], ChSNR[1][ich]);
+    // 	}
+    //     }
       
-    }
-  }
+    //   }
+    // }
   
-  UnixTimeSelected.push_back(unixTime-firstUnixTime);
-  for(int ich=0; ich<MCH; ich++){
-    if(IgnoreCh[0][ich]!=0 && IgnoreCh[1][ich]!=0){
-      PwrSNR[0][ich].push_back(ChSNR[0][ich]);
-      PwrSNR[1][ich].push_back(ChSNR[1][ich]);
-      dtDR_Ch[ich].push_back(fabs(ChHitTime[0][ich]-ChHitTime[1][ich]));
-      DRAmpRatio_Ch[ich].push_back(ChAmp[0][ich]/ChAmp[1][ich]);
-    }else{
-      PwrSNR[0][ich].push_back(ChSNR[0][ich]);  
-      PwrSNR[1][ich].push_back(0);
-      dtDR_Ch[ich].push_back(0);
-      DRAmpRatio_Ch[ich].push_back(0);
-    }
-  }    
+    // UnixTimeSelected.push_back(unixTime-firstUnixTime);
+    // for(int ich=0; ich<MCH; ich++){
+    //   if(IgnoreCh[0][ich]!=0 && IgnoreCh[1][ich]!=0){
+    //     PwrSNR[0][ich].push_back(ChSNR[0][ich]);
+    //     PwrSNR[1][ich].push_back(ChSNR[1][ich]);
+    //     dtDR_Ch[ich].push_back(fabs(ChHitTime[0][ich]-ChHitTime[1][ich]));
+    //     DRAmpRatio_Ch[ich].push_back(ChAmp[0][ich]/ChAmp[1][ich]);
+    //   }else{
+    //     PwrSNR[0][ich].push_back(ChSNR[0][ich]);  
+    //     PwrSNR[1][ich].push_back(0);
+    //     dtDR_Ch[ich].push_back(0);
+    //     DRAmpRatio_Ch[ich].push_back(0);
+    //   }
+    // }    
 
-  if(NumChAvailable>=4){
+    if(NumChAvailable>=4){
   
-    double GuessResultCor[3][3]; 
-    double MinimizerRadialWidth;
+      double GuessResultCor[3][3]; 
+      double MinimizerRadialWidth;
 
-    auto t1 = std::chrono::high_resolution_clock::now();
-    double SPICE_Depth = gsl_spline_eval(spline_steffen, unixTime, spline_acc);
+      double timeRay[2][TotalAntennasRx];
+      int IgnoreChB[2][TotalAntennasRx];
+      bool CheckTrigger=true;
     
-    if(GetActualInitialCondition==true){  
-      InitialTxCor_XYZ[0]=TrueX;
-      InitialTxCor_XYZ[1]=TrueY;
-      InitialTxCor_XYZ[2]=-SPICE_Depth;
+      auto t1 = std::chrono::high_resolution_clock::now();
+      double SPICE_Depth = gsl_spline_eval(spline_steffen, unixTime, spline_acc);
     
-      Interferometer::XYZtoThPhR(InitialTxCor_XYZ,InitialTxCor_ThPhR);
-      InitialTxCor_ThPhR[0]=InitialTxCor_ThPhR[0]*(180./Interferometer::pi);
-      InitialTxCor_ThPhR[1]=InitialTxCor_ThPhR[1]*(180./Interferometer::pi); 
+      if(GetActualInitialCondition==true){  
+	InitialTxCor_XYZ[0]=TrueX;
+	InitialTxCor_XYZ[1]=TrueY;
+	InitialTxCor_XYZ[2]=-SPICE_Depth;
+    
+	Interferometer::XYZtoThPhR(InitialTxCor_XYZ,InitialTxCor_ThPhR);
+	InitialTxCor_ThPhR[0]=InitialTxCor_ThPhR[0]*(180./Interferometer::pi);
+	InitialTxCor_ThPhR[1]=InitialTxCor_ThPhR[1]*(180./Interferometer::pi); 
 
-      GuessResultCor[0][0]=InitialTxCor_ThPhR[0];
-      GuessResultCor[0][1]=InitialTxCor_ThPhR[1];
-      GuessResultCor[0][2]=InitialTxCor_ThPhR[2];
+	GuessResultCor[0][0]=InitialTxCor_ThPhR[0];
+	GuessResultCor[0][1]=InitialTxCor_ThPhR[1];
+	GuessResultCor[0][2]=InitialTxCor_ThPhR[2];
       
-      MinimizerRadialWidth=100;
-    }else{
-      double StartDistance=sqrt(SPICE_Depth*SPICE_Depth+ TrueX*TrueX + TrueY*TrueY)-100;
-      Interferometer::GetApproximateMinThPhR(GuessResultCor,ExpectedPositionUncertainty,ChHitTime,IgnoreCh,ChSNR,StartDistance);
-      Interferometer::GetApproximateDistance(GuessResultCor,ExpectedPositionUncertainty,ChHitTime,IgnoreCh,ChSNR);
-      MinimizerRadialWidth=100;
-    }
-    auto t2 = std::chrono::high_resolution_clock::now();
-    auto duration = std::chrono::duration_cast<std::chrono::microseconds>( t2 - t1 ).count();
-    DurationInitialCondition=duration/1000;
-    
-    InitialTxCor_ThPhR[0]=GuessResultCor[0][0]*(Interferometer::pi/180);
-    InitialTxCor_ThPhR[1]=GuessResultCor[0][1]*(Interferometer::pi/180);
-    InitialTxCor_ThPhR[2]=GuessResultCor[0][2];
+	MinimizerRadialWidth=100;
+
+	for(int ich=0;ich<TotalAntennasRx;ich++){
+	  for(int iray=0;iray<2;iray++){
+	    IgnoreChB[iray][ich]=IgnoreCh[iray][ich];
+	  }
+	}
+	
+	Interferometer::GenerateChHitTimeAndCheckHits(InitialTxCor_XYZ,timeRay,IgnoreChB);
+	CheckTrigger=Interferometer::CheckTrigger(IgnoreChB);
+
+      }else{
+	double StartDistance=sqrt(SPICE_Depth*SPICE_Depth+ TrueX*TrueX + TrueY*TrueY)-100;
+	Interferometer::GetApproximateMinThPhR(GuessResultCor,ExpectedPositionUncertainty,ChHitTime,IgnoreCh,ChSNR,StartDistance);
+	Interferometer::GetApproximateDistance(GuessResultCor,ExpectedPositionUncertainty,ChHitTime,IgnoreCh,ChSNR);
+	MinimizerRadialWidth=100;
+      }
+      auto t2 = std::chrono::high_resolution_clock::now();
+      auto duration = std::chrono::duration_cast<std::chrono::microseconds>( t2 - t1 ).count();
+      DurationInitialCondition=duration/1000;
+
+      if(CheckTrigger==true){
+	InitialTxCor_ThPhR[0]=GuessResultCor[0][0]*(Interferometer::pi/180);
+	InitialTxCor_ThPhR[1]=GuessResultCor[0][1]*(Interferometer::pi/180);
+	InitialTxCor_ThPhR[2]=GuessResultCor[0][2];
  
-    Interferometer::DoInterferometery(InitialTxCor_ThPhR, FinalTxCor_ThPhR, ExpectedPositionUncertainty, ChHitTime, IgnoreCh, ChSNR, FinalMinValue, DurationReconstruction, Iterations,MinimizerRadialWidth); 
+	Interferometer::DoInterferometery(InitialTxCor_ThPhR, FinalTxCor_ThPhR, ExpectedPositionUncertainty, ChHitTime, IgnoreCh, ChSNR, FinalMinValue, DurationReconstruction, Iterations,MinimizerRadialWidth); 
     
-    double FixedR=sqrt(SPICE_Depth*SPICE_Depth+ TrueX*TrueX + TrueY*TrueY);
-    Interferometer::GetRecoFixedR(GuessResultCor[0], FinalTxCor_ThPhR_fR,ExpectedPositionUncertainty,ChHitTime, IgnoreCh, ChSNR, FixedR);
+	double FixedR=sqrt(SPICE_Depth*SPICE_Depth+ TrueX*TrueX + TrueY*TrueY);
+	Interferometer::GetRecoFixedR(GuessResultCor[0], FinalTxCor_ThPhR_fR,ExpectedPositionUncertainty,ChHitTime, IgnoreCh, ChSNR, FixedR);
     
-    DurationTotal=DurationInitialCondition+DurationReconstruction;
+	DurationTotal=DurationInitialCondition+DurationReconstruction;
 
-    InitialTxCor_ThPhR[0]=InitialTxCor_ThPhR[0]*(180./Interferometer::pi);
-    InitialTxCor_ThPhR[1]=InitialTxCor_ThPhR[1]*(180./Interferometer::pi); 
+	InitialTxCor_ThPhR[0]=InitialTxCor_ThPhR[0]*(180./Interferometer::pi);
+	InitialTxCor_ThPhR[1]=InitialTxCor_ThPhR[1]*(180./Interferometer::pi); 
     
-    FinalTxCor_XYZ[0]=0;
-    FinalTxCor_XYZ[1]=0;
-    FinalTxCor_XYZ[2]=0;
-    FinalTxCor_ThPhR[0]=FinalTxCor_ThPhR[0]*(Interferometer::pi/180);
-    FinalTxCor_ThPhR[1]=FinalTxCor_ThPhR[1]*(Interferometer::pi/180); 
-    Interferometer::ThPhRtoXYZ(FinalTxCor_ThPhR, FinalTxCor_XYZ);
-    FinalTxCor_ThPhR[0]=FinalTxCor_ThPhR[0]*(180./Interferometer::pi);
-    FinalTxCor_ThPhR[1]=FinalTxCor_ThPhR[1]*(180./Interferometer::pi);
+	FinalTxCor_XYZ[0]=0;
+	FinalTxCor_XYZ[1]=0;
+	FinalTxCor_XYZ[2]=0;
+	FinalTxCor_ThPhR[0]=FinalTxCor_ThPhR[0]*(Interferometer::pi/180);
+	FinalTxCor_ThPhR[1]=FinalTxCor_ThPhR[1]*(Interferometer::pi/180); 
+	Interferometer::ThPhRtoXYZ(FinalTxCor_ThPhR, FinalTxCor_XYZ);
+	FinalTxCor_ThPhR[0]=FinalTxCor_ThPhR[0]*(180./Interferometer::pi);
+	FinalTxCor_ThPhR[1]=FinalTxCor_ThPhR[1]*(180./Interferometer::pi);
 
-    FinalTxCor_XYZ_fR[0]=0;
-    FinalTxCor_XYZ_fR[1]=0;
-    FinalTxCor_XYZ_fR[2]=0;
-    FinalTxCor_ThPhR_fR[0]=FinalTxCor_ThPhR_fR[0]*(Interferometer::pi/180);
-    FinalTxCor_ThPhR_fR[1]=FinalTxCor_ThPhR_fR[1]*(Interferometer::pi/180); 
-    Interferometer::ThPhRtoXYZ(FinalTxCor_ThPhR_fR, FinalTxCor_XYZ_fR);
-    FinalTxCor_ThPhR_fR[0]=FinalTxCor_ThPhR_fR[0]*(180./Interferometer::pi);
-    FinalTxCor_ThPhR_fR[1]=FinalTxCor_ThPhR_fR[1]*(180./Interferometer::pi);
+	FinalTxCor_XYZ_fR[0]=0;
+	FinalTxCor_XYZ_fR[1]=0;
+	FinalTxCor_XYZ_fR[2]=0;
+	FinalTxCor_ThPhR_fR[0]=FinalTxCor_ThPhR_fR[0]*(Interferometer::pi/180);
+	FinalTxCor_ThPhR_fR[1]=FinalTxCor_ThPhR_fR[1]*(Interferometer::pi/180); 
+	Interferometer::ThPhRtoXYZ(FinalTxCor_ThPhR_fR, FinalTxCor_XYZ_fR);
+	FinalTxCor_ThPhR_fR[0]=FinalTxCor_ThPhR_fR[0]*(180./Interferometer::pi);
+	FinalTxCor_ThPhR_fR[1]=FinalTxCor_ThPhR_fR[1]*(180./Interferometer::pi);
 
-    for(int i=0;i<3;i++){
-      dXYZ[i]=InitialTxCor_XYZ[i]-FinalTxCor_XYZ[i]; 
-      dThPhR[i]=InitialTxCor_ThPhR[i]-FinalTxCor_ThPhR[i]; 
-    }
+	for(int i=0;i<3;i++){
+	  dXYZ[i]=InitialTxCor_XYZ[i]-FinalTxCor_XYZ[i]; 
+	  dThPhR[i]=InitialTxCor_ThPhR[i]-FinalTxCor_ThPhR[i]; 
+	}
     
-    cout<<"Final Reco Results are: dX="<<dXYZ[0]<<" ,dY="<<dXYZ[1]<<" ,dZ="<<dXYZ[2]<<" |  Xtrue="<<InitialTxCor_XYZ[0]<<" ,Ytrue="<<InitialTxCor_XYZ[1]<<" ,Ztrue="<<InitialTxCor_XYZ[2]<<" | Xreco="<<FinalTxCor_XYZ[0]<<" ,Yreco="<<FinalTxCor_XYZ[1]<<" ,Zreco="<<FinalTxCor_XYZ[2]<<endl;
-    cout<<"Final Reco Results are: dTh="<<dThPhR[0]<<" ,dPh="<<dThPhR[1]<<" ,dR="<<dThPhR[2]<<" |  Thtrue="<<InitialTxCor_ThPhR[0]<<" ,Phtrue="<<InitialTxCor_ThPhR[1]<<" ,Rtrue="<<InitialTxCor_ThPhR[2]<<" | Threco="<<FinalTxCor_ThPhR[0]<<" ,Phreco="<<FinalTxCor_ThPhR[1]<<" ,Rreco="<<FinalTxCor_ThPhR[2]<<endl;
-    cout<<"Final Reco Results for fixed R are: |  Th_initial="<<InitialTxCor_ThPhR[0]<<" ,Ph_initial="<<InitialTxCor_ThPhR[1]<<" ,R_initial="<<FixedR<<" | Th_reco="<<FinalTxCor_ThPhR_fR[0]<<" ,Ph_reco="<<FinalTxCor_ThPhR_fR[1]<<" ,R_reco="<<FixedR<<endl;
-    cout<<"Fn Min Value:"<<FinalMinValue<<", Total Minimizer Iterations: "<<Iterations<<", Total Reco Duration (ms): "<<DurationTotal<<endl;
-  }else{
-    FinalTxCor_XYZ[0]=0;
-    FinalTxCor_XYZ[1]=0;
-    FinalTxCor_XYZ[2]=0;
+	cout<<"Final Reco Results are: dX="<<dXYZ[0]<<" ,dY="<<dXYZ[1]<<" ,dZ="<<dXYZ[2]<<" |  Xtrue="<<InitialTxCor_XYZ[0]<<" ,Ytrue="<<InitialTxCor_XYZ[1]<<" ,Ztrue="<<InitialTxCor_XYZ[2]<<" | Xreco="<<FinalTxCor_XYZ[0]<<" ,Yreco="<<FinalTxCor_XYZ[1]<<" ,Zreco="<<FinalTxCor_XYZ[2]<<endl;
+	cout<<"Final Reco Results are: dTh="<<dThPhR[0]<<" ,dPh="<<dThPhR[1]<<" ,dR="<<dThPhR[2]<<" |  Thtrue="<<InitialTxCor_ThPhR[0]<<" ,Phtrue="<<InitialTxCor_ThPhR[1]<<" ,Rtrue="<<InitialTxCor_ThPhR[2]<<" | Threco="<<FinalTxCor_ThPhR[0]<<" ,Phreco="<<FinalTxCor_ThPhR[1]<<" ,Rreco="<<FinalTxCor_ThPhR[2]<<endl;
+	cout<<"Final Reco Results for fixed R are: |  Th_initial="<<InitialTxCor_ThPhR[0]<<" ,Ph_initial="<<InitialTxCor_ThPhR[1]<<" ,R_initial="<<FixedR<<" | Th_reco="<<FinalTxCor_ThPhR_fR[0]<<" ,Ph_reco="<<FinalTxCor_ThPhR_fR[1]<<" ,R_reco="<<FixedR<<endl;
+	cout<<"Fn Min Value:"<<FinalMinValue<<", Total Minimizer Iterations: "<<Iterations<<", Total Reco Duration (ms): "<<DurationTotal<<endl;
+      }else{
+	FinalTxCor_XYZ[0]=0;
+	FinalTxCor_XYZ[1]=0;
+	FinalTxCor_XYZ[2]=0;
+      
+	InitialTxCor_XYZ[0]=0;
+	InitialTxCor_XYZ[1]=0;
+	InitialTxCor_XYZ[2]=0;
+      
+	FinalTxCor_ThPhR[0]=0;
+	FinalTxCor_ThPhR[1]=0;
+	FinalTxCor_ThPhR[2]=0;
 
-    InitialTxCor_XYZ[0]=0;
-    InitialTxCor_XYZ[1]=0;
-    InitialTxCor_XYZ[2]=0;
+	InitialTxCor_ThPhR[0]=0;
+	InitialTxCor_ThPhR[1]=0;
+	InitialTxCor_ThPhR[2]=0;
 
-    FinalTxCor_ThPhR[0]=0;
-    FinalTxCor_ThPhR[1]=0;
-    FinalTxCor_ThPhR[2]=0;
+	cout<<" Initial condition is in shadow zone no reconstruction was performed!!!"<<endl;
+      }
 
-    InitialTxCor_ThPhR[0]=0;
-    InitialTxCor_ThPhR[1]=0;
-    InitialTxCor_ThPhR[2]=0;
+    }else{
+      FinalTxCor_XYZ[0]=0;
+      FinalTxCor_XYZ[1]=0;
+      FinalTxCor_XYZ[2]=0;
 
-    cout<<" Number of hit channels is less than 3 so no reconstruction was performed!!!"<<endl;
-  }  
+      InitialTxCor_XYZ[0]=0;
+      InitialTxCor_XYZ[1]=0;
+      InitialTxCor_XYZ[2]=0;
 
-  RecoTree->Fill();
-  RecoTree->Write();
+      FinalTxCor_ThPhR[0]=0;
+      FinalTxCor_ThPhR[1]=0;
+      FinalTxCor_ThPhR[2]=0;
+
+      InitialTxCor_ThPhR[0]=0;
+      InitialTxCor_ThPhR[1]=0;
+      InitialTxCor_ThPhR[2]=0;
+
+      cout<<" Number of hit channels is less than 3 so no reconstruction was performed!!!"<<endl;
+    }  
+
+    RecoTree->Fill();
+    RecoTree->Write();
     
-  ///Delete the event pointer so we get a new pointer for the next event and there is no memory
-  delete realAtriEvPtr;
+    ///Delete the event pointer so we get a new pointer for the next event and there is no memory
+    delete realAtriEvPtr;
       
   }////if condition for the single event  
 
@@ -913,5 +953,14 @@ void ReconstructSPICEevents(int StationId,char const *InputFileName, int Run, in
 
   OutputFile->Write();
   OutputFile->Close();
+  TCanvas *c1=new TCanvas("c1","c1");
+  c1->Divide(4,4);
+
+  for(int ich=0; ich<MCH; ich++){
+    if(IgnoreCh[0][ich]!=0){
+      c1->cd(ich+1);
+      grWF[ich]->Draw("AL");
+    }
+  }
   
 }
