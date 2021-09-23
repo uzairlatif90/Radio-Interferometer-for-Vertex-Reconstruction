@@ -466,8 +466,8 @@ void ReconstructSPICEevents(int StationId,char const *InputFileName, int Run, in
   double TrueX=-456.721;
   double TrueY=-2353;
   //A5
-  double TrueX=348.963;
-  double TrueY=-4152.76;
+  // double TrueX=348.963;
+  // double TrueY=-4152.76;
 
   double ExpectedPositionUncertainty=5;//in m
   double GetActualInitialCondition=true;

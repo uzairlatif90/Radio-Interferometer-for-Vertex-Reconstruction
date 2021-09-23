@@ -324,7 +324,14 @@ void Interferometer::AddGaussianJitterToHitTimes(double JitterNumber,double ChHi
   TRandom3 *RandNumIni = new TRandom3(0);
   for (int iRx=0; iRx<TotalAntennasRx; iRx++){
     for(int iray=0;iray<2;iray++){ 
-      double RandNum = (RandNumIni->Rndm(iRx)*2*JitterNumber)-JitterNumber;
+      //double RandNum = (RandNumIni->Rndm(iRx)*2*JitterNumber)-JitterNumber;
+      double RandNum = (RandNumIni->Gaus(0,0.4));
+      if(RandNum>=JitterNumber){
+	RandNum=JitterNumber;
+      }
+      if(RandNum<=-JitterNumber){
+	RandNum=-JitterNumber;
+      }
       ChHitTime[iray][iRx]=ChHitTime[iray][iRx]+RandNum;
     }
   }
@@ -442,13 +449,12 @@ double Interferometer::Minimizer_f(const gsl_vector *v, void *params){
   
   if(chanD[1]>=chanDsame && chanR[1]>=chanRsame && chanDsame>=chanD[0] && chanRsame>=chanR[0]){   
     output=(chi2/chi2d);
-
     if(std::isnan(output)){
       output=1e9;
     }
-   
   }else{
-    output=1e9+(chi2/chi2d); 
+    //cout<<chanD[1]<<" "<<chanDsame<<" "<<chanR[1]<<" "<<chanRsame<<" "<<chanDsame<<" "<<chanD[0]<<" "<<chanRsame<<" "<<chanR[0]<<endl;
+    output=pow(chi2/chi2d,2); 
   }
   
   return output;
@@ -556,16 +562,13 @@ double Interferometer::Minimizer_fCnz(const gsl_vector *v, void *params){
       // }   
     }
   
-  if(chanD[1]>=chanDsame && chanR[1]>=chanRsame && chanDsame>=chanD[0] && chanRsame>=chanR[0]){ 
-    
+  if(chanD[1]>=chanDsame && chanR[1]>=chanRsame && chanDsame>=chanD[0] && chanRsame>=chanR[0]){
     output=(chi2/chi2d);
-    
     if(std::isnan(output)){
       output=1e9;
-    }
-    
+    }   
   }else{
-    output=1e9+(chi2/chi2d); 
+    output=pow(chi2/chi2d,2); 
   }  
 
   return output;
