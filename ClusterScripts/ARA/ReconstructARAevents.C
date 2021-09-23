@@ -327,17 +327,17 @@ void PeakFinder(TGraph *grPwrEnvOriginal, TGraph *grPeakPoint){
     for(int ipeak=0;ipeak<2;ipeak++){
       //vector <double> RefinePeak[3];
    
-    //   for(int isample=PowerPeakBin[ipeak]-20; isample<=PowerPeakBin[ipeak]+20; isample++){
-    // 	if(isample>-1){
-    // 	  double xp,yp;
-    // 	  grPwrEnvOriginal->GetPoint(isample,xp,yp);
-    // 	  if(isample<PowerPeakBin[ipeak]-5 || isample>PowerPeakBin[ipeak]+5){
-    // 	    RefinePeak[0].push_back(xp);
-    // 	    RefinePeak[1].push_back(yp);
-    // 	    RefinePeak[2].push_back(isample);
-    // 	  }
-    // 	}
-    //   }
+      //   for(int isample=PowerPeakBin[ipeak]-20; isample<=PowerPeakBin[ipeak]+20; isample++){
+      // 	if(isample>-1){
+      // 	  double xp,yp;
+      // 	  grPwrEnvOriginal->GetPoint(isample,xp,yp);
+      // 	  if(isample<PowerPeakBin[ipeak]-5 || isample>PowerPeakBin[ipeak]+5){
+      // 	    RefinePeak[0].push_back(xp);
+      // 	    RefinePeak[1].push_back(yp);
+      // 	    RefinePeak[2].push_back(isample);
+      // 	  }
+      // 	}
+      //   }
       
       // DummyBin=TMath::LocMax(RefinePeak[1].size(),RefinePeak[1].data());
       // PowerPeakAmp[ipeak+2]=RefinePeak[1][DummyBin];
@@ -397,19 +397,19 @@ void PeakFinder(TGraph *grPwrEnvOriginal, TGraph *grPeakPoint){
     cout<<"We have one peak "<<endl;
 
     for(int ipeak=0;ipeak<1;ipeak++){
-    //   vector <double> RefinePeak[3];
+      //   vector <double> RefinePeak[3];
    
-    //   for(int isample=PowerPeakBin[ipeak]-20; isample<=PowerPeakBin[ipeak]+20; isample++){
-    // 	if(isample>-1){
-    // 	  double xp,yp;
-    // 	  grPwrEnvOriginal->GetPoint(isample,xp,yp);
-    // 	  if(isample<PowerPeakBin[ipeak]-5 || isample>PowerPeakBin[ipeak]+5){
-    // 	    RefinePeak[0].push_back(xp);
-    // 	    RefinePeak[1].push_back(yp);
-    // 	    RefinePeak[2].push_back(isample);
-    // 	  }
-    // 	}
-    //   }
+      //   for(int isample=PowerPeakBin[ipeak]-20; isample<=PowerPeakBin[ipeak]+20; isample++){
+      // 	if(isample>-1){
+      // 	  double xp,yp;
+      // 	  grPwrEnvOriginal->GetPoint(isample,xp,yp);
+      // 	  if(isample<PowerPeakBin[ipeak]-5 || isample>PowerPeakBin[ipeak]+5){
+      // 	    RefinePeak[0].push_back(xp);
+      // 	    RefinePeak[1].push_back(yp);
+      // 	    RefinePeak[2].push_back(isample);
+      // 	  }
+      // 	}
+      //   }
       
       // DummyBin=TMath::LocMax(RefinePeak[1].size(),RefinePeak[1].data());
       // PowerPeakAmp[ipeak+2]=RefinePeak[1][DummyBin];
@@ -452,11 +452,11 @@ void PeakFinder(TGraph *grPwrEnvOriginal, TGraph *grPeakPoint){
 
 
 void ReconstructARAevents(Int_t StationId, char const *InputFileName, int Run, int Event){
-// //void ReconstructARAevents(){
-//   Int_t StationId=2;
-//   char const *InputFileName="event9129.root";
-//   int Run=9129;
-//   int Event=1301;
+  // //void ReconstructARAevents(){
+  //   Int_t StationId=2;
+  //   char const *InputFileName="event9129.root";
+  //   int Run=9129;
+  //   int Event=1301;
 
   DeclareAntennaConfigARA(StationId);
   ReadCPTemp();
@@ -605,6 +605,7 @@ void ReconstructARAevents(Int_t StationId, char const *InputFileName, int Run, i
     if(VoltageSNR[ich]<6 || FaultyCh[ich]==1){
       //cout<<ich<<" channel cut "<<VoltageSNR[ich]<<endl;
       CutCh[ich]=1;
+      VoltageSNR[ich]=0;
     }else{
       NumChAvailable++;
       if(ich<8){
@@ -836,31 +837,31 @@ void ReconstructARAevents(Int_t StationId, char const *InputFileName, int Run, i
       
     }
   }
+
+  double GuessResultCor[3][3]; 
+  double MinimizerRadialWidth;
+
+  auto t1 = std::chrono::high_resolution_clock::now();
+  if(rawAtriEvPtr->isCalpulserEvent()==true){
+    vector <double> CalPulCor[3];
+    GetCPCor(StationId, CalPulCor,firstUnixTime);
+    Interferometer::GetApproximateMinUserCor(CalPulCor,GuessResultCor,ExpectedPositionUncertainty,ChHitTime,IgnoreCh,ChSNR);
+    MinimizerRadialWidth=20;
+  }else{
+    double StartDistance=0;
+    Interferometer::GetApproximateMinThPhR(GuessResultCor,ExpectedPositionUncertainty,ChHitTime,IgnoreCh,ChSNR,StartDistance);
+    Interferometer::GetApproximateDistance(GuessResultCor,ExpectedPositionUncertainty,ChHitTime,IgnoreCh,ChSNR);
+    MinimizerRadialWidth=100;
+  }
+  auto t2 = std::chrono::high_resolution_clock::now();
+  auto duration = std::chrono::duration_cast<std::chrono::microseconds>( t2 - t1 ).count();
+  DurationInitialCondition=duration/1000;
+    
+  InitialTxCor_ThPhR[0]=GuessResultCor[0][0]*(Interferometer::pi/180);
+  InitialTxCor_ThPhR[1]=GuessResultCor[0][1]*(Interferometer::pi/180);
+  InitialTxCor_ThPhR[2]=GuessResultCor[0][2];
   
   if(NumChAvailable>=4){
- 
-    double GuessResultCor[3][3]; 
-    double MinimizerRadialWidth;
-
-    auto t1 = std::chrono::high_resolution_clock::now();
-    if(rawAtriEvPtr->isCalpulserEvent()==true){
-      vector <double> CalPulCor[3];
-      GetCPCor(StationId, CalPulCor,firstUnixTime);
-      Interferometer::GetApproximateMinUserCor(CalPulCor,GuessResultCor,ExpectedPositionUncertainty,ChHitTime,IgnoreCh,ChSNR);
-      MinimizerRadialWidth=20;
-    }else{
-      double StartDistance=0;
-      Interferometer::GetApproximateMinThPhR(GuessResultCor,ExpectedPositionUncertainty,ChHitTime,IgnoreCh,ChSNR,StartDistance);
-      Interferometer::GetApproximateDistance(GuessResultCor,ExpectedPositionUncertainty,ChHitTime,IgnoreCh,ChSNR);
-      MinimizerRadialWidth=100;
-    }
-    auto t2 = std::chrono::high_resolution_clock::now();
-    auto duration = std::chrono::duration_cast<std::chrono::microseconds>( t2 - t1 ).count();
-    DurationInitialCondition=duration/1000;
-    
-    InitialTxCor_ThPhR[0]=GuessResultCor[0][0]*(Interferometer::pi/180);
-    InitialTxCor_ThPhR[1]=GuessResultCor[0][1]*(Interferometer::pi/180);
-    InitialTxCor_ThPhR[2]=GuessResultCor[0][2];
  
     Interferometer::DoInterferometery(InitialTxCor_ThPhR, FinalTxCor_ThPhR, ExpectedPositionUncertainty, ChHitTime, IgnoreCh, ChSNR, FinalMinValue, DurationReconstruction, Iterations,MinimizerRadialWidth); 
     
@@ -909,18 +910,10 @@ void ReconstructARAevents(Int_t StationId, char const *InputFileName, int Run, i
     FinalTxCor_XYZ[0]=0;
     FinalTxCor_XYZ[1]=0;
     FinalTxCor_XYZ[2]=0;
-
-    InitialTxCor_XYZ[0]=0;
-    InitialTxCor_XYZ[1]=0;
-    InitialTxCor_XYZ[2]=0;
-
+   
     FinalTxCor_ThPhR[0]=0;
     FinalTxCor_ThPhR[1]=0;
     FinalTxCor_ThPhR[2]=0;
-
-    InitialTxCor_ThPhR[0]=0;
-    InitialTxCor_ThPhR[1]=0;
-    InitialTxCor_ThPhR[2]=0;
 
     cout<<" Number of hit channels is less than 3 so no reconstruction was performed!!!"<<endl;
   }

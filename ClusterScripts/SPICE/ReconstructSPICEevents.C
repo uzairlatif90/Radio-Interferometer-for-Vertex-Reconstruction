@@ -867,10 +867,11 @@ void ReconstructSPICEevents(int StationId,char const *InputFileName, int Run, in
       auto duration = std::chrono::duration_cast<std::chrono::microseconds>( t2 - t1 ).count();
       DurationInitialCondition=duration/1000;
 
+      InitialTxCor_ThPhR[0]=GuessResultCor[0][0]*(Interferometer::pi/180);
+      InitialTxCor_ThPhR[1]=GuessResultCor[0][1]*(Interferometer::pi/180);
+      InitialTxCor_ThPhR[2]=GuessResultCor[0][2];
+
       if(CheckTrigger==true){
-	InitialTxCor_ThPhR[0]=GuessResultCor[0][0]*(Interferometer::pi/180);
-	InitialTxCor_ThPhR[1]=GuessResultCor[0][1]*(Interferometer::pi/180);
-	InitialTxCor_ThPhR[2]=GuessResultCor[0][2];
  
 	Interferometer::DoInterferometery(InitialTxCor_ThPhR, FinalTxCor_ThPhR, ExpectedPositionUncertainty, ChHitTime, IgnoreCh, ChSNR, FinalMinValue, DurationReconstruction, Iterations,MinimizerRadialWidth); 
     
@@ -913,18 +914,13 @@ void ReconstructSPICEevents(int StationId,char const *InputFileName, int Run, in
 	FinalTxCor_XYZ[0]=0;
 	FinalTxCor_XYZ[1]=0;
 	FinalTxCor_XYZ[2]=0;
-      
-	InitialTxCor_XYZ[0]=0;
-	InitialTxCor_XYZ[1]=0;
-	InitialTxCor_XYZ[2]=0;
-      
+	
+	InitialTxCor_ThPhR[0]=InitialTxCor_ThPhR[0]*(180./Interferometer::pi);
+	InitialTxCor_ThPhR[1]=InitialTxCor_ThPhR[1]*(180./Interferometer::pi); 
+	
 	FinalTxCor_ThPhR[0]=0;
 	FinalTxCor_ThPhR[1]=0;
 	FinalTxCor_ThPhR[2]=0;
-
-	InitialTxCor_ThPhR[0]=0;
-	InitialTxCor_ThPhR[1]=0;
-	InitialTxCor_ThPhR[2]=0;
 
 	cout<<" Initial condition is in shadow zone no reconstruction was performed!!!"<<endl;
       }
@@ -934,17 +930,12 @@ void ReconstructSPICEevents(int StationId,char const *InputFileName, int Run, in
       FinalTxCor_XYZ[1]=0;
       FinalTxCor_XYZ[2]=0;
 
-      InitialTxCor_XYZ[0]=0;
-      InitialTxCor_XYZ[1]=0;
-      InitialTxCor_XYZ[2]=0;
-
+      InitialTxCor_ThPhR[0]=InitialTxCor_ThPhR[0]*(180./Interferometer::pi);
+      InitialTxCor_ThPhR[1]=InitialTxCor_ThPhR[1]*(180./Interferometer::pi); 
+      
       FinalTxCor_ThPhR[0]=0;
       FinalTxCor_ThPhR[1]=0;
       FinalTxCor_ThPhR[2]=0;
-
-      InitialTxCor_ThPhR[0]=0;
-      InitialTxCor_ThPhR[1]=0;
-      InitialTxCor_ThPhR[2]=0;
 
       cout<<" Number of hit channels is less than 3 so no reconstruction was performed!!!"<<endl;
     }  

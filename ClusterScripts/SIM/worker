@@ -1,0 +1,43 @@
+#!/bin/bash
+
+submitFile=MasterSubmit
+if [ -f $submitFile ] ; then rm $submitFile ; fi
+
+EXE=exe_Int.sh
+
+PRINT_UNI="Universe = vanilla"
+PRINT_EXE="Executable = $EXE"
+PRINT_TRN="should_transfer_files = YES"
+PRINT_WTT="when_to_transfer_output = ON_EXIT"
+PRINT_QUE="Queue"
+PRINT_MEM="request_memory=4GB"
+PRINT_MED="request_disk=2MB"
+
+value1=0
+value2=0
+
+while IFS=" " read -r value1 value2 value3 value4
+do
+    echo "The file values are:" $value1 $value2 $value3
+    
+    EVENTNUM=$value1
+
+    PRINT_ARG="Arguments = value1 value2 value3 value4 "
+    PRINT_LOG="Log = /scratch/ulatif/Log/Log_SIM_RunSIM_Ev${EVENTNUM}.log"
+    PRINT_OUT="Output = /scratch/ulatif/Out/Out_SIM_RunSIM_Ev${EVENTNUM}.out"
+    PRINT_ERR="Error = /scratch/ulatif/Error/Error_SIM_RunSIM_Ev${EVENTNUM}.error"
+    echo $PRINT_UNI >> $submitFile
+    echo $PRINT_EXE >> $submitFile
+    echo $PRINT_ARG >> $submitFile
+    echo $PRINT_LOG >> $submitFile
+    #echo $PRINT_OUT >> $submitFile
+    #echo $PRINT_ERR >> $submitFile
+    #echo $PRINT_TRN_IN >> $submitFile
+    echo $PRINT_MEM >> $submitFile
+    echo $PRINT_MED >> $submitFile
+    # echo $PRINT_TRN >> $submitFile
+    # echo $PRINT_WTT >> $submitFile
+    # echo $PRINT_GTE >> $submitFile
+    echo $PRINT_QUE >> $submitFile
+
+done < "SIM_EVENTS.txt"
