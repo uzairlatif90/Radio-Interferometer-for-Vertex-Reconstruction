@@ -883,8 +883,8 @@ double *IceRayTracing::GetRefractedRayPar(double z0, double x1 ,double z1, doubl
     zmax[0]=IceRayTracing::GetZmax(IceRayTracing::A_ice,lvalueRa[0])+1e-7;
   }  
 
+  
   if(fabs(checkzeroRa[0])<0.5 && fabs(checkzeroD)>0.5 && fabs(checkzeroR)>0.5){
-
     lvalueRa[1]=IceRayTracing::FindFunctionRoot(F4,lvalueRa[0]-0.23,lvalueRa[0]-0.023);
     LangRa[1]=asin(lvalueRa[1]/IceRayTracing::Getnz(z0))*(180.0/IceRayTracing::pi);
     checkzeroRa[1]=IceRayTracing::fRaa(lvalueRa[1],&params4);
@@ -897,7 +897,7 @@ double *IceRayTracing::GetRefractedRayPar(double z0, double x1 ,double z1, doubl
       zmax[1]=IceRayTracing::GetZmax(IceRayTracing::A_ice,lvalueRa[1])+1e-7;
     }
 
-    if(fabs(checkzeroRa[1])>0.5 || std::isnan(checkzeroRa[1])==true || fabs(lvalueRa[1]-lvalueRa[0])<1e-4 ){  
+    if((fabs(checkzeroRa[1])>0.5 || std::isnan(checkzeroRa[1])==true || fabs(lvalueRa[1]-lvalueRa[0])<1e-4) && lvalueRa[0]+0.005<UpperLimitL[0]){  
       lvalueRa[1]=IceRayTracing::FindFunctionRoot(F4,lvalueRa[0]+0.005,UpperLimitL[0]);
       LangRa[1]=asin(lvalueRa[1]/IceRayTracing::Getnz(z0))*(180.0/IceRayTracing::pi);
       checkzeroRa[1]=IceRayTracing::fRaa(lvalueRa[1],&params4);
@@ -911,7 +911,7 @@ double *IceRayTracing::GetRefractedRayPar(double z0, double x1 ,double z1, doubl
       zmax[1]=IceRayTracing::GetZmax(IceRayTracing::A_ice,lvalueRa[1])+1e-7;
     }
 
-    if(fabs(checkzeroRa[1])>0.5 || std::isnan(checkzeroRa[1])==true || fabs(lvalueRa[1]-lvalueRa[0])<1e-4 ){  
+    if(fabs(checkzeroRa[1])>0.5 || std::isnan(checkzeroRa[1])==true || fabs(lvalueRa[1]-lvalueRa[0])<1e-4 ){
       lvalueRa[1]=IceRayTracing::FindFunctionRootFDF(F4b,lvalueRa[0]-0.1,lvalueRa[0]-0.023);
       LangRa[1]=asin(lvalueRa[1]/IceRayTracing::Getnz(z0))*(180.0/IceRayTracing::pi);
       checkzeroRa[1]=IceRayTracing::fRaa(lvalueRa[1],&params4);
@@ -1652,9 +1652,8 @@ double *IceRayTracing::IceRayTracing(double x0, double z0, double x1, double z1)
 
   /* This if condition makes sure that we only try to find a refracted ray if we don't get two possible ray paths from the direct and reflected case. This saves us alot of time since we know that between each Tx and Rx position we only expect 2 rays. */
   if(fabs(checkzeroR)>0.5 || fabs(checkzeroD)>0.5){
-  
     double* GetRefractedRay=IceRayTracing::GetRefractedRayPar(z0,x1,z1,LangR,RangR,checkzeroD,checkzeroR);
-  
+
     RangRa[0]=GetRefractedRay[0];
     LangRa[0]=GetRefractedRay[1];
     timeRa[0]=GetRefractedRay[2];

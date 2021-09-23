@@ -1,7 +1,7 @@
 const int MCH=16;
 
 #include "FFTtools.h"
-#include "../Interferometer/Interferometer.cc"
+#include "/data/user/ulatif/Interferometer/Interferometer.cc"
 #include <gsl/gsl_math.h>
 #include <gsl/gsl_spline.h>
 
@@ -12,7 +12,7 @@ void LoadDepthFile(){
   
   int StartTime=1545822000-13*60*60;
   ////Open the file
-  std::ifstream ain("Depth26Dec.txt");
+  std::ifstream ain("/data/user/ulatif/SPICE_Inter/Depth26Dec.txt");
   int n1=0;////variable for counting total number of data points
   std::string line;
   int dummy[2]={0,0};////temporary variable for storing data values from the file  
@@ -47,7 +47,7 @@ TGraph *gCPtemp[2][16];
 void ReadCPTemp(){
 
   {
-    TString filename="../Interferometer/";
+    TString filename="/data/user/ulatif/Interferometer/";
     filename+="CP_D6VPol_A2.root";
     TFile *f = TFile::Open(filename, "READ");
     for(int ich=0;ich<MCH;ich++){
@@ -58,7 +58,7 @@ void ReadCPTemp(){
     delete f;
   }
   {
-    TString filename="../Interferometer/";
+    TString filename="/data/user/ulatif/Interferometer/";
     filename+="CP_D6HPol_A2.root";
     TFile *f = TFile::Open(filename, "READ");
     for(int ich=0;ich<MCH;ich++){
@@ -303,7 +303,8 @@ void PeakFinder(TGraph *grPwrEnvOriginal, TGraph *grPeakPoint){
   //   RefinePeak[0].clear();
   //   RefinePeak[1].clear();
   //   RefinePeak[2].clear();
-  // }  
+  // }
+  
 
   double NoiseRMS=GetNoiseRMS(grPwrEnvOriginal);
   int IgnorePeak[2]={1,1};
@@ -313,7 +314,7 @@ void PeakFinder(TGraph *grPwrEnvOriginal, TGraph *grPeakPoint){
     swap(SmallPeak,LargePeak);
   }
 
-  if(SmallPeak>=LargePeak*0.50 && fabs(PowerPeakTime[1]-PowerPeakTime[0])>40 ){
+  if(SmallPeak>=LargePeak*0.25 && fabs(PowerPeakTime[1]-PowerPeakTime[0])>40 ){
     //cout<<"We have two peaks "<<endl;
 
     if(PowerPeakTime[0]>PowerPeakTime[1]){
@@ -323,8 +324,8 @@ void PeakFinder(TGraph *grPwrEnvOriginal, TGraph *grPeakPoint){
     }
 
     for(int ipeak=0;ipeak<2;ipeak++){
+      
       // vector <double> RefinePeak[3];
-   
       // for(int isample=PowerPeakBin[ipeak]-20; isample<=PowerPeakBin[ipeak]+20; isample++){
       // 	if(isample>-1){
       // 	  double xp,yp;
@@ -343,7 +344,7 @@ void PeakFinder(TGraph *grPwrEnvOriginal, TGraph *grPeakPoint){
       // PowerPeakBin[ipeak+2]=RefinePeak[2][DummyBin];
       // RefinePeak[0].clear();
       // RefinePeak[1].clear();
-      // RefinePeak[2].clear();   
+      // RefinePeak[2].clear(); 
     
       double LargePeak=PowerPeakAmp[ipeak+2];
       double SmallPeak=PowerPeakAmp[ipeak];
@@ -395,8 +396,8 @@ void PeakFinder(TGraph *grPwrEnvOriginal, TGraph *grPeakPoint){
     //cout<<"We have one peak "<<endl;
 
     for(int ipeak=0;ipeak<1;ipeak++){
+     
       // vector <double> RefinePeak[3];
-   
       // for(int isample=PowerPeakBin[ipeak]-20; isample<=PowerPeakBin[ipeak]+20; isample++){
       // 	if(isample>-1){
       // 	  double xp,yp;
@@ -454,15 +455,20 @@ void ReconstructSPICEevents(int StationId,char const *InputFileName, int Run, in
   LoadDepthFile();
   ReadCPTemp();
   
-  TString OutputFileName="./output/";
+  TString OutputFileName="/data/user/ulatif/SPICE_Inter/output/";
   OutputFileName+="Run";
   OutputFileName+=Run;
   OutputFileName+="Event";
   OutputFileName+=Event;
   OutputFileName+=".root";
 
+  //A2
   double TrueX=-456.721;
   double TrueY=-2353;
+  //A5
+  double TrueX=348.963;
+  double TrueY=-4152.76;
+
   double ExpectedPositionUncertainty=5;//in m
   double GetActualInitialCondition=true;
   
@@ -599,7 +605,8 @@ void ReconstructSPICEevents(int StationId,char const *InputFileName, int Run, in
     int IgnorePeakCount=0;
 
     double CutCh[16]={-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1};
-    double FaultyCh[16]={-1,-1,-1,-1,-1,-1,-1,-1,1,-1,-1,1,-1,1,-1,1};
+    //double FaultyCh[16]={-1,-1,-1,-1,-1,-1,-1,-1,1,-1,-1,1,-1,1,-1,1};//A2
+    double FaultyCh[16]={-1,-1,-1,1,-1,-1,-1,-1,1,1,1,1,1,1,1,1};//A5
     int NumChAvailable=0;
     int NumChAvailableV=0;
     int NumChAvailableH=0;
@@ -746,10 +753,18 @@ void ReconstructSPICEevents(int StationId,char const *InputFileName, int Run, in
 
      ///separate out the V and H SNRs for voltage 
     for(Int_t cho=0; cho<8; cho++){
-      SNRV[cho]= VoltageSNR[cho];
+      if(IgnoreCh[0][cho]==1){
+	SNRV[cho]= VoltageSNR[cho];
+      }else{
+	SNRV[cho]= 0;
+      }
     }     
     for(Int_t ch=8; ch<16; ch++){
-      SNRH[ch-8]=VoltageSNR[ch];
+      if(IgnoreCh[0][ch]==1){
+	SNRH[ch-8]=VoltageSNR[ch];
+      }else{
+	SNRH[ch-8]=0;
+      }
     }
   
     int nr=0;
@@ -814,17 +829,16 @@ void ReconstructSPICEevents(int StationId,char const *InputFileName, int Run, in
     // }    
 
     if(NumChAvailable>=4){
-  
       double GuessResultCor[3][3]; 
       double MinimizerRadialWidth;
 
       double timeRay[2][TotalAntennasRx];
       int IgnoreChB[2][TotalAntennasRx];
       bool CheckTrigger=true;
-    
+ 
       auto t1 = std::chrono::high_resolution_clock::now();
       double SPICE_Depth = gsl_spline_eval(spline_steffen, unixTime, spline_acc);
-    
+ 
       if(GetActualInitialCondition==true){  
 	InitialTxCor_XYZ[0]=TrueX;
 	InitialTxCor_XYZ[1]=TrueY;
@@ -840,12 +854,6 @@ void ReconstructSPICEevents(int StationId,char const *InputFileName, int Run, in
       
 	MinimizerRadialWidth=100;
 
-	for(int ich=0;ich<TotalAntennasRx;ich++){
-	  for(int iray=0;iray<2;iray++){
-	    IgnoreChB[iray][ich]=IgnoreCh[iray][ich];
-	  }
-	}
-	
 	Interferometer::GenerateChHitTimeAndCheckHits(InitialTxCor_XYZ,timeRay,IgnoreChB);
 	CheckTrigger=Interferometer::CheckTrigger(IgnoreChB);
 
@@ -868,7 +876,7 @@ void ReconstructSPICEevents(int StationId,char const *InputFileName, int Run, in
     
 	double FixedR=sqrt(SPICE_Depth*SPICE_Depth+ TrueX*TrueX + TrueY*TrueY);
 	Interferometer::GetRecoFixedR(GuessResultCor[0], FinalTxCor_ThPhR_fR,ExpectedPositionUncertainty,ChHitTime, IgnoreCh, ChSNR, FixedR);
-    
+
 	DurationTotal=DurationInitialCondition+DurationReconstruction;
 
 	InitialTxCor_ThPhR[0]=InitialTxCor_ThPhR[0]*(180./Interferometer::pi);
@@ -953,14 +961,14 @@ void ReconstructSPICEevents(int StationId,char const *InputFileName, int Run, in
 
   OutputFile->Write();
   OutputFile->Close();
-  TCanvas *c1=new TCanvas("c1","c1");
-  c1->Divide(4,4);
+  // TCanvas *c1=new TCanvas("c1","c1");
+  // c1->Divide(4,4);
 
-  for(int ich=0; ich<MCH; ich++){
-    if(IgnoreCh[0][ich]!=0){
-      c1->cd(ich+1);
-      grWF[ich]->Draw("AL");
-    }
-  }
+  // for(int ich=0; ich<MCH; ich++){
+  //   if(IgnoreCh[0][ich]!=0){
+  //     c1->cd(ich+1);
+  //     grWF[ich]->Draw("AL");
+  //   }
+  // }
   
 }
