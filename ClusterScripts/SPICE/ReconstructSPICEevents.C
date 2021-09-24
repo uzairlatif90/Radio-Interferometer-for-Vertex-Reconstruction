@@ -1,7 +1,7 @@
 const int MCH=16;
 
 #include "FFTtools.h"
-#include "/data/user/ulatif/Interferometer/Interferometer.cc"
+#include "../../Interferometer/Interferometer.cc"
 #include <gsl/gsl_math.h>
 #include <gsl/gsl_spline.h>
 
@@ -12,7 +12,7 @@ void LoadDepthFile(){
   
   int StartTime=1545822000-13*60*60;
   ////Open the file
-  std::ifstream ain("/data/user/ulatif/SPICE_Inter/Depth26Dec.txt");
+  std::ifstream ain("../Depth26Dec.txt");
   int n1=0;////variable for counting total number of data points
   std::string line;
   int dummy[2]={0,0};////temporary variable for storing data values from the file  
@@ -47,7 +47,7 @@ TGraph *gCPtemp[2][16];
 void ReadCPTemp(){
 
   {
-    TString filename="/data/user/ulatif/Interferometer/";
+    TString filename="../../Interferometer/";
     filename+="CP_D6VPol_A2.root";
     TFile *f = TFile::Open(filename, "READ");
     for(int ich=0;ich<MCH;ich++){
@@ -58,7 +58,7 @@ void ReadCPTemp(){
     delete f;
   }
   {
-    TString filename="/data/user/ulatif/Interferometer/";
+    TString filename="../../Interferometer/";
     filename+="CP_D6HPol_A2.root";
     TFile *f = TFile::Open(filename, "READ");
     for(int ich=0;ich<MCH;ich++){
@@ -455,7 +455,7 @@ void ReconstructSPICEevents(int StationId,char const *InputFileName, int Run, in
   LoadDepthFile();
   ReadCPTemp();
   
-  TString OutputFileName="/data/user/ulatif/SPICE_Inter/output/";
+  TString OutputFileName="./output/";
   OutputFileName+="Run";
   OutputFileName+=Run;
   OutputFileName+="Event";
@@ -605,8 +605,8 @@ void ReconstructSPICEevents(int StationId,char const *InputFileName, int Run, in
     int IgnorePeakCount=0;
 
     double CutCh[16]={-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1};
-    //double FaultyCh[16]={-1,-1,-1,-1,-1,-1,-1,-1,1,-1,-1,1,-1,1,-1,1};//A2
-    double FaultyCh[16]={-1,-1,-1,1,-1,-1,-1,-1,1,1,1,1,1,1,1,1};//A5
+    double FaultyCh[16]={-1,-1,-1,-1,-1,-1,-1,-1,1,-1,-1,1,-1,1,-1,1};//A2
+    //double FaultyCh[16]={-1,-1,-1,1,-1,-1,-1,-1,1,1,1,1,1,1,1,1};//A5
     int NumChAvailable=0;
     int NumChAvailableV=0;
     int NumChAvailableH=0;
@@ -862,6 +862,7 @@ void ReconstructSPICEevents(int StationId,char const *InputFileName, int Run, in
 	Interferometer::GetApproximateMinThPhR(GuessResultCor,ExpectedPositionUncertainty,ChHitTime,IgnoreCh,ChSNR,StartDistance);
 	Interferometer::GetApproximateDistance(GuessResultCor,ExpectedPositionUncertainty,ChHitTime,IgnoreCh,ChSNR);
 	MinimizerRadialWidth=100;
+
       }
       auto t2 = std::chrono::high_resolution_clock::now();
       auto duration = std::chrono::duration_cast<std::chrono::microseconds>( t2 - t1 ).count();
@@ -870,7 +871,8 @@ void ReconstructSPICEevents(int StationId,char const *InputFileName, int Run, in
       InitialTxCor_ThPhR[0]=GuessResultCor[0][0]*(Interferometer::pi/180);
       InitialTxCor_ThPhR[1]=GuessResultCor[0][1]*(Interferometer::pi/180);
       InitialTxCor_ThPhR[2]=GuessResultCor[0][2];
-
+      Interferometer::ThPhRtoXYZ(InitialTxCor_ThPhR, InitialTxCor_XYZ);
+      
       if(CheckTrigger==true){
  
 	Interferometer::DoInterferometery(InitialTxCor_ThPhR, FinalTxCor_ThPhR, ExpectedPositionUncertainty, ChHitTime, IgnoreCh, ChSNR, FinalMinValue, DurationReconstruction, Iterations,MinimizerRadialWidth); 
