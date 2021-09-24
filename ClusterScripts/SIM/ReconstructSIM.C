@@ -1,4 +1,4 @@
-#include "../Interferometer/Interferometer.cc"
+#include "/data/user/ulatif/Interferometer/Interferometer.cc"
 
 void ReconstructSIM(int eventID, double Theta, double Phi, double R){
   DeclareAntennaConfigARA(2);
@@ -34,7 +34,7 @@ void ReconstructSIM(int eventID, double Theta, double Phi, double R){
   double dXYZ[3];
   double dThPhR[3];
 
-  TString OutputFileName="./output/";
+  TString OutputFileName="/data/user/ulatif/SIM_Inter/output/";
   OutputFileName+="RunSim";
   OutputFileName+="Event";
   OutputFileName+=eventID;
@@ -83,8 +83,6 @@ void ReconstructSIM(int eventID, double Theta, double Phi, double R){
   Interferometer::ThPhRtoXYZ(TrueTxCor_ThPhR,TrueTxCor_XYZ);
   TrueTxCor_ThPhR[0]=Theta;
   TrueTxCor_ThPhR[1]=Phi;
- 
-  
   
   TRandom3 *RandNumIni = new TRandom3(0); 
   for(int ixyz=0;ixyz<3;ixyz++){
@@ -94,9 +92,14 @@ void ReconstructSIM(int eventID, double Theta, double Phi, double R){
  	  
   for(int iRx=0;iRx<TotalAntennasRx;iRx++){
     for(int iray=0;iray<2;iray++){
+
       IgnoreCh[iray][iRx]=1;
       ChSNR[iray][iRx]=10;
     }
+    if(Theta<90){
+      IgnoreCh[1][iRx]=0;
+    }
+
   }
   
   Interferometer::GenerateChHitTimeAndCheckHits(TrueTxCor_XYZ,ChHitTime,IgnoreCh);
@@ -122,7 +125,7 @@ void ReconstructSIM(int eventID, double Theta, double Phi, double R){
     Interferometer::ThPhRtoXYZ(InitialTxCor_ThPhR,InitialTxCor_XYZ);
 	    
     double Duration=0;
-    int Iterations=0;  
+    //int Iterations=0;  
     double MinimizerRadialWidth=100;
     Interferometer::DoInterferometery(InitialTxCor_ThPhR, FinalTxCor_ThPhR, ExpectedPositionUncertainty, ChHitTime, IgnoreCh, ChSNR, FinalMinValue, DurationReconstruction, Iterations,MinimizerRadialWidth);
     

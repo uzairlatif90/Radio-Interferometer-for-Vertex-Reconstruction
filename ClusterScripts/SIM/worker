@@ -18,11 +18,11 @@ value2=0
 
 while IFS=" " read -r value1 value2 value3 value4
 do
-    echo "The file values are:" $value1 $value2 $value3
+    echo "The file values are:" $value1 $value2 $value3 $value4
     
     EVENTNUM=$value1
 
-    PRINT_ARG="Arguments = value1 value2 value3 value4 "
+    PRINT_ARG="Arguments = $value1 $value2 $value3 $value4 "
     PRINT_LOG="Log = /scratch/ulatif/Log/Log_SIM_RunSIM_Ev${EVENTNUM}.log"
     PRINT_OUT="Output = /scratch/ulatif/Out/Out_SIM_RunSIM_Ev${EVENTNUM}.out"
     PRINT_ERR="Error = /scratch/ulatif/Error/Error_SIM_RunSIM_Ev${EVENTNUM}.error"

@@ -6,10 +6,12 @@ void MakeEventFile(){
     for(int iph=0;iph<360;iph=iph+20){
       for(int ir=1;ir<21;ir++){
 
+	if(ith!=90){
 	cout<<eventcount<<" "<<ith<<" "<<iph<<" "<<ir*50<<endl;
 	aout<<eventcount<<" "<<ith<<" "<<iph<<" "<<ir*50<<endl;
 	
 	eventcount++;
+	}
       }
     }
   }
