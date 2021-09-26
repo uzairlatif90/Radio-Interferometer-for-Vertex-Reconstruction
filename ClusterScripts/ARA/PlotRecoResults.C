@@ -42,7 +42,7 @@ void GetCPCor(Int_t iStation, vector <double> CalPulCor[3],double year){
 
 void PlotRecoResults(){
   
-  Int_t Run=9185;
+  Int_t Run=9129;
 
   int eventNum;
   double unixTime;
@@ -75,9 +75,9 @@ void PlotRecoResults(){
   TString InputFileName="Run";
   InputFileName+=Run;
   //InputFileName+="AllEvents_varyingR_varyingIni.root";
-  InputFileName+="AllEvents.root";
-  //InputFileName+="AllEvents_woCPini1st.root";
-  //InputFileName+="AllEvents_wCPini.root";  
+  //InputFileName+="AllEvents.root";
+  //InputFileName+="AllEvents_woCPini.root";
+  InputFileName+="AllEvents_wCPini.root";  
   TFile *InputFile=new TFile(InputFileName);
   TString OutputFileName="Run";
   OutputFileName+=Run;
@@ -397,9 +397,9 @@ void PlotRecoResults(){
   c2->cd(3)->SetGridx();
   c2->cd(3)->SetGridy();
   grReco_ThPhR[2]->GetXaxis()->SetLabelSize(0.05);
-  grReco_ThPhR[2]->GetYaxis()->SetLabelSize(0.05);
+  grReco_ThPhR[2]->GetYaxis()->SetLabelSize(0.06);
   grReco_ThPhR[2]->GetXaxis()->SetTitleSize(0.05);
-  grReco_ThPhR[2]->GetYaxis()->SetTitleSize(0.05);
+  grReco_ThPhR[2]->GetYaxis()->SetTitleSize(0.06);
   grReco_ThPhR[2]->Draw("AP");
   grReco_ThPhR[2]->SetTitle(";Unixtime (s);Reconstructed Displacement (m);");  
   OutputFile->cd();
@@ -415,46 +415,79 @@ void PlotRecoResults(){
   // c2->SaveAs(PlotFileName);
   
   TCanvas *c3 = new TCanvas("c3","c3",1800,1800);
-  c3->Divide(1,3);
+  c3->Divide(2,3);
   c3->cd(1);
   c3->cd(1)->SetGridx();
   c3->cd(1)->SetGridy();
   c3->cd(1)->SetLogy();
   hReco_dXYZ[0]->GetXaxis()->SetLabelSize(0.05);
-  hReco_dXYZ[0]->GetYaxis()->SetLabelSize(0.05);
+  hReco_dXYZ[0]->GetYaxis()->SetLabelSize(0.06);
   hReco_dXYZ[0]->GetXaxis()->SetTitleSize(0.05);
-  hReco_dXYZ[0]->GetYaxis()->SetTitleSize(0.05);
+  hReco_dXYZ[0]->GetYaxis()->SetTitleSize(0.06);
   hReco_dXYZ[0]->Draw();
   hReco_dXYZ[0]->SetTitle(";Reconstructed X True - Reco (m);No. of Events;");
   OutputFile->cd();
   hReco_dXYZ[0]->Write("hReco_dX");
   
-  c3->cd(2);
-  c3->cd(2)->SetGridx();
-  c3->cd(2)->SetGridy();
-  c3->cd(2)->SetLogy();
+  c3->cd(3);
+  c3->cd(3)->SetGridx();
+  c3->cd(3)->SetGridy();
+  c3->cd(3)->SetLogy();
   hReco_dXYZ[1]->GetXaxis()->SetLabelSize(0.05);
-  hReco_dXYZ[1]->GetYaxis()->SetLabelSize(0.05);
+  hReco_dXYZ[1]->GetYaxis()->SetLabelSize(0.06);
   hReco_dXYZ[1]->GetXaxis()->SetTitleSize(0.05);
-  hReco_dXYZ[1]->GetYaxis()->SetTitleSize(0.05);
+  hReco_dXYZ[1]->GetYaxis()->SetTitleSize(0.06);
   hReco_dXYZ[1]->Draw();
   hReco_dXYZ[1]->SetTitle(";Reconstructed Y True - Reco (m);No. of Events;");
   OutputFile->cd();
   hReco_dXYZ[1]->Write("hReco_dY");
 
-  c3->cd(3);
-  c3->cd(3)->SetGridx();
-  c3->cd(3)->SetGridy();
-  c3->cd(3)->SetLogy();
+  c3->cd(5);
+  c3->cd(5)->SetGridx();
+  c3->cd(5)->SetGridy();
+  c3->cd(5)->SetLogy();
   hReco_dXYZ[2]->GetXaxis()->SetLabelSize(0.05);
-  hReco_dXYZ[2]->GetYaxis()->SetLabelSize(0.05);
+  hReco_dXYZ[2]->GetYaxis()->SetLabelSize(0.06);
   hReco_dXYZ[2]->GetXaxis()->SetTitleSize(0.05);
-  hReco_dXYZ[2]->GetYaxis()->SetTitleSize(0.05);
+  hReco_dXYZ[2]->GetYaxis()->SetTitleSize(0.06);
   hReco_dXYZ[2]->Draw();
   hReco_dXYZ[2]->SetTitle(";Reconstructed Z True - Reco (m);No. of Events;");
   OutputFile->cd();
   hReco_dXYZ[2]->Write("hReco_dZ");
 
+  c3->cd(2);
+  c3->cd(2)->SetGridx();
+  c3->cd(2)->SetGridy();
+  //c3->cd(2)->SetLogy();
+  hReco_dXYZ[0]->GetXaxis()->SetLabelSize(0.05);
+  hReco_dXYZ[0]->GetYaxis()->SetLabelSize(0.06);
+  hReco_dXYZ[0]->GetXaxis()->SetTitleSize(0.05);
+  hReco_dXYZ[0]->GetYaxis()->SetTitleSize(0.06);
+  hReco_dXYZ[0]->Draw();
+  hReco_dXYZ[0]->SetTitle(";Reconstructed X True - Reco (m);No. of Events;");
+  
+  c3->cd(4);
+  c3->cd(4)->SetGridx();
+  c3->cd(4)->SetGridy();
+  //c3->cd(4)->SetLogy();
+  hReco_dXYZ[1]->GetXaxis()->SetLabelSize(0.05);
+  hReco_dXYZ[1]->GetYaxis()->SetLabelSize(0.06);
+  hReco_dXYZ[1]->GetXaxis()->SetTitleSize(0.05);
+  hReco_dXYZ[1]->GetYaxis()->SetTitleSize(0.06);
+  hReco_dXYZ[1]->Draw();
+  hReco_dXYZ[1]->SetTitle(";Reconstructed Y True - Reco (m);No. of Events;");
+ 
+  c3->cd(6);
+  c3->cd(6)->SetGridx();
+  c3->cd(6)->SetGridy();
+  //c3->cd(6)->SetLogy();
+  hReco_dXYZ[2]->GetXaxis()->SetLabelSize(0.05);
+  hReco_dXYZ[2]->GetYaxis()->SetLabelSize(0.06);
+  hReco_dXYZ[2]->GetXaxis()->SetTitleSize(0.05);
+  hReco_dXYZ[2]->GetYaxis()->SetTitleSize(0.06);
+  hReco_dXYZ[2]->Draw();
+  hReco_dXYZ[2]->SetTitle(";Reconstructed Z True - Reco (m);No. of Events;");
+  
   PlotFileName="Run";
   PlotFileName+=Run;
   PlotFileName+="RecodXYZ";
@@ -465,7 +498,7 @@ void PlotRecoResults(){
   c3->SaveAs(PlotFileName);
 
   TCanvas *c4 = new TCanvas("c4","c4",1800,1800);
-  c4->Divide(1,3);
+  c4->Divide(2,3);
   c4->cd(1);
   c4->cd(1)->SetGridx();
   c4->cd(1)->SetGridy();
@@ -479,32 +512,62 @@ void PlotRecoResults(){
   OutputFile->cd();
   hReco_dThPhR[0]->Write("hReco_dTh");
   
-  c4->cd(2);
-  c4->cd(2)->SetGridx();
-  c4->cd(2)->SetGridy();
-  c4->cd(2)->SetLogy();
+  c4->cd(3);
+  c4->cd(3)->SetGridx();
+  c4->cd(3)->SetGridy();
+  c4->cd(3)->SetLogy();
   hReco_dThPhR[1]->GetXaxis()->SetLabelSize(0.05);
-  hReco_dThPhR[1]->GetYaxis()->SetLabelSize(0.05);
+  hReco_dThPhR[1]->GetYaxis()->SetLabelSize(0.06);
   hReco_dThPhR[1]->GetXaxis()->SetTitleSize(0.05);
-  hReco_dThPhR[1]->GetYaxis()->SetTitleSize(0.05);
+  hReco_dThPhR[1]->GetYaxis()->SetTitleSize(0.06);
   hReco_dThPhR[1]->Draw();
   hReco_dThPhR[1]->SetTitle(";Reconstructed Phi True - Reco (^{o});No. of Events;");
   OutputFile->cd();
   hReco_dThPhR[1]->Write("hReco_dPh");
 
-  c4->cd(3);
-  c4->cd(3)->SetGridx();
-  c4->cd(3)->SetGridy();
-  c4->cd(3)->SetLogy();
+  c4->cd(5);
+  c4->cd(5)->SetGridx();
+  c4->cd(5)->SetGridy();
+  c4->cd(5)->SetLogy();
+  hReco_dThPhR[2]->GetXaxis()->SetLabelSize(0.05);
+  hReco_dThPhR[2]->GetYaxis()->SetLabelSize(0.06);
+  hReco_dThPhR[2]->GetXaxis()->SetTitleSize(0.05);
+  hReco_dThPhR[2]->GetYaxis()->SetTitleSize(0.06);
+  hReco_dThPhR[2]->Draw();
+  hReco_dThPhR[2]->SetTitle(";Reconstructed Displacement True - Reco (m);No. of Events;");
+  OutputFile->cd();
+  hReco_dThPhR[2]->Write("hReco_dR");
+
+  c4->cd(2);
+  c4->cd(2)->SetGridx();
+  c4->cd(2)->SetGridy();
+  hReco_dThPhR[0]->GetXaxis()->SetLabelSize(0.05);
+  hReco_dThPhR[0]->GetYaxis()->SetLabelSize(0.06);
+  hReco_dThPhR[0]->GetXaxis()->SetTitleSize(0.05);
+  hReco_dThPhR[0]->GetYaxis()->SetTitleSize(0.06);
+  hReco_dThPhR[0]->Draw();
+  hReco_dThPhR[0]->SetTitle(";Reconstructed Theta True - Reco (^{o});No. of Events;");
+  
+  c4->cd(4);
+  c4->cd(4)->SetGridx();
+  c4->cd(4)->SetGridy();
+  hReco_dThPhR[1]->GetXaxis()->SetLabelSize(0.05);
+  hReco_dThPhR[1]->GetYaxis()->SetLabelSize(0.06);
+  hReco_dThPhR[1]->GetXaxis()->SetTitleSize(0.05);
+  hReco_dThPhR[1]->GetYaxis()->SetTitleSize(0.06);
+  hReco_dThPhR[1]->Draw();
+  hReco_dThPhR[1]->SetTitle(";Reconstructed Phi True - Reco (^{o});No. of Events;");
+ 
+  c4->cd(6);
+  c4->cd(6)->SetGridx();
+  c4->cd(6)->SetGridy();
   hReco_dThPhR[2]->GetXaxis()->SetLabelSize(0.05);
   hReco_dThPhR[2]->GetYaxis()->SetLabelSize(0.05);
   hReco_dThPhR[2]->GetXaxis()->SetTitleSize(0.05);
   hReco_dThPhR[2]->GetYaxis()->SetTitleSize(0.05);
   hReco_dThPhR[2]->Draw();
   hReco_dThPhR[2]->SetTitle(";Reconstructed Displacement True - Reco (m);No. of Events;");
-  OutputFile->cd();
-  hReco_dThPhR[2]->Write("hReco_dR");
-
+ 
   PlotFileName="Run";
   PlotFileName+=Run;
   PlotFileName+="RecodThPhR";

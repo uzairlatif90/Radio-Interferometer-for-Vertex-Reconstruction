@@ -43,7 +43,7 @@ void GetCPCor(Int_t iStation, vector <double> CalPulCor[3],double year){
 void RunInterferometerARA(){
   DeclareAntennaConfigARA(2);
 
-  double ExpectedTimeJitter=10;// in ns
+  double ExpectedTimeJitter=5;// in ns
   double ExpectedPositionUncertainty=5;// in m
   
   double ChHitTime[2][TotalAntennasRx]; ////Channel Hit Time
@@ -101,7 +101,7 @@ void RunInterferometerARA(){
   TrueTxCor_ThPhR[0]=TrueTxCor_ThPhR[0]*(180./Interferometer::pi);
   TrueTxCor_ThPhR[1]=TrueTxCor_ThPhR[1]*(180./Interferometer::pi);  
 
-  double MinimizerRadialWidth=100;
+  double MinimizerRadialWidth=20;
   
   for(double k=0; k<400;k++){
 
@@ -126,14 +126,20 @@ void RunInterferometerARA(){
     //bool CheckStationTrigger=Interferometer::CheckTrigger(IgnoreCh);
     //if(CheckStationTrigger==true){
    
-      double GuessResultCor[3][3];
-      double StartDistance=0;
-      Interferometer::GetApproximateMinThPhR(GuessResultCor,ExpectedPositionUncertainty,ChHitTime,IgnoreCh,ChSNR,StartDistance);
-      Interferometer::GetApproximateDistance(GuessResultCor,ExpectedPositionUncertainty,ChHitTime,IgnoreCh,ChSNR);
+      // double GuessResultCor[3][3];
+      // double StartDistance=0;
+      // Interferometer::GetApproximateMinThPhR(GuessResultCor,ExpectedPositionUncertainty,ChHitTime,IgnoreCh,ChSNR,StartDistance);
+      // Interferometer::GetApproximateDistance(GuessResultCor,ExpectedPositionUncertainty,ChHitTime,IgnoreCh,ChSNR);
       
-      InitialTxCor_ThPhR[0]=GuessResultCor[0][0]*(Interferometer::pi/180);
-      InitialTxCor_ThPhR[1]=GuessResultCor[0][1]*(Interferometer::pi/180);
-      InitialTxCor_ThPhR[2]=GuessResultCor[0][2];
+      // InitialTxCor_ThPhR[0]=GuessResultCor[0][0]*(Interferometer::pi/180);
+      // InitialTxCor_ThPhR[1]=GuessResultCor[0][1]*(Interferometer::pi/180);
+      // InitialTxCor_ThPhR[2]=GuessResultCor[0][2];
+
+      InitialTxCor_ThPhR[0]=TrueTxCor_ThPhR[0]*(Interferometer::pi/180);
+      InitialTxCor_ThPhR[1]=TrueTxCor_ThPhR[1]*(Interferometer::pi/180);
+      InitialTxCor_ThPhR[2]=TrueTxCor_ThPhR[2];
+
+      
       Interferometer::ThPhRtoXYZ(InitialTxCor_ThPhR,InitialTxCor_XYZ);
       
       double Duration=0;
@@ -194,7 +200,7 @@ void RunInterferometerARA(){
   hy->SetTitle("#DeltaY; Y_{true} - Y_{reco} (m);No. of Events");
   hz->SetTitle("#DeltaZ; Z_{true} - Z_{reco} (m);No. of Events");
   TCanvas *c1=new TCanvas("c1","c1");
-  c1->Divide(3);
+  c1->Divide(1,3);
   c1->cd(1);
   c1->cd(1)->SetGridx();
   c1->cd(1)->SetGridy();
@@ -211,25 +217,59 @@ void RunInterferometerARA(){
   c1->cd(3)->SetLogy();
   hz->Draw();
 
-  hr->SetTitle("#DeltaR; R_{true} - R_{reco} (m);No. of Events");
-  hth->SetTitle("#DeltaTheta; Theta_{true} - Theta_{reco} (m);No. of Events");
-  hph->SetTitle("#DeltaPhi; Phi_{true} - Phi_{reco} (m);No. of Events");
+  // hr->SetTitle("#DeltaR; R_{true} - R_{reco} (m);No. of Events");
+  // hth->SetTitle("#DeltaTheta; Theta_{true} - Theta_{reco} (m);No. of Events");
+  // hph->SetTitle("#DeltaPhi; Phi_{true} - Phi_{reco} (m);No. of Events");
+  hr->SetTitle("; R_{true} - R_{reco} (m);No. of Events");
+  hth->SetTitle("; Theta_{true} - Theta_{reco} (m);No. of Events");
+  hph->SetTitle("; Phi_{true} - Phi_{reco} (m);No. of Events");
   TCanvas *c12=new TCanvas("c12","c12");
-  c12->Divide(3);
+  c12->Divide(2,3);
   c12->cd(1);
   c12->cd(1)->SetGridx();
   c12->cd(1)->SetGridy();
   c12->cd(1)->SetLogy();
+  hth->GetXaxis()->SetLabelSize(0.05);
+  hth->GetYaxis()->SetLabelSize(0.07);
+  hth->GetXaxis()->SetTitleSize(0.05);
+  hth->GetYaxis()->SetTitleSize(0.07);
+  hth->GetYaxis()->SetTitleOffset(0.7);
   hth->Draw();
-  c12->cd(2);
-  c12->cd(2)->SetGridx();
-  c12->cd(2)->SetGridy();
-  c12->cd(2)->SetLogy();
-  hph->Draw();
   c12->cd(3);
   c12->cd(3)->SetGridx();
   c12->cd(3)->SetGridy();
   c12->cd(3)->SetLogy();
+  hph->GetXaxis()->SetLabelSize(0.05);
+  hph->GetYaxis()->SetLabelSize(0.07);
+  hph->GetXaxis()->SetTitleSize(0.05);
+  hph->GetYaxis()->SetTitleSize(0.07);
+  hph->GetYaxis()->SetTitleOffset(0.7);
+  hph->Draw();
+  c12->cd(5);
+  c12->cd(5)->SetGridx();
+  c12->cd(5)->SetGridy();
+  c12->cd(5)->SetLogy();
+  hr->GetXaxis()->SetLabelSize(0.05);
+  hr->GetYaxis()->SetLabelSize(0.07);
+  hr->GetXaxis()->SetTitleSize(0.05);
+  hr->GetYaxis()->SetTitleSize(0.07);
+  hr->GetYaxis()->SetTitleOffset(0.7);
+  hr->Draw();
+
+  c12->cd(2);
+  c12->cd(2)->SetGridx();
+  c12->cd(2)->SetGridy();
+  //c12->cd(2)->SetLogy();
+  hth->Draw();
+  c12->cd(4);
+  c12->cd(4)->SetGridx();
+  c12->cd(4)->SetGridy();
+  //c12->cd(4)->SetLogy();
+  hph->Draw();
+  c12->cd(6);
+  c12->cd(6)->SetGridx();
+  c12->cd(6)->SetGridy();
+  //c12->cd(6)->SetLogy();
   hr->Draw();
   
   TCanvas *c2=new TCanvas("c2","c2");

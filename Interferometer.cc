@@ -324,14 +324,14 @@ void Interferometer::AddGaussianJitterToHitTimes(double JitterNumber,double ChHi
   TRandom3 *RandNumIni = new TRandom3(0);
   for (int iRx=0; iRx<TotalAntennasRx; iRx++){
     for(int iray=0;iray<2;iray++){ 
-      //double RandNum = (RandNumIni->Rndm(iRx)*2*JitterNumber)-JitterNumber;
-      double RandNum = (RandNumIni->Gaus(0,0.4));
-      if(RandNum>=JitterNumber){
-	RandNum=JitterNumber;
-      }
-      if(RandNum<=-JitterNumber){
-	RandNum=-JitterNumber;
-      }
+      double RandNum = (RandNumIni->Rndm(iRx)*2*JitterNumber)-JitterNumber;
+      // double RandNum = (RandNumIni->Gaus(0,0.4));
+      // if(RandNum>=JitterNumber){
+      // 	RandNum=JitterNumber;
+      // }
+      // if(RandNum<=-JitterNumber){
+      // 	RandNum=-JitterNumber;
+      // }
       ChHitTime[iray][iRx]=ChHitTime[iray][iRx]+RandNum;
     }
   }
