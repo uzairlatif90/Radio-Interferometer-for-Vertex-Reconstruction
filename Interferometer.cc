@@ -385,7 +385,7 @@ double Interferometer::Minimizer_f(const gsl_vector *v, void *params){
     ChDRTime[iRx]=0;
   }    
 
-  if(XYZ[2]<0){
+  if(XYZ[2]<0 || p[7*TotalAntennasRx+12==1]){
     Interferometer::GenerateChHitTimeAndCheckHits(AntennaCoordTx,timeRay,IgnoreCh);  
   }else{
     Interferometer::GenerateChHitTimeAndCheckHits_Air(AntennaCoordTx,timeRay,IgnoreCh);  
@@ -505,7 +505,7 @@ double Interferometer::Minimizer_fCnz(const gsl_vector *v, void *params){
     ChDRTime[iRx]=0;
   }
 
-  if(XYZ[2]<0){
+  if(XYZ[2]<0 || p[7*TotalAntennasRx+12==1]){
     Interferometer::GenerateChHitTimeAndCheckHits_Cnz(AntennaCoordTx,timeRay,IgnoreCh);  
   }else{
     Interferometer::GenerateChHitTimeAndCheckHits_Air(AntennaCoordTx,timeRay,IgnoreCh);  
@@ -668,7 +668,7 @@ double Interferometer::MinimizerThPh(double x, void * params)
 
 void Interferometer::MinimizerThPhR(double InitialTxCor_XYZ[3], double InitialTxCor_ThPhR[3], double FinalTxCor[3], double ExpectedUncertainty, double ChHitTime[2][TotalAntennasRx], int IgnoreCh[2][TotalAntennasRx], double ChSNR[2][TotalAntennasRx], int ChHitOrder[TotalAntennasRx], double &FinalMinValue, int &Iterations, double MinimizerRadialWidth){
  
-  double ParameterArray[7*TotalAntennasRx+12];
+  double ParameterArray[7*TotalAntennasRx+13];
   int iEnt=0;
   for(int iray=0;iray<2;iray++){
     for(int iRx=0;iRx<TotalAntennasRx;iRx++){
@@ -712,6 +712,12 @@ void Interferometer::MinimizerThPhR(double InitialTxCor_XYZ[3], double InitialTx
   ParameterArray[iEnt+10]=0;
   ParameterArray[iEnt+11]=0;
 
+  ParameterArray[iEnt+12]=0;
+
+  if(InitialTxCor_ThPhR[2]<90){
+    ParameterArray[iEnt+12]=1;
+  }
+  
   int status;
   int iter = 0, max_iter = 50;
   const gsl_min_fminimizer_type *T;
@@ -775,7 +781,7 @@ void Interferometer::MinimizerThPhR(double InitialTxCor_XYZ[3], double InitialTx
 
 void Interferometer::RootThPhR(double InitialTxCor_XYZ[3], double InitialTxCor_ThPhR[3], double FinalTxCor[3], double ExpectedUncertainty, double ChHitTime[2][TotalAntennasRx], int IgnoreCh[2][TotalAntennasRx], double ChSNR[2][TotalAntennasRx], int ChHitOrder[TotalAntennasRx], double &FinalMinValue, int &Iterations){
   
-  double ParameterArray[7*TotalAntennasRx+12];
+  double ParameterArray[7*TotalAntennasRx+13];
   int iEnt=0;
   for(int iray=0;iray<2;iray++){
     for(int iRx=0;iRx<TotalAntennasRx;iRx++){
@@ -818,6 +824,8 @@ void Interferometer::RootThPhR(double InitialTxCor_XYZ[3], double InitialTxCor_T
   ParameterArray[iEnt+9]=ExpectedUncertainty;
   ParameterArray[iEnt+10]=0;
   ParameterArray[iEnt+11]=0;
+
+  ParameterArray[iEnt+12]=0;
   
   int status1,status2;
   int iter = 0, max_iter = 10;
@@ -876,11 +884,15 @@ void Interferometer::RootThPhR(double InitialTxCor_XYZ[3], double InitialTxCor_T
  
 }
 
-void Interferometer::SearchApproxiMin(int C_nz, double StartCor[3],double GuessResultCor[3][3],double ParameterArray[7*TotalAntennasRx+12],int &iEnt, double StartDistance){
+void Interferometer::SearchApproxiMin(int C_nz, double StartCor[3],double GuessResultCor[3][3],double ParameterArray[7*TotalAntennasRx+13],int &iEnt, double StartDistance, bool CheckAboveSurface){
 
+  double Number=0;
+  if(CheckAboveSurface==true){
+    Number=100;
+  }
   Double_t NumBinsTh=10,NumBinsPh=10,NumBinsR=4;
   Double_t StartTh=1,StartPh=-179,StartR=StartDistance+20;
-  Double_t StopTh=179,StopPh=180,StopR=StartDistance+100;
+  Double_t StopTh=189-Number,StopPh=180,StopR=StartDistance+100;
   if(C_nz==0){
     NumBinsTh=5,NumBinsPh=5,NumBinsR=4;
     StartTh=StartCor[0]-20,StartPh=StartCor[1]-20,StartR=StartDistance+20;
@@ -891,7 +903,12 @@ void Interferometer::SearchApproxiMin(int C_nz, double StartCor[3],double GuessR
   } 
   if(StopTh>=180){
     StopTh=179;
-  } 
+  }
+  
+  if(StopTh>89 && CheckAboveSurface==true){
+    StopTh=89;
+  }
+  
   if(StartR<0){
     StartR=10;
   }
@@ -983,7 +1000,7 @@ void Interferometer::GetApproximateMinUserCor(vector <double> UserCor[3] ,double
   gsl_vector *ThPhRVec;
   ThPhRVec = gsl_vector_alloc (2);
   
-  double ParameterArray[7*TotalAntennasRx+12];
+  double ParameterArray[7*TotalAntennasRx+13];
   int iEnt=0;
   for(int iray=0;iray<2;iray++){
     for(int iRx=0;iRx<TotalAntennasRx;iRx++){
@@ -1019,6 +1036,8 @@ void Interferometer::GetApproximateMinUserCor(vector <double> UserCor[3] ,double
   ParameterArray[iEnt+10]=0;
   ParameterArray[iEnt+11]=0;
 
+  ParameterArray[iEnt+12]=0;
+  
   for(int i=0;i<UserCor[0].size();i++){
     double Tht=UserCor[0][i];
     double Pht=UserCor[1][i];
@@ -1071,7 +1090,7 @@ void Interferometer::GetApproximateMinThPhR(double GuessResultCor[3][3], double 
   //Interferometer::AddGaussianJitterToHitTimes(10,ChHitTime);
   Interferometer::FindFirstHitAndNormalizeHitTime(ChHitTime,IgnoreCh,ChDRTime,ChHitOrder);
   
-  double ParameterArray[7*TotalAntennasRx+12];
+  double ParameterArray[7*TotalAntennasRx+13];
   int iEnt=0;
   for(int iray=0;iray<2;iray++){
     for(int iRx=0;iRx<TotalAntennasRx;iRx++){
@@ -1106,11 +1125,43 @@ void Interferometer::GetApproximateMinThPhR(double GuessResultCor[3][3], double 
   ParameterArray[iEnt+9]=ExpectedUncertainty;
   ParameterArray[iEnt+10]=0;
   ParameterArray[iEnt+11]=0;
+
+  ParameterArray[iEnt+12]=0;
+  
+  bool CheckAboveSurface=false;
   
   double StartCor[3];
-  Interferometer::SearchApproxiMin(1,StartCor,GuessResultCor,ParameterArray,iEnt,StartDistance);
+  Interferometer::SearchApproxiMin(1,StartCor,GuessResultCor,ParameterArray,iEnt,StartDistance,CheckAboveSurface);
 
-  Interferometer::SearchApproxiMin(0,StartCor,GuessResultCor,ParameterArray,iEnt,StartDistance);
+  double ThPhR[3]={StartCor[0]*(Interferometer::pi/180),StartCor[1]*(Interferometer::pi/180),StartCor[2]};
+  double XYZ[3]={0,0,0};
+  Interferometer::ThPhRtoXYZ(ThPhR,XYZ);
+  
+  XYZ[0]=XYZ[0]-AvgAntennaCoordRx[0];
+  XYZ[1]=XYZ[1]-AvgAntennaCoordRx[1];
+  XYZ[2]=XYZ[2]-AvgAntennaCoordRx[2];
+  ThPhR[0]=0;
+  ThPhR[1]=0;
+  ThPhR[2]=0;
+  Interferometer::XYZtoThPhR(XYZ,ThPhR);
+
+  //cout<<"It is above the station"<<endl;
+  if(ThPhR[0]<Interferometer::pi/2){
+    cout<<"It is above the station"<<endl;
+    bool AreAllRIgnored=true;
+    for(int iRx=0;iRx<TotalAntennasRx;iRx++){
+      if(IgnoreCh[1][iRx]==1){
+	AreAllRIgnored=false;
+      }
+    }
+    if(AreAllRIgnored==true){
+      CheckAboveSurface=true;
+      ParameterArray[iEnt+12]=1;
+      Interferometer::SearchApproxiMin(1,StartCor,GuessResultCor,ParameterArray,iEnt,StartDistance,CheckAboveSurface);
+    }
+  }
+  
+  Interferometer::SearchApproxiMin(0,StartCor,GuessResultCor,ParameterArray,iEnt,StartDistance,CheckAboveSurface);
   
 }
 
@@ -1123,7 +1174,7 @@ void Interferometer::GetApproximateDistance(double GuessResultCor[3][3], double 
   //Interferometer::AddGaussianJitterToHitTimes(10,ChHitTime);
   Interferometer::FindFirstHitAndNormalizeHitTime(ChHitTime,IgnoreCh,ChDRTime,ChHitOrder);
   
-  double ParameterArray[7*TotalAntennasRx+12];
+  double ParameterArray[7*TotalAntennasRx+13];
   int iEnt=0;
   for(int iray=0;iray<2;iray++){
     for(int iRx=0;iRx<TotalAntennasRx;iRx++){
@@ -1163,7 +1214,12 @@ void Interferometer::GetApproximateDistance(double GuessResultCor[3][3], double 
   ParameterArray[iEnt+9]=ExpectedUncertainty;
   ParameterArray[iEnt+10]=0;
   ParameterArray[iEnt+11]=0;
-  
+
+  ParameterArray[iEnt+12]=0;
+
+  if(GuessResultCor[0][0]<90){
+    ParameterArray[iEnt+12]=1;
+  }
   double StartR=GuessResultCor[0][2];
   double StopR=500+GuessResultCor[0][2];
   double StepSizeR=100;//(StopR-StartR)/20;
@@ -1345,7 +1401,7 @@ void Interferometer::GetRecoFixedR(double InitialTxCor[3], double FinalTxCor[3],
   //Interferometer::AddGaussianJitterToHitTimes(10,ChHitTime);
   Interferometer::FindFirstHitAndNormalizeHitTime(ChHitTime,IgnoreCh,ChDRTime,ChHitOrder);
   
-  double ParameterArray[7*TotalAntennasRx+12];
+  double ParameterArray[7*TotalAntennasRx+13];
   int iEnt=0;
   for(int iray=0;iray<2;iray++){
     for(int iRx=0;iRx<TotalAntennasRx;iRx++){
@@ -1385,6 +1441,8 @@ void Interferometer::GetRecoFixedR(double InitialTxCor[3], double FinalTxCor[3],
   ParameterArray[iEnt+9]=ExpectedUncertainty;
   ParameterArray[iEnt+10]=0;
   ParameterArray[iEnt+11]=0;
+
+  ParameterArray[iEnt+12]=0;
   
   double min=0;
   
@@ -1399,6 +1457,10 @@ void Interferometer::GetRecoFixedR(double InitialTxCor[3], double FinalTxCor[3],
   Double_t XYZ[3]={0,0,0}; 
   Interferometer::ThPhRtoXYZ(ThPhR,XYZ);
 
+  if(testTh<90){
+    ParameterArray[iEnt+12]=1;
+  }
+  
   ParameterArray[iEnt]=XYZ[0];
   ParameterArray[iEnt+1]=XYZ[1];
   ParameterArray[iEnt+2]=XYZ[2];
