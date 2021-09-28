@@ -10,6 +10,7 @@
 ////Define your antennas
 const Int_t TotalAntennasRx=16;
 Double_t AntennaCoordRx[TotalAntennasRx][3];
+Double_t AvgAntennaCoordRx[3]={0,0,0};
 
 void DeclareAntennaConfig(){
 
@@ -45,11 +46,21 @@ void DeclareAntennaConfig(){
 	AntennaCoordRx[TotalAntennas][0]=x;
 	AntennaCoordRx[TotalAntennas][1]=y;
 	AntennaCoordRx[TotalAntennas][2]=z;
+
+	AvgAntennaCoordRx[0]+=x;
+	AvgAntennaCoordRx[1]+=y;
+	AvgAntennaCoordRx[2]+=z;
+	
 	TotalAntennas++;
 	cout<<idepth<<" "<<iring<<" "<<ipnt<<" "<<x<<" "<<y<<" "<<z<<endl;
       }
     }
   }
+
+  AvgAntennaCoordRx[0]=AvgAntennaCoordRx[0]/TotalAntennasRx;
+  AvgAntennaCoordRx[1]=AvgAntennaCoordRx[1]/TotalAntennasRx;
+  AvgAntennaCoordRx[2]=AvgAntennaCoordRx[2]/TotalAntennasRx;
+  
 }
 
 void DeclareAntennaConfigARA(Int_t StationId){
@@ -66,9 +77,17 @@ void DeclareAntennaConfigARA(Int_t StationId){
     AntennaCoordRx[ich][1]=antLocRx[1];
     AntennaCoordRx[ich][2]=antLocRx[2];
 
-    cout<<AntennaCoordRx[ich][0]<<" "<<AntennaCoordRx[ich][1]<<" "<<AntennaCoordRx[ich][2]<<endl;
+    AvgAntennaCoordRx[0]+=antLocRx[0];
+    AvgAntennaCoordRx[1]+=antLocRx[1];
+    AvgAntennaCoordRx[2]+=antLocRx[2];
+    
+    cout<<ich<<" "<<AntennaCoordRx[ich][0]<<" "<<AntennaCoordRx[ich][1]<<" "<<AntennaCoordRx[ich][2]<<endl;
     //delete [] antLocRx;
   }
   // delete geom;
   // delete stationInfo;
+
+  AvgAntennaCoordRx[0]=AvgAntennaCoordRx[0]/TotalAntennasRx;
+  AvgAntennaCoordRx[1]=AvgAntennaCoordRx[1]/TotalAntennasRx;
+  AvgAntennaCoordRx[2]=AvgAntennaCoordRx[2]/TotalAntennasRx;
 }
