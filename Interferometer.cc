@@ -737,7 +737,7 @@ void Interferometer::MinimizerThPhR(double InitialTxCor_XYZ[3], double InitialTx
 
   ParameterArray[iEnt+12]=0;
 
-  if(InitialTxCor_ThPhR[2]<90){
+  if(InitialTxCor_ThPhR[0]<90){
     ParameterArray[iEnt+12]=1;
   }
   
