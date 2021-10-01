@@ -464,11 +464,11 @@ double Interferometer::Minimizer_f(const gsl_vector *v, void *params){
     output=pow(chi2/chi2d,2); 
   }
   
-  if((gsl_vector_get(v, 0)>180 || gsl_vector_get(v, 0)<90) && p[7*TotalAntennasRx+12]==0){
+  if((gsl_vector_get(v, 0)>179.9 || gsl_vector_get(v, 0)<89.9) && p[7*TotalAntennasRx+12]==0){
     output=1e9+pow(chi2/chi2d,2);
   }
 
-  if((gsl_vector_get(v, 0)>90 || gsl_vector_get(v, 0)<0) && p[7*TotalAntennasRx+12]==1){
+  if((gsl_vector_get(v, 0)>89.9 || gsl_vector_get(v, 0)<0.1) && p[7*TotalAntennasRx+12]==1){
     output=1e9+pow(chi2/chi2d,2);
   }
   
@@ -586,11 +586,11 @@ double Interferometer::Minimizer_fCnz(const gsl_vector *v, void *params){
     output=pow(chi2/chi2d,2); 
   }  
 
-  if((gsl_vector_get(v, 0)>180 || gsl_vector_get(v, 0)<90) && p[7*TotalAntennasRx+12]==0){
+  if((gsl_vector_get(v, 0)>179.9 || gsl_vector_get(v, 0)<89.9) && p[7*TotalAntennasRx+12]==0){
     output=1e9+pow(chi2/chi2d,2);
   }
 
-  if((gsl_vector_get(v, 0)>90 || gsl_vector_get(v, 0)<0) && p[7*TotalAntennasRx+12]==1){
+  if((gsl_vector_get(v, 0)>89.9 || gsl_vector_get(v, 0)<0.1) && p[7*TotalAntennasRx+12]==1){
     output=1e9+pow(chi2/chi2d,2);
   }
   
@@ -915,7 +915,7 @@ void Interferometer::SearchApproxiMin(int C_nz, double StartCor[3],double GuessR
   }
   Double_t NumBinsTh=10,NumBinsPh=10,NumBinsR=4;
   Double_t StartTh=1,StartPh=-180,StartR=StartDistance+20;
-  Double_t StopTh=179-Number,StopPh=179,StopR=StartDistance+100;  
+  Double_t StopTh=178-Number,StopPh=179,StopR=StartDistance+100;  
   if(C_nz==0){
     NumBinsTh=5,NumBinsPh=5,NumBinsR=4;
     StartTh=StartCor[0]-20,StartPh=StartCor[1]-20,StartR=StartDistance+20;
@@ -925,7 +925,7 @@ void Interferometer::SearchApproxiMin(int C_nz, double StartCor[3],double GuessR
     StartTh=1;
   } 
   if(StopTh>=180){
-    StopTh=179;
+    StopTh=178;
   }
 
   // if(StartPh<-180){
