@@ -325,14 +325,14 @@ void Interferometer::AddGaussianJitterToHitTimes(double JitterNumber,double ChHi
   TRandom3 *RandNumIni = new TRandom3(0);
   for (int iRx=0; iRx<TotalAntennasRx; iRx++){
     for(int iray=0;iray<2;iray++){ 
-      double RandNum = (RandNumIni->Rndm(iRx)*2*JitterNumber)-JitterNumber;
-      // double RandNum = (RandNumIni->Gaus(0,0.4));
-      // if(RandNum>=JitterNumber){
-      // 	RandNum=JitterNumber;
-      // }
-      // if(RandNum<=-JitterNumber){
-      // 	RandNum=-JitterNumber;
-      // }
+      //double RandNum = (RandNumIni->Rndm(iRx)*2*JitterNumber)-JitterNumber;
+      double RandNum = (RandNumIni->Gaus(0,0.4));
+      if(RandNum>=JitterNumber){
+      	RandNum=JitterNumber;
+      }
+      if(RandNum<=-JitterNumber){
+      	RandNum=-JitterNumber;
+      }
       ChHitTime[iray][iRx]=ChHitTime[iray][iRx]+RandNum;
     }
   }
@@ -464,11 +464,11 @@ double Interferometer::Minimizer_f(const gsl_vector *v, void *params){
     output=pow(chi2/chi2d,2); 
   }
   
-  if((gsl_vector_get(v, 0)>179.9 || gsl_vector_get(v, 0)<89.9) && p[7*TotalAntennasRx+12]==0){
+  if((gsl_vector_get(v, 0)>179.9 || gsl_vector_get(v, 0)<89.8 || gsl_vector_get(v, 0)<0.1)  && p[7*TotalAntennasRx+12]==0){
     output=1e9+pow(chi2/chi2d,2);
   }
 
-  if((gsl_vector_get(v, 0)>89.9 || gsl_vector_get(v, 0)<0.1) && p[7*TotalAntennasRx+12]==1){
+  if((gsl_vector_get(v, 0)>89.8 || gsl_vector_get(v, 0)<0.1) && p[7*TotalAntennasRx+12]==1){
     output=1e9+pow(chi2/chi2d,2);
   }
   
@@ -586,11 +586,11 @@ double Interferometer::Minimizer_fCnz(const gsl_vector *v, void *params){
     output=pow(chi2/chi2d,2); 
   }  
 
-  if((gsl_vector_get(v, 0)>179.9 || gsl_vector_get(v, 0)<89.9) && p[7*TotalAntennasRx+12]==0){
+  if((gsl_vector_get(v, 0)>179.9 || gsl_vector_get(v, 0)<89.8) && p[7*TotalAntennasRx+12]==0){
     output=1e9+pow(chi2/chi2d,2);
   }
 
-  if((gsl_vector_get(v, 0)>89.9 || gsl_vector_get(v, 0)<0.1) && p[7*TotalAntennasRx+12]==1){
+  if((gsl_vector_get(v, 0)>89.8 || gsl_vector_get(v, 0)<0.1) && p[7*TotalAntennasRx+12]==1){
     output=1e9+pow(chi2/chi2d,2);
   }
   
@@ -1317,7 +1317,7 @@ void Interferometer::GetApproximateDistance(double GuessResultCor[3][3], double 
       FinalTxCor[2]=testR;
     }
 
-    if(std::isnan(min)==false && min!=1e9 && min<1e9){
+    if(std::isnan(min)==false && min!=1e9 && min<1e9 && FinalTxCor[0]>0.001){
       RecoPar[0].push_back(FinalTxCor[0]);
       RecoPar[1].push_back(FinalTxCor[1]);
       RecoPar[2].push_back(FinalTxCor[2]);
@@ -1330,7 +1330,7 @@ void Interferometer::GetApproximateDistance(double GuessResultCor[3][3], double 
       checkmincurve=true;
     }
      
-    if((std::isnan(min)==true || min==1e9 || min>1e9) && iloop>=5 ){
+    if((std::isnan(min)==true || min==1e9 || min>1e9 || FinalTxCor[0]<0.001) && iloop>=5 ){
       checkmincurve=true;
     }
      
@@ -1391,7 +1391,7 @@ void Interferometer::GetApproximateDistance(double GuessResultCor[3][3], double 
     FinalTxCor[1]=ParameterArray[iEnt+7];
     FinalTxCor[2]=testR;
     
-    if(std::isnan(min)==false && min!=1e9 && min<1e9){
+    if(std::isnan(min)==false && min!=1e9 && min<1e9 && FinalTxCor[0]>0.001){
       RecoPar[0].push_back(FinalTxCor[0]);
       RecoPar[1].push_back(FinalTxCor[1]);
       RecoPar[2].push_back(FinalTxCor[2]);
@@ -1404,7 +1404,7 @@ void Interferometer::GetApproximateDistance(double GuessResultCor[3][3], double 
       checkmincurve=true;
     }
 
-    if((std::isnan(min)==true || min==1e9 || min>1e9) && iloop>=5 ){
+    if((std::isnan(min)==true || min==1e9 || min>1e9 || FinalTxCor[0]<0.001) && iloop>=5 ){
       checkmincurve=true;
     }
     
