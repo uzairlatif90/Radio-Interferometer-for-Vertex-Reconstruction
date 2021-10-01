@@ -471,6 +471,10 @@ double Interferometer::Minimizer_f(const gsl_vector *v, void *params){
   if((gsl_vector_get(v, 0)>89.8 || gsl_vector_get(v, 0)<0.1) && p[7*TotalAntennasRx+12]==1){
     output=1e9+pow(chi2/chi2d,2);
   }
+
+  if(std::isnan(output)){
+    output=1e9;
+  }
   
   return output;
 }
@@ -586,14 +590,14 @@ double Interferometer::Minimizer_fCnz(const gsl_vector *v, void *params){
     output=pow(chi2/chi2d,2); 
   }  
 
-  if((gsl_vector_get(v, 0)>179.9 || gsl_vector_get(v, 0)<89.8) && p[7*TotalAntennasRx+12]==0){
-    output=1e9+pow(chi2/chi2d,2);
-  }
-
   if((gsl_vector_get(v, 0)>89.8 || gsl_vector_get(v, 0)<0.1) && p[7*TotalAntennasRx+12]==1){
     output=1e9+pow(chi2/chi2d,2);
   }
-  
+
+  if(std::isnan(output)){
+    output=1e9;
+  }  
+
   return output;
 }
 
@@ -1194,10 +1198,6 @@ void Interferometer::GetApproximateMinThPhR(double GuessResultCor[3][3], double 
   
   Interferometer::SearchApproxiMin(0,StartCor,GuessResultCor,ParameterArray,iEnt,StartDistance,CheckAboveSurface);
 
-  // if(GuessResultCor[0][0]>180){
-  //   GuessResultCor[0][0]=360-GuessResultCor[0][0];
-  // }
-  
 }
 
 void Interferometer::GetApproximateDistance(double GuessResultCor[3][3], double ExpectedUncertainty, double ChHitTime[2][TotalAntennasRx], int IgnoreCh[2][TotalAntennasRx], double ChSNR[2][TotalAntennasRx]){
@@ -1433,7 +1433,16 @@ void Interferometer::GetApproximateDistance(double GuessResultCor[3][3], double 
   if(GuessResultCor[0][1]>180){
     GuessResultCor[0][1]=-360+GuessResultCor[0][1];
   }
+
+  if(fabs(GuessResultCor[0][0]-90)<0.001 && ParameterArray[iEnt+12]==1){
+    GuessResultCor[0][1]=89.5;
+  }
+
+  if(fabs(GuessResultCor[0][0]-90)<0.001 && ParameterArray[iEnt+12]==0){
+    GuessResultCor[0][1]=90.5;
+  }
   
+ 
 }
 
 void Interferometer::GetRecoFixedR(double InitialTxCor[3], double FinalTxCor[3], double ExpectedUncertainty, double ChHitTime[2][TotalAntennasRx], int IgnoreCh[2][TotalAntennasRx], double ChSNR[2][TotalAntennasRx], double &FixedR){
