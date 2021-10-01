@@ -914,7 +914,7 @@ void Interferometer::SearchApproxiMin(int C_nz, double StartCor[3],double GuessR
     Number=90;
   }
   Double_t NumBinsTh=10,NumBinsPh=10,NumBinsR=4;
-  Double_t StartTh=1,StartPh=-180,StartR=StartDistance+20;
+  Double_t StartTh=2,StartPh=-180,StartR=StartDistance+20;
   Double_t StopTh=178-Number,StopPh=179,StopR=StartDistance+100;  
   if(C_nz==0){
     NumBinsTh=5,NumBinsPh=5,NumBinsR=4;
@@ -922,7 +922,7 @@ void Interferometer::SearchApproxiMin(int C_nz, double StartCor[3],double GuessR
     StopTh=StartCor[0]+20,StopPh=StartCor[1]+20,StopR=StartDistance+100;
   }
   if(StartTh<=0){
-    StartTh=1;
+    StartTh=2;
   } 
   if(StopTh>=180){
     StopTh=178;
