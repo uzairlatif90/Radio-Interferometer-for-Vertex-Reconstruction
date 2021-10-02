@@ -554,16 +554,16 @@ double Interferometer::Minimizer_fCnz(const gsl_vector *v, void *params){
   SumSNR=SumSNRD+SumSNRR;
 
   for(int iRx=0;iRx<TotalAntennasRx;iRx++){
-      if(p[2*TotalAntennasRx +iRx]!=0 && IgnoreCh[0][iRx]!=0){
-	chi2+=pow(((p[4*TotalAntennasRx +iRx]*(timeRay[0][iRx] - p[0+iRx]))/SumSNR),2);
-	chi2d+=pow(p[4*TotalAntennasRx +iRx]/SumSNR,2);
+    if(p[2*TotalAntennasRx +iRx]!=0 && IgnoreCh[0][iRx]!=0){
+      chi2+=pow(((p[4*TotalAntennasRx +iRx]*(timeRay[0][iRx] - p[0+iRx]))/SumSNR),2);
+      chi2d+=pow(p[4*TotalAntennasRx +iRx]/SumSNR,2);
 	
-      }
-      if(p[3*TotalAntennasRx +iRx]!=0 && IgnoreCh[1][iRx]!=0){
-	chi2+=pow(((p[5*TotalAntennasRx +iRx]*(timeRay[1][iRx] - p[1*TotalAntennasRx+iRx]))/SumSNR),2);
-	chi2d+=pow(p[5*TotalAntennasRx +iRx]/SumSNR,2);
-      }
     }
+    if(p[3*TotalAntennasRx +iRx]!=0 && IgnoreCh[1][iRx]!=0){
+      chi2+=pow(((p[5*TotalAntennasRx +iRx]*(timeRay[1][iRx] - p[1*TotalAntennasRx+iRx]))/SumSNR),2);
+      chi2d+=pow(p[5*TotalAntennasRx +iRx]/SumSNR,2);
+    }
+  }
   
   if(chanD[1]>=chanDsame && chanR[1]>=chanRsame && chanDsame>=chanD[0] && chanRsame>=chanR[0]){
     output=(chi2/chi2d);
@@ -1545,12 +1545,12 @@ void Interferometer::DoInterferometery(double InitialTxCor[3], double FinalTxCor
     FinalTxCor[2]=0;
   }  
 
-  if(FinalTxCor_ThPhR[1]>180){
-    FinalTxCor_ThPhR[1]=360-FinalTxCor_ThPhR[1];
+  if(FinalTxCor[1]>180){
+    FinalTxCor[1]=360-FinalTxCor[1];
   }
   
-  if(FinalTxCor_ThPhR[1]<-180){
-    FinalTxCor_ThPhR[1]=360+FinalTxCor_ThPhR[1];
+  if(FinalTxCor[1]<-180){
+    FinalTxCor[1]=360+FinalTxCor[1];
   }
   
   ThPhR[0]=FinalTxCor[0];

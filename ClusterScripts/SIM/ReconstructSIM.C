@@ -1,9 +1,9 @@
-#include "../Interferometer/Interferometer.cc"
+#include "/data/user/ulatif/Interferometer/Interferometer.cc"
 
 void ReconstructSIM(int eventID, double Theta, double Phi, double R){
   DeclareAntennaConfigARA(2);
 
-  TString OutputFileName="./output/";
+  TString OutputFileName="/data/user/ulatif/SIM_Inter/output/";
   OutputFileName+="RunSim";
   OutputFileName+="Event";
   OutputFileName+=eventID;
@@ -19,7 +19,7 @@ void ReconstructSIM(int eventID, double Theta, double Phi, double R){
     Phi=Phi-360;
   }
   
-  double ExpectedTimeJitter=1;// in ns
+  double ExpectedTimeJitter=5;// in ns
   double ExpectedPositionUncertainty=5;// in m
   
   double ChDRTime[TotalAntennasRx];
@@ -98,8 +98,13 @@ void ReconstructSIM(int eventID, double Theta, double Phi, double R){
     }
 
   }
-  
-  Interferometer::GenerateChHitTimeAndCheckHits(TrueTxCor_XYZ,ChHitTime,IgnoreCh);
+
+  if(TrueTxCor_XYZ[2]<0){
+    Interferometer::GenerateChHitTimeAndCheckHits(TrueTxCor_XYZ,ChHitTime,IgnoreCh);  
+  }else{
+    Interferometer::GenerateChHitTimeAndCheckHits_Air(TrueTxCor_XYZ,ChHitTime,IgnoreCh);  
+  }  
+ 
   Interferometer::AddGaussianJitterToHitTimes(ExpectedTimeJitter,ChHitTime);  
   
   bool CheckStationTrigger=Interferometer::CheckTrigger(IgnoreCh);
