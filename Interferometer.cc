@@ -385,7 +385,7 @@ double Interferometer::Minimizer_f(const gsl_vector *v, void *params){
     ChDRTime[iRx]=0;
   }    
 
-  if(XYZ[2]<0 || p[7*TotalAntennasRx+12]==0){
+  if(XYZ[2]<0 || p[7*TotalAntennasRx+12]==1){
     // cout<<"working for ice "<<endl;
     Interferometer::GenerateChHitTimeAndCheckHits(AntennaCoordTx,timeRay,IgnoreCh);  
   }else{
@@ -457,11 +457,11 @@ double Interferometer::Minimizer_f(const gsl_vector *v, void *params){
     output=1e9+pow(chi2/chi2d,2); 
   }
   
-  if((gsl_vector_get(v, 0)>179.9 || gsl_vector_get(v, 0)<89.8 || gsl_vector_get(v, 0)<0.1)  && p[7*TotalAntennasRx+12]==0){
+  if((gsl_vector_get(v, 0)>179.9 || gsl_vector_get(v, 0)<0.1)  && p[7*TotalAntennasRx+12]==0){
     output=1e9+pow(chi2/chi2d,2);
   }
 
-  if((gsl_vector_get(v, 0)>89.8 || gsl_vector_get(v, 0)<0.1) && p[7*TotalAntennasRx+12]==1){
+  if((gsl_vector_get(v, 0)<90.2 || gsl_vector_get(v, 0)>179.9 || gsl_vector_get(v, 0)<0.1) && p[7*TotalAntennasRx+12]==1){
     output=1e9+pow(chi2/chi2d,2);
   }
 
@@ -517,7 +517,7 @@ double Interferometer::Minimizer_fCnz(const gsl_vector *v, void *params){
     ChDRTime[iRx]=0;
   }
 
-  if(XYZ[2]<0 || p[7*TotalAntennasRx+12]==0){
+  if(XYZ[2]<0 || p[7*TotalAntennasRx+12]==1){
     Interferometer::GenerateChHitTimeAndCheckHits_Cnz(AntennaCoordTx,timeRay,IgnoreCh);  
   }else{
     Interferometer::GenerateChHitTimeAndCheckHits_Air(AntennaCoordTx,timeRay,IgnoreCh);  
@@ -572,12 +572,16 @@ double Interferometer::Minimizer_fCnz(const gsl_vector *v, void *params){
     }   
   }else{
     output=1e9+pow(chi2/chi2d,2); 
-  }  
-
-  if((gsl_vector_get(v, 0)>89.8 || gsl_vector_get(v, 0)<0.1) && p[7*TotalAntennasRx+12]==1){
+  }
+  
+  if((gsl_vector_get(v, 0)>179.9 || gsl_vector_get(v, 0)<0.1)  && p[7*TotalAntennasRx+12]==0){
     output=1e9+pow(chi2/chi2d,2);
   }
 
+  if((gsl_vector_get(v, 0)<90.2 || gsl_vector_get(v, 0)>179.9 || gsl_vector_get(v, 0)<0.1) && p[7*TotalAntennasRx+12]==1){
+    output=1e9+pow(chi2/chi2d,2);
+  }
+  
   if(std::isnan(output)){
     output=1e9;
   }  
@@ -725,7 +729,7 @@ void Interferometer::MinimizerThPhR(double InitialTxCor_XYZ[3], double InitialTx
 
   ParameterArray[iEnt+12]=0;
 
-  if(InitialTxCor_ThPhR[0]<90){
+  if(InitialTxCor_ThPhR[0]>90){
     ParameterArray[iEnt+12]=1;
   }
   
@@ -895,15 +899,15 @@ void Interferometer::RootThPhR(double InitialTxCor_XYZ[3], double InitialTxCor_T
  
 }
 
-void Interferometer::SearchApproxiMin(int C_nz, double StartCor[3],double GuessResultCor[3][3],double ParameterArray[7*TotalAntennasRx+13],int &iEnt, double StartDistance, bool CheckAboveSurface){
+void Interferometer::SearchApproxiMin(int C_nz, double StartCor[3],double GuessResultCor[3][3],double ParameterArray[7*TotalAntennasRx+13],int &iEnt, double StartDistance, bool CheckBelowSurface){
 
   double Number=0;
-  if(CheckAboveSurface==true){
+  if(CheckBelowSurface==true){
     Number=90;
   }
   Double_t NumBinsTh=20,NumBinsPh=20,NumBinsR=4;
-  Double_t StartTh=2,StartPh=-180,StartR=StartDistance+20;
-  Double_t StopTh=178-Number,StopPh=179,StopR=StartDistance+100;  
+  Double_t StartTh=2+Number,StartPh=-180,StartR=StartDistance+20;
+  Double_t StopTh=178,StopPh=179,StopR=StartDistance+100;  
   if(C_nz==0){
     NumBinsTh=5,NumBinsPh=5,NumBinsR=4;
     StartTh=StartCor[0]-20,StartPh=StartCor[1]-20,StartR=StartDistance+20;
@@ -915,15 +919,14 @@ void Interferometer::SearchApproxiMin(int C_nz, double StartCor[3],double GuessR
   if(StopTh>=180){
     StopTh=178;
   }
-  
-  if(StopTh>89 && CheckAboveSurface==true){
-    StopTh=89;
+  if(StopTh>178 && CheckBelowSurface==true){
+    StopTh=178;
   }
   
   if(StartR<0){
     StartR=10;
   }
-  
+  cout<<"start stop thetas are "<<StartTh<<" "<<StopTh<<endl;
   Double_t StepSizeTh=(StopTh-StartTh)/NumBinsTh,StepSizePh=(StopPh-StartPh)/NumBinsPh,StepSizeR=(StopR-StartR)/NumBinsR;
   StepSizeR=20;
   vector <double> RecoPar[4];
@@ -937,6 +940,14 @@ void Interferometer::SearchApproxiMin(int C_nz, double StartCor[3],double GuessR
       for(double k=0; k<=NumBinsR;k++){
   	double Rt=k*StepSizeR + StartR;
 
+	if(Tht==90 && CheckBelowSurface==true){
+	  Tht=90.2;
+	}
+
+	if(Tht==90 && CheckBelowSurface==false){
+	  Tht=89.8;
+	}
+	
   	Double_t ThPhR[3]={Tht*(Interferometer::pi/180),Pht*(Interferometer::pi/180),Rt};
   	Double_t XYZ[3]={0,0,0}; 
   	Interferometer::ThPhRtoXYZ(ThPhR,XYZ);
@@ -959,7 +970,7 @@ void Interferometer::SearchApproxiMin(int C_nz, double StartCor[3],double GuessR
   	  min=Interferometer::Minimizer_fCnz(ThPhRVec, ParameterArray);
   	}
 	
-  	if(std::isnan(min)==false && min!=1e9 && min<1e9){
+  	if(std::isnan(min)==false && min!=1e9 && min<1e9 && Tht!=90){
   	  //cout<<Tht<<" "<<Pht<<" "<<Rt<<" "<<min<<endl;
   	  RecoPar[0].push_back(Tht);
   	  RecoPar[1].push_back(Pht);
@@ -1134,10 +1145,10 @@ void Interferometer::GetApproximateMinThPhR(double GuessResultCor[3][3], double 
 
   ParameterArray[iEnt+12]=0;
   
-  bool CheckAboveSurface=false;
+  bool CheckBelowSurface=false;
   
   double StartCor[3];
-  Interferometer::SearchApproxiMin(1,StartCor,GuessResultCor,ParameterArray,iEnt,StartDistance,CheckAboveSurface);
+  Interferometer::SearchApproxiMin(1,StartCor,GuessResultCor,ParameterArray,iEnt,StartDistance,CheckBelowSurface);
 
   double ThPhR[3]={StartCor[0]*(Interferometer::pi/180),StartCor[1]*(Interferometer::pi/180),StartCor[2]};
   double XYZ[3]={0,0,0};
@@ -1154,20 +1165,36 @@ void Interferometer::GetApproximateMinThPhR(double GuessResultCor[3][3], double 
   if(ThPhR[0]<Interferometer::pi/2){
     cout<<"It is above the station"<<endl;
     bool AreAllRIgnored=true;
+    bool IsdtDRtimeInWindow=false;
+    
     for(int iRx=0;iRx<TotalAntennasRx;iRx++){
       if(IgnoreCh[1][iRx]==1){
-	AreAllRIgnored=false;
+	double dtDR=fabs(ChHitTime[1][iRx]-ChHitTime[0][iRx]);
+	if(dtDR>500){
+	  AreAllRIgnored=true;
+	  IsdtDRtimeInWindow=false;
+	}else{
+	  AreAllRIgnored=false;
+	  IsdtDRtimeInWindow=true;
+	}
       }
     }
-    if(AreAllRIgnored==true){
-      CheckAboveSurface=true;
-      cout<<"It is above the surface"<<endl;
-      ParameterArray[iEnt+12]=1;
-      Interferometer::SearchApproxiMin(1,StartCor,GuessResultCor,ParameterArray,iEnt,StartDistance,CheckAboveSurface);
+    if(AreAllRIgnored==true && IsdtDRtimeInWindow==false){
+      CheckBelowSurface=false;
+      cout<<"It is probably above the surface but could be in ice"<<endl;
+      ParameterArray[iEnt+12]=0;
     }
+
+    if(AreAllRIgnored==false && IsdtDRtimeInWindow==true){
+      CheckBelowSurface=true;
+      cout<<"It is definitely in ice"<<endl;
+      ParameterArray[iEnt+12]=1;
+      Interferometer::SearchApproxiMin(1,StartCor,GuessResultCor,ParameterArray,iEnt,StartDistance,CheckBelowSurface);
+    }
+    
   }
   
-  Interferometer::SearchApproxiMin(0,StartCor,GuessResultCor,ParameterArray,iEnt,StartDistance,CheckAboveSurface);
+  Interferometer::SearchApproxiMin(0,StartCor,GuessResultCor,ParameterArray,iEnt,StartDistance,CheckBelowSurface);
 
 }
 
@@ -1217,7 +1244,7 @@ void Interferometer::GetApproximateDistance(double GuessResultCor[3][3], double 
 
   ParameterArray[iEnt+12]=0;
 
-  if(GuessResultCor[0][0]<90){
+  if(GuessResultCor[0][0]>90){
     ParameterArray[iEnt+12]=1;
   }
   double StartR=GuessResultCor[0][2];
@@ -1400,10 +1427,6 @@ void Interferometer::GetApproximateDistance(double GuessResultCor[3][3], double 
   }
 
   if(fabs(GuessResultCor[0][0]-90)<0.001 && ParameterArray[iEnt+12]==1){
-    GuessResultCor[0][0]=89.5;
-  }
-  
-  if(fabs(GuessResultCor[0][0]-90)<0.001 && ParameterArray[iEnt+12]==0){
     GuessResultCor[0][0]=90.5;
   }
   
@@ -1469,7 +1492,7 @@ void Interferometer::GetRecoFixedR(double InitialTxCor[3], double FinalTxCor[3],
   Double_t XYZ[3]={0,0,0}; 
   Interferometer::ThPhRtoXYZ(ThPhR,XYZ);
 
-  if(testTh<90){
+  if(testTh>90){
     ParameterArray[iEnt+12]=1;
   }
   
