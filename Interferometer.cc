@@ -926,7 +926,7 @@ void Interferometer::SearchApproxiMin(int C_nz, double StartCor[3],double GuessR
   if(StartR<0){
     StartR=10;
   }
-  cout<<"start stop thetas are "<<StartTh<<" "<<StopTh<<endl;
+ 
   Double_t StepSizeTh=(StopTh-StartTh)/NumBinsTh,StepSizePh=(StopPh-StartPh)/NumBinsPh,StepSizeR=(StopR-StartR)/NumBinsR;
   StepSizeR=20;
   vector <double> RecoPar[4];
@@ -1146,24 +1146,31 @@ void Interferometer::GetApproximateMinThPhR(double GuessResultCor[3][3], double 
   ParameterArray[iEnt+12]=0;
   
   bool CheckBelowSurface=false;
+  bool IsItBelowStation=true;
   
   double StartCor[3];
   Interferometer::SearchApproxiMin(1,StartCor,GuessResultCor,ParameterArray,iEnt,StartDistance,CheckBelowSurface);
 
-  double ThPhR[3]={StartCor[0]*(Interferometer::pi/180),StartCor[1]*(Interferometer::pi/180),StartCor[2]};
   double XYZ[3]={0,0,0};
-  Interferometer::ThPhRtoXYZ(ThPhR,XYZ);
+  for(int iRx=0;iRx<TotalAntennasRx;iRx++){
+    if(ChHitTime[0][iRx]==0 && IgnoreCh[0][iRx]==1){
+      XYZ[0]=AntennaCoordRx[iRx][0]-AvgAntennaCoordRx[0];
+      XYZ[1]=AntennaCoordRx[iRx][1]-AvgAntennaCoordRx[1];
+      XYZ[2]=AntennaCoordRx[iRx][2]-AvgAntennaCoordRx[2];
+
+      if(XYZ[2]>0){
+	cout<<"Ch."<<iRx<<" was hit first and it is definitely above the station"<<endl;
+	IsItBelowStation=false;
+      }
+      if(XYZ[2]<0){
+	cout<<"Ch."<<iRx<<" was hit first and it is definitely below the station in ice"<<endl;
+	IsItBelowStation=true;
+      }
+    }
+  }
   
-  XYZ[0]=XYZ[0]-AvgAntennaCoordRx[0];
-  XYZ[1]=XYZ[1]-AvgAntennaCoordRx[1];
-  XYZ[2]=XYZ[2]-AvgAntennaCoordRx[2];
-  ThPhR[0]=0;
-  ThPhR[1]=0;
-  ThPhR[2]=0;
-  Interferometer::XYZtoThPhR(XYZ,ThPhR);
-  
-  if(ThPhR[0]<Interferometer::pi/2){
-    cout<<"It is above the station"<<endl;
+  if(IsItBelowStation==false){
+
     bool AreAllRIgnored=true;
     bool IsdtDRtimeInWindow=false;
     
@@ -1181,7 +1188,7 @@ void Interferometer::GetApproximateMinThPhR(double GuessResultCor[3][3], double 
     }
     if(AreAllRIgnored==true && IsdtDRtimeInWindow==false){
       CheckBelowSurface=false;
-      cout<<"It is probably above the surface but could be in ice"<<endl;
+      cout<<"It could be in ice or in air"<<endl;
       ParameterArray[iEnt+12]=0;
     }
 
@@ -1192,6 +1199,12 @@ void Interferometer::GetApproximateMinThPhR(double GuessResultCor[3][3], double 
       Interferometer::SearchApproxiMin(1,StartCor,GuessResultCor,ParameterArray,iEnt,StartDistance,CheckBelowSurface);
     }
     
+  }
+
+  if(IsItBelowStation==true){
+    CheckBelowSurface=true;
+    ParameterArray[iEnt+12]=1;
+    Interferometer::SearchApproxiMin(1,StartCor,GuessResultCor,ParameterArray,iEnt,StartDistance,CheckBelowSurface);
   }
   
   Interferometer::SearchApproxiMin(0,StartCor,GuessResultCor,ParameterArray,iEnt,StartDistance,CheckBelowSurface);
