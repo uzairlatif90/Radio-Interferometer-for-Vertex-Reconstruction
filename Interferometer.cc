@@ -899,6 +899,87 @@ void Interferometer::RootThPhR(double InitialTxCor_XYZ[3], double InitialTxCor_T
  
 }
 
+double Interferometer::GetChiSquaredThPhR(double UserCor[3] , double ExpectedUncertainty, double ChHitTime[2][TotalAntennasRx], int IgnoreCh[2][TotalAntennasRx], double ChSNR[2][TotalAntennasRx]){
+
+  double ChDRTime[TotalAntennasRx];
+  int ChHitOrder[TotalAntennasRx];
+  
+  Interferometer::FindFirstHitAndNormalizeHitTime(ChHitTime,IgnoreCh,ChDRTime,ChHitOrder);
+
+  gsl_vector *ThPhRVec;
+  ThPhRVec = gsl_vector_alloc (2);
+  
+  double ParameterArray[7*TotalAntennasRx+13];
+  int iEnt=0;
+  for(int iray=0;iray<2;iray++){
+    for(int iRx=0;iRx<TotalAntennasRx;iRx++){
+      ParameterArray[iEnt]=ChHitTime[iray][iRx];
+      iEnt++;
+    } 
+  }  
+
+  for(int iray=0;iray<2;iray++){
+    for(int iRx=0;iRx<TotalAntennasRx;iRx++){
+      ParameterArray[iEnt]=IgnoreCh[iray][iRx];
+      iEnt++;
+    } 
+  }
+
+  for(int iray=0;iray<2;iray++){
+    for(int iRx=0;iRx<TotalAntennasRx;iRx++){
+      ParameterArray[iEnt]=ChSNR[iray][iRx];
+      iEnt++;
+    }
+  }
+  
+  for(int iRx=0;iRx<TotalAntennasRx;iRx++){
+    ParameterArray[iEnt]=ChHitOrder[iRx];
+    iEnt++;
+  }
+  
+  ParameterArray[iEnt+6]=0;
+  ParameterArray[iEnt+7]=0;
+  ParameterArray[iEnt+8]=0;
+
+  ParameterArray[iEnt+9]=ExpectedUncertainty;
+  ParameterArray[iEnt+10]=0;
+  ParameterArray[iEnt+11]=0;
+
+  ParameterArray[iEnt+12]=0;
+
+  double Tht=UserCor[0];
+  double Pht=UserCor[1];
+  double Rt=UserCor[2];
+    
+  if(Tht>90){
+    ParameterArray[iEnt+12]=1;
+  }
+
+  Double_t ThPhR[3]={Tht*(Interferometer::pi/180),Pht*(Interferometer::pi/180),Rt};
+  Double_t XYZ[3]={0,0,0}; 
+  Interferometer::ThPhRtoXYZ(ThPhR,XYZ);
+
+  ParameterArray[iEnt]=XYZ[0];
+  ParameterArray[iEnt+1]=XYZ[1];
+  ParameterArray[iEnt+2]=XYZ[2];
+  ParameterArray[iEnt+3]=Tht;
+  ParameterArray[iEnt+4]=Pht;
+  ParameterArray[iEnt+5]=Rt;      
+
+  gsl_vector_set (ThPhRVec, 0, Tht);
+  gsl_vector_set (ThPhRVec, 1, Pht);
+  ParameterArray[iEnt+10]=Rt;
+
+  double min=0;
+  min=Interferometer::Minimizer_f(ThPhRVec, ParameterArray);
+    
+  gsl_vector_free(ThPhRVec);
+
+  return min;
+  
+}
+
+
 void Interferometer::SearchApproxiMin(int C_nz, double StartCor[3],double GuessResultCor[3][3],double ParameterArray[7*TotalAntennasRx+13],int &iEnt, double StartDistance, bool CheckBelowSurface){
 
   double Number=0;
@@ -1064,6 +1145,12 @@ void Interferometer::GetApproximateMinUserCor(vector <double> UserCor[3] ,double
     double Pht=UserCor[1][i];
     double Rt=UserCor[2][i];
     
+    if(Tht>90){
+      ParameterArray[iEnt+12]=1;
+    }else{
+      ParameterArray[iEnt+12]=0;
+    }
+    
     Double_t ThPhR[3]={Tht*(Interferometer::pi/180),Pht*(Interferometer::pi/180),Rt};
     Double_t XYZ[3]={0,0,0}; 
     Interferometer::ThPhRtoXYZ(ThPhR,XYZ);
@@ -1078,11 +1165,11 @@ void Interferometer::GetApproximateMinUserCor(vector <double> UserCor[3] ,double
     gsl_vector_set (ThPhRVec, 0, Tht);
     gsl_vector_set (ThPhRVec, 1, Pht);
     ParameterArray[iEnt+10]=Rt;
-
+   
     double min=0;
     min=Interferometer::Minimizer_f(ThPhRVec, ParameterArray);
     
-    if(std::isnan(min)==false && min!=1e9 && min<1e9){
+    if(std::isnan(min)==false && min!=1e9 && min<1e9 && Tht>0.001){
       RecoPar[0].push_back(Tht);
       RecoPar[1].push_back(Pht);
       RecoPar[2].push_back(Rt);
@@ -1352,9 +1439,13 @@ void Interferometer::GetApproximateDistance(double GuessResultCor[3][3], double 
     }
     iloop++;
   }
-
+  
   int Nmin=0;
-  while(Nmin<3){
+  int Nminsize=3;
+  if(RecoPar[3].size()<3){
+    Nminsize=RecoPar[3].size();
+  }
+  while(Nmin<Nminsize){
     int FinalMinValueBin=TMath::LocMin(RecoPar[3].size(),RecoPar[3].data());
     double FinalMinValue=RecoPar[3][FinalMinValueBin];	
     GuessResultCor[Nmin][0]=RecoPar[0][FinalMinValueBin];
@@ -1432,7 +1523,11 @@ void Interferometer::GetApproximateDistance(double GuessResultCor[3][3], double 
   }
 
   Nmin=0;
-  while(Nmin<3){
+  Nminsize=3;
+  if(RecoPar[3].size()<3){
+    Nminsize=RecoPar[3].size();
+  }
+  while(Nmin<Nminsize){
     int FinalMinValueBin=TMath::LocMin(RecoPar[3].size(),RecoPar[3].data());
     double FinalMinValue=RecoPar[3][FinalMinValueBin];	
     GuessResultCor[Nmin][0]=RecoPar[0][FinalMinValueBin];
