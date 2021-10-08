@@ -983,7 +983,11 @@ void Interferometer::SearchApproxiMin(int C_nz, double StartCor[3],double GuessR
   gsl_vector_free(ThPhRVec);
   
   int Nmin=0;
-  while(Nmin<3){
+  int Nminsize=3;
+  if(RecoPar[3].size()<3){
+    Nminsize=RecoPar[3].size();
+  }
+  while(Nmin<Nminsize){
     int FinalMinValueBin=TMath::LocMin(RecoPar[3].size(),RecoPar[3].data());
     double FinalMinValue=RecoPar[3][FinalMinValueBin];	
     GuessResultCor[Nmin][0]=RecoPar[0][FinalMinValueBin];
@@ -1088,7 +1092,11 @@ void Interferometer::GetApproximateMinUserCor(vector <double> UserCor[3] ,double
   gsl_vector_free(ThPhRVec);
   
   int Nmin=0;
-  while(Nmin<2){
+  int Nminsize=2;
+  if(RecoPar[3].size()<2){
+    Nminsize=RecoPar[3].size();
+  }
+  while(Nmin<Nminsize){
     int FinalMinValueBin=TMath::LocMin(RecoPar[3].size(),RecoPar[3].data());
     double FinalMinValue=RecoPar[3][FinalMinValueBin];	
     GuessResultCor[Nmin][0]=RecoPar[0][FinalMinValueBin];
