@@ -1010,7 +1010,7 @@ void Interferometer::SearchApproxiMin(int C_nz, double StartCor[3],double GuessR
  
   Double_t StepSizeTh=(StopTh-StartTh)/NumBinsTh,StepSizePh=(StopPh-StartPh)/NumBinsPh,StepSizeR=(StopR-StartR)/NumBinsR;
   StepSizeR=20;
-  NumBinsR=(StopR-StartR)/StepSizeR+1;
+  NumBinsR=((StopR-StartR)/StepSizeR)+1;
   vector <double> RecoPar[4];
   gsl_vector *ThPhRVec;
   ThPhRVec = gsl_vector_alloc (2);
