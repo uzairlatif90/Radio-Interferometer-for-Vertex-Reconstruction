@@ -15,6 +15,16 @@ void ReadCPTemp(){
       TString GetGraph="gr";
       GetGraph+=ich;
       f->GetObject(GetGraph, gCPtemp[0][ich]);
+
+      int N=gCPtemp[0][ich]->GetN();
+      int DummyBin=TMath::LocMax(N,gCPtemp[0][ich]->GetY());
+      double xp,yp,x,y;
+      double maxVoltage=gCPtemp[0][ich]->GetPoint(DummyBin,xp,yp);
+      for(int ip=0;ip<N;ip++){
+        gCPtemp[0][ich]->GetPoint(ip,x,y);
+        gCPtemp[0][ich]->SetPoint(ip,x-xp,y);
+      }
+      
     }
     delete f;
   }
@@ -26,6 +36,16 @@ void ReadCPTemp(){
       TString GetGraph="gr";
       GetGraph+=ich;
       f->GetObject(GetGraph, gCPtemp[1][ich]);
+
+      int N=gCPtemp[0][ich]->GetN();
+      int DummyBin=TMath::LocMax(N,gCPtemp[0][ich]->GetY());
+      double xp,yp,x,y;
+      double maxVoltage=gCPtemp[0][ich]->GetPoint(DummyBin,xp,yp);
+      for(int ip=0;ip<N;ip++){
+        gCPtemp[0][ich]->GetPoint(ip,x,y);
+        gCPtemp[0][ich]->SetPoint(ip,x-xp,y);
+      }
+      
     }
     delete f;
   }
@@ -35,8 +55,8 @@ void ReadCPTemp(){
 void GetCPCor(Int_t iStation, vector <double> CalPulCor[3],double year){
 
   ///////////////////////////////////////////////////////////////
-  Double_t antLocD5[2][3];
-  Double_t antLocD6[2][3];
+  // Double_t antLocD5[2][3];
+  // Double_t antLocD6[2][3];
   
   AraStationInfo *stationInfo=new AraStationInfo(iStation,year);
   AraGeomTool *geom = AraGeomTool::Instance();;
@@ -50,17 +70,22 @@ void GetCPCor(Int_t iStation, vector <double> CalPulCor[3],double year){
     /////////0 is H
     /////////1 is V
     if(i<2){
-      antLocD5[i][0]=antLocTx[0];       
-      antLocD5[i][1]=antLocTx[1];       
-      antLocD5[i][2]=antLocTx[2];
-      //cout<<i<<" D5: "<<antLocD5[i][0]<<" "<<antLocD5[i][1]<<" "<<antLocD5[i][2]<<endl;       
+      // antLocD5[i][0]=antLocTx[0];       
+      // antLocD5[i][1]=antLocTx[1];       
+      // antLocD5[i][2]=antLocTx[2];
+      // //cout<<i<<" D5: "<<antLocD5[i][0]<<" "<<antLocD5[i][1]<<" "<<antLocD5[i][2]<<endl;       
     }
     if(i>1){
-      antLocD6[i-2][0]=antLocTx[0];       
-      antLocD6[i-2][1]=antLocTx[1];       
-      antLocD6[i-2][2]=antLocTx[2];       
-      //cout<<i<<" D6: "<<antLocD6[i-2][0]<<" "<<antLocD6[i-2][1]<<" "<<antLocD6[i-2][2]<<endl;         
+      // antLocD6[i-2][0]=antLocTx[0];       
+      // antLocD6[i-2][1]=antLocTx[1];       
+      // antLocD6[i-2][2]=antLocTx[2];       
+      // //cout<<i<<" D6: "<<antLocD6[i-2][0]<<" "<<antLocD6[i-2][1]<<" "<<antLocD6[i-2][2]<<endl;
     }
+
+    antLocTx[0]-=AvgAntennaCoordRx[0];
+    antLocTx[1]-=AvgAntennaCoordRx[1];
+    antLocTx[2]-=AvgAntennaCoordRx[2];
+    
     Double_t ThPhR[3]={0,0,0};
     Interferometer::XYZtoThPhR(antLocTx,ThPhR);
     ThPhR[0]=ThPhR[0]*(180./Interferometer::pi);
@@ -68,10 +93,107 @@ void GetCPCor(Int_t iStation, vector <double> CalPulCor[3],double year){
     CalPulCor[0].push_back(ThPhR[0]);
     CalPulCor[1].push_back(ThPhR[1]);
     CalPulCor[2].push_back(ThPhR[2]);
+
+    cout<<"Calpulcor are "<<ThPhR[0]<<" "<<ThPhR[1]<<" "<<ThPhR[2]<<endl;
     
   }
 }
 
+double integrateBinPower( TGraph *plot, int numBinsToIntegrate, vector<double> &integratedBins)
+{
+  int nPoints = plot->GetN();
+  if (nPoints < numBinsToIntegrate){
+    return 0;
+  }
+
+  //  Double_t *xVals = plot->GetX();                                                                                                          
+  Double_t *yVals = plot->GetY();
+  std::deque<double> integrator;
+  double sum = 0.;
+  for (int i = 0; i < numBinsToIntegrate; i++){
+    integrator.push_back(pow(yVals[i], 2));
+    sum = accumulate(integrator.begin(), integrator.end(), 0);
+  }
+  double max = 0.;
+  integratedBins.push_back(sum);
+
+  for (int i = 0+numBinsToIntegrate; i < nPoints; i++){
+
+    sum = sum - integrator[0];
+    integrator.pop_front();
+    integrator.push_back(pow(yVals[i], 2));
+    sum = sum + integrator[numBinsToIntegrate-1];
+
+    integratedBins.push_back(sum);
+
+    if (sum > max){
+      max = sum;
+    }
+  }
+
+  return max;
+}
+
+TGraph* makeIntegratedBinPowerGraphs(TGraph* graphsInput, int numBinsToIntegrate, string titles){
+  
+  vector<double> integratedBins;
+  double maxIntPower = integrateBinPower(graphsInput, numBinsToIntegrate, integratedBins);
+  double *volts = &integratedBins[0];
+  TGraph* graphsOutput = new TGraph(integratedBins.size(), graphsInput->GetX(), volts);
+  graphsOutput->GetXaxis()->SetTitle("Time (ns)");
+  graphsOutput->GetYaxis()->SetTitle("Integrated Power (arb units)");
+  graphsOutput->SetTitle("ich");
+  integratedBins.clear();
+  //    delete gIntPower;
+
+  return graphsOutput;
+}
+
+void getAbsMaximum_N(TGraph* plot, int nPeaks, double timeApart, vector<double> &xs, vector<double> &ys)
+{
+  // xs.clear();
+  // ys.clear();
+
+  int nPoints = plot->GetN();
+  if (nPoints < nPeaks){
+    cerr << "Number of points in waveform is fewer than the number of peaks requested. Decreasing number of peaks requested to match number points." << endl;
+    nPeaks = nPoints;
+  } 
+
+  double x_temp, y_temp;
+  double y_good, x_good;
+  int test;
+  double y_upper;
+
+  for (int iPeak = 0; iPeak < nPeaks; iPeak++){
+    y_good = -9.0E99;
+    y_upper = 9.0E99;
+    if (iPeak > 0){
+      y_upper = ys[iPeak-1];
+    }
+    for (int i = 0; i < nPoints; i++){
+      test = plot->GetPoint(i, x_temp, y_temp);
+      if (iPeak == 0){
+	if (y_temp > y_good){
+	  x_good = x_temp;
+	  y_good = y_temp;
+	}
+      } 
+      else {
+	for (int iTimeTest = 0; iTimeTest < xs.size(); iTimeTest++){
+	  if (y_temp > y_good && y_temp < y_upper && abs(x_temp - xs[iTimeTest]) > timeApart){
+	    x_good = x_temp;
+	    y_good = y_temp;
+	  }
+	}
+      }
+    }
+    xs.push_back(x_good);
+    ys.push_back(y_good);
+    //cout << iPeak << " : " << xs[iPeak] << " : " << ys[iPeak] << endl;
+  }
+  //return;
+}
 
 double GetNoiseRMS(TGraph *gr){
 
@@ -469,6 +591,8 @@ void ReconstructARAevents(Int_t StationId, char const *InputFileName, int Run, i
   OutputFileName+=".root";   
   
   double ExpectedPositionUncertainty=5;//in m 
+
+  bool RefineRecoResults=false;
   
   ////initialise the event pointer to take data from the event tree
   RawAtriStationEvent *rawAtriEvPtr=0;
@@ -515,6 +639,9 @@ void ReconstructARAevents(Int_t StationId, char const *InputFileName, int Run, i
   int Iterations;
   bool isCalpulserTrig;
   bool isSoftwareTrig;
+  int IsItBelowStation;
+  double ArrivalDirection[3];
+
   double FinalTxCor_XYZ[3];
   double FinalTxCor_ThPhR[3];
   double FinalTxCor_XYZ_fR[3];
@@ -594,18 +721,45 @@ void ReconstructARAevents(Int_t StationId, char const *InputFileName, int Run, i
   int NumChAvailableH=0;
   
   for(int ich=0; ich<MCH; ich++){
-    ///Get the Waveform from the data file for each channel
-    TGraph *grdum=realAtriEvPtr->getGraphFromRFChan(ich);
+          
+    //Get the Waveform from the data file for each channel
+    TGraph *grdum=usefulAtriEvPtr->getGraphFromRFChan(ich);
 
-    ///Interpolate the waveforms to ensure equal spacing between the samples
-    TGraph *gr=FFTtools::getInterpolatedGraph(grdum,0.6);
+    //Interpolate the waveforms to ensure equal spacing between the samples
+    TGraph *gr=FFTtools::getInterpolatedGraph(grdum,0.01);
     delete grdum;
 
-    VoltageSNR[ich]=getmyWaveformSNR(gr);
-    if(VoltageSNR[ich]<6 || FaultyCh[ich]==1){
-      //cout<<ich<<" channel cut "<<VoltageSNR[ich]<<endl;
+    //Initiate values to set up the peak finding algorithm
+    int numBinsToIntegrate=10;
+    string title="ich";
+    TGraph* grIntPower = makeIntegratedBinPowerGraphs(gr, numBinsToIntegrate,  title);
+
+    vector<double> vvHitTimes; // vector of vector of hit times (first index is antenna, second index is hit time)
+    vector<double> vvPeakIntPowers; // vector of vector of peak values
+     
+    //Find the peaks
+    int numSearchPeaks=2; //only look for two peaks
+    double peakSeparation=30.0;
+    getAbsMaximum_N(grIntPower, numSearchPeaks, peakSeparation, vvHitTimes, vvPeakIntPowers);
+      
+    //Calculate the noise RMS for the waveform
+    double noiserms=GetNoiseRMS(grIntPower);
+
+    
+    //Fill in the peak hit times and peak SNR values
+    ChHitTime[0][ich]=vvHitTimes[0];
+    ChHitTime[1][ich]=vvHitTimes[1];
+    ChSNR[0][ich]=vvPeakIntPowers[0]/noiserms;
+    ChSNR[1][ich]=vvPeakIntPowers[1]/noiserms;
+    if(ChSNR[1][ich]/ChSNR[0][ich]<0.2){
+      ChSNR[1][ich]=10;
+    }     
+    //Ignore the second peak for now by giving it a below threshold SNR
+    ChSNR[1][ich]=10;
+    
+    //Filter out channels which have low SNR or are faulty
+    if( (ChSNR[0][ich]<25 && ChSNR[1][ich]<25) || FaultyCh[ich]==1){
       CutCh[ich]=1;
-      VoltageSNR[ich]=0;
     }else{
       NumChAvailable++;
       if(ich<8){
@@ -677,93 +831,137 @@ void ReconstructARAevents(Int_t StationId, char const *InputFileName, int Run, i
     CorScore[ich]=0;
     
     if(CutCh[ich]==-1){
-      ///Get the Waveform from the data file for each channel
-      TGraph *grdum=realAtriEvPtr->getGraphFromRFChan(ich);
+      // ///Get the Waveform from the data file for each channel
+      // TGraph *grdum=realAtriEvPtr->getGraphFromRFChan(ich);
 
-      ///Interpolate the waveforms to ensure equal spacing between the samples
-      TGraph *gr=FFTtools::getInterpolatedGraph(grdum,0.6);
-      delete grdum;
+      // ///Interpolate the waveforms to ensure equal spacing between the samples
+      // TGraph *gr=FFTtools::getInterpolatedGraph(grdum,0.6);
+      // delete grdum;
 	
-      grPwrEnv[ich]=FFTtools::getSimplePowerEnvelopeGraph(gr);
-      TGraph *grPeakPoint=new TGraph();
+      // grPwrEnv[ich]=FFTtools::getSimplePowerEnvelopeGraph(gr);
+      // TGraph *grPeakPoint=new TGraph();
 
-      PeakFinder(grPwrEnv[ich], grPeakPoint);
+      // PeakFinder(grPwrEnv[ich], grPeakPoint);
       
-      int NumOfPulses=grPeakPoint->GetN();
+      // int NumOfPulses=grPeakPoint->GetN();
+      // double Dtime=0,Rtime=0;
+      // double DAmp=0,RAmp=0;
+      // double DSNR=0,RSNR=0;
+      // int IgnorePeakD=0,IgnorePeakR=0;
+      //if(NumOfPulses==6){
       double Dtime=0,Rtime=0;
-      double DAmp=0,RAmp=0;
       double DSNR=0,RSNR=0;
-      int IgnorePeakD=0,IgnorePeakR=0;
-      if(NumOfPulses==6){
-	double xpeak,ypeak;
-	grPeakPoint->GetPoint(0,xpeak,ypeak);
-	Dtime=xpeak;
-	DAmp=ypeak;
-	grPeakPoint->GetPoint(2,xpeak,ypeak);
-	DSNR=ypeak;
-	grPeakPoint->GetPoint(4,xpeak,ypeak);
-	IgnorePeakD=xpeak;
+      
+      //If both peaks are present
+      if(ChSNR[0][ich]>=25 && ChSNR[1][ich]>=25){
+	// double xpeak,ypeak;
+	// grPeakPoint->GetPoint(0,xpeak,ypeak);
+	// Dtime=xpeak;
+	// DAmp=ypeak;
+	// grPeakPoint->GetPoint(2,xpeak,ypeak);
+	// DSNR=ypeak;
+	// grPeakPoint->GetPoint(4,xpeak,ypeak);
+	// IgnorePeakD=xpeak;
 	   
-	grPeakPoint->GetPoint(1,xpeak,ypeak);
-	Rtime=xpeak;
-	RAmp=ypeak;
-	grPeakPoint->GetPoint(3,xpeak,ypeak);
-	RSNR=ypeak;
-	grPeakPoint->GetPoint(5,xpeak,ypeak);
-	IgnorePeakR=xpeak;
+	// grPeakPoint->GetPoint(1,xpeak,ypeak);
+	// Rtime=xpeak;
+	// RAmp=ypeak;
+	// grPeakPoint->GetPoint(3,xpeak,ypeak);
+	// RSNR=ypeak;
+	// grPeakPoint->GetPoint(5,xpeak,ypeak);
+	// IgnorePeakR=xpeak;
 	    
+	// if(Dtime>Rtime){
+	//   swap(Dtime,Rtime);
+	//   swap(DAmp,RAmp);
+	//   swap(DSNR,RSNR);
+	//   swap(IgnorePeakD,IgnorePeakR);
+	// }
+
+	// if(IgnorePeakD==0){
+	//   Dtime=0;
+	//   DSNR=0;
+	//   DAmp=0;
+	//   IgnorePeakCount++;
+	// }
+
+	// if(IgnorePeakR==0){
+	//   Rtime=0;
+	//   RSNR=0;
+	//   RAmp=0;
+	//   IgnorePeakCount++;
+	// }
+	      
+	// ChHitTime[0][ich]=Dtime;
+	// ChHitTime[1][ich]=Rtime;
+	// ChSNR[0][ich]=DSNR;
+	// ChSNR[1][ich]=RSNR;
+	// ChAmp[0][ich]=DAmp;
+	// ChAmp[1][ich]=RAmp;
+	  
+	Dtime=ChHitTime[0][ich];
+	Rtime=ChHitTime[1][ich];
+	DSNR=ChSNR[0][ich];
+	RSNR=ChSNR[1][ich];
+
 	if(Dtime>Rtime){
 	  swap(Dtime,Rtime);
-	  swap(DAmp,RAmp);
-	  swap(DSNR,RSNR);
-	  swap(IgnorePeakD,IgnorePeakR);
+	  swap(ChSNR[0][ich],ChSNR[1][ich]);
 	}
 
-	if(IgnorePeakD==0){
-	  Dtime=0;
-	  DSNR=0;
-	  DAmp=0;
-	  IgnorePeakCount++;
-	}
-
-	if(IgnorePeakR==0){
-	  Rtime=0;
-	  RSNR=0;
-	  RAmp=0;
-	  IgnorePeakCount++;
-	}
+	// if(ChSNR[0][ich]<ChSNR[1][ich]){
+	//   swap(Dtime,Rtime);
+	//   swap(ChSNR[0][ich],ChSNR[1][ich]);
+	//   Rtime=0;
+	// }
 	      
 	ChHitTime[0][ich]=Dtime;
 	ChHitTime[1][ich]=Rtime;
-	ChSNR[0][ich]=DSNR;
-	ChSNR[1][ich]=RSNR;
-	ChAmp[0][ich]=DAmp;
-	ChAmp[1][ich]=RAmp;
+
+	cout<<ich<<" two peak "<<Dtime<<" "<<Rtime<<" "<<ChSNR[0][ich]<<" "<<ChSNR[1][ich]<<endl;
+	
       }else{
-	double xpeak,ypeak;
-	grPeakPoint->GetPoint(0,xpeak,ypeak);
-	Dtime=xpeak;
-	DAmp=ypeak;
-	grPeakPoint->GetPoint(1,xpeak,ypeak);
-	DSNR=ypeak;
-	grPeakPoint->GetPoint(2,xpeak,ypeak);
-	IgnorePeakD=xpeak;
+	////If only one peak is present
+	// double xpeak,ypeak;
+	// grPeakPoint->GetPoint(0,xpeak,ypeak);
+	// Dtime=xpeak;
+	// DAmp=ypeak;
+	// grPeakPoint->GetPoint(1,xpeak,ypeak);
+	// DSNR=ypeak;
+	// grPeakPoint->GetPoint(2,xpeak,ypeak);
+	// IgnorePeakD=xpeak;
 	    
-	if(IgnorePeakD==0){
-	  Dtime=0;
-	  DSNR=0;
-	  DAmp=0;
-	  IgnorePeakCount++;
-	}
+	// if(IgnorePeakD==0){
+	//   Dtime=0;
+	//   DSNR=0;
+	//   DAmp=0;
+	//   IgnorePeakCount++;
+	// }
+	// ChHitTime[0][ich]=Dtime;
+	// ChHitTime[1][ich]=0;
+	// ChSNR[0][ich]=DSNR;
+	// ChSNR[1][ich]=0;
+	// ChAmp[0][ich]=DAmp;
+	// ChAmp[1][ich]=0;
+	// cout<<ich<<" "<<Dtime<<" "<<VoltageSNR[ich]<<" "<<DSNR<<endl;
+
+	Dtime=ChHitTime[0][ich];
+
 	ChHitTime[0][ich]=Dtime;
 	ChHitTime[1][ich]=0;
-	ChSNR[0][ich]=DSNR;
 	ChSNR[1][ich]=0;
-	ChAmp[0][ich]=DAmp;
-	ChAmp[1][ich]=0;
-	cout<<ich<<" "<<Dtime<<" "<<VoltageSNR[ich]<<" "<<DSNR<<endl;
+	cout<<ich<<" one peak "<<Dtime<<" "<<ChSNR[0][ich]<<endl;
       }
-
+      
+      int N=gr->GetN();
+      int DummyBin=TMath::LocMax(N,gr->GetY());
+      double xp,yp,x,y;
+      double maxVoltage=gr->GetPoint(DummyBin,xp,yp);
+      for(int ip=0;ip<N;ip++){
+        gr->GetPoint(ip,x,y);
+        gr->SetPoint(ip,x-xp,y);
+      }
+      
       if(ich<8){
 	grCor[ich]=FFTtools::getCorrelationGraph(gCPtemp[0][ich],gr);
       }else{
@@ -780,16 +978,24 @@ void ReconstructARAevents(Int_t StationId, char const *InputFileName, int Run, i
       CorScore[ich]=MaxCorScore;
 
       delete gr;
-      delete grPeakPoint;
+      //delete grPeakPoint;
     }
   }////channel loop
   
   ///separate out the V and H SNRs for voltage 
   for(Int_t cho=0; cho<8; cho++){
-    SNRV[cho]= VoltageSNR[cho];
+    if(IgnoreCh[0][cho]==1){
+      SNRV[cho]= VoltageSNR[cho];
+    }else{
+      SNRV[cho]= 0;
+    }
   }     
   for(Int_t ch=8; ch<16; ch++){
-    SNRH[ch-8]=VoltageSNR[ch];
+     if(IgnoreCh[0][ch]==1){
+       SNRH[ch-8]=VoltageSNR[ch];
+     }else{
+       SNRH[ch-8]=0;
+     }
   }
   
   int nr=0;
@@ -808,6 +1014,7 @@ void ReconstructARAevents(Int_t StationId, char const *InputFileName, int Run, i
   
   Double_t NumSinglePeak=0;
   Double_t NumTotalChannels=0;
+  //Loop over channels and fill in the ignore channel array which will be used by the interferometer to see which channels need to be ignored
   for(int ich=0;ich<TotalAntennasRx;ich++){
     for(int iray=0;iray<2;iray++){
       IgnoreCh[iray][ich]=1;
@@ -824,6 +1031,7 @@ void ReconstructARAevents(Int_t StationId, char const *InputFileName, int Run, i
     }
   } 
 
+  //If in all the selected channels 85% have single peak and 15% have double peaks then ignore the second peak in the channels having double peaks. This is probably because those second peaks are noise peaks.
   Double_t FractionSinglePeak=NumSinglePeak/NumTotalChannels;
   if(FractionSinglePeak>=0.85){
     for(int ich=0;ich<TotalAntennasRx;ich++){
@@ -837,41 +1045,62 @@ void ReconstructARAevents(Int_t StationId, char const *InputFileName, int Run, i
       
     }
   }
-
-  double GuessResultCor[3][3]; 
-  double MinimizerRadialWidth;
-
-  auto t1 = std::chrono::high_resolution_clock::now();
-  if(rawAtriEvPtr->isCalpulserEvent()==true){
-    vector <double> CalPulCor[3];
-    GetCPCor(StationId, CalPulCor,firstUnixTime);
-    Interferometer::GetApproximateMinUserCor(CalPulCor,GuessResultCor,ExpectedPositionUncertainty,ChHitTime,IgnoreCh,ChSNR);
-    MinimizerRadialWidth=20;
-  }else{
-    double StartDistance=0;
-    Interferometer::GetApproximateMinThPhR(GuessResultCor,ExpectedPositionUncertainty,ChHitTime,IgnoreCh,ChSNR,StartDistance);
-    Interferometer::GetApproximateDistance(GuessResultCor,ExpectedPositionUncertainty,ChHitTime,IgnoreCh,ChSNR);
-    MinimizerRadialWidth=100;
-  }
-  auto t2 = std::chrono::high_resolution_clock::now();
-  auto duration = std::chrono::duration_cast<std::chrono::microseconds>( t2 - t1 ).count();
-  DurationInitialCondition=duration/1000;
-    
-  InitialTxCor_ThPhR[0]=GuessResultCor[0][0]*(Interferometer::pi/180);
-  InitialTxCor_ThPhR[1]=GuessResultCor[0][1]*(Interferometer::pi/180);
-  InitialTxCor_ThPhR[2]=GuessResultCor[0][2];
   
   if(NumChAvailable>=4){
- 
-    Interferometer::DoInterferometery(InitialTxCor_ThPhR, FinalTxCor_ThPhR, ExpectedPositionUncertainty, ChHitTime, IgnoreCh, ChSNR, FinalMinValue, DurationReconstruction, Iterations,MinimizerRadialWidth); 
     
-    double FixedR=200;
+    double A=1.78;
+    double B=-0.43;
+    double C=0.0132;
+    
+    IceRayTracing::SetA(A);
+    IceRayTracing::SetB(B);
+    IceRayTracing::SetC(C);
+    
+    double GuessResultCor[3][4]; 
+    double MinimizerRadialWidth;
+      
+    IsItBelowStation=Interferometer::IsItAboveOrBelow(ChHitTime,IgnoreCh) ;
+    
+    Interferometer::GetRecieveAngle(ChHitTime, IgnoreCh, ChSNR, IsItBelowStation, 100, ArrivalDirection);
+    
+    auto t1 = std::chrono::high_resolution_clock::now();
     if(rawAtriEvPtr->isCalpulserEvent()==true){
-      FixedR=GuessResultCor[0][2];
+      vector <double> CalPulCor[3];
+      GetCPCor(StationId, CalPulCor,firstUnixTime);
+      Interferometer::GetApproximateMinUserCor(UserCor ,GuessResultCor, ChHitTime, IgnoreCh, ChSNR, IsItBelowStation, max_iter);
+      MinimizerRadialWidth=20;
     }else{
-      FixedR=200;
+      Interferometer::GetApproximateMinThPhR(GuessResultCor,ChHitTime,IgnoreCh,ChSNR,IsItBelowStation,10);      
+      Interferometer::GetApproximateDistance(GuessResultCor,ChHitTime,IgnoreCh,ChSNR,IsItBelowStation,10);
+      MinimizerRadialWidth=500;
     }
-    Interferometer::GetRecoFixedR(GuessResultCor[0], FinalTxCor_ThPhR_fR,ExpectedPositionUncertainty,ChHitTime, IgnoreCh, ChSNR, FixedR);
+    auto t2 = std::chrono::high_resolution_clock::now();
+    auto duration = std::chrono::duration_cast<std::chrono::microseconds>( t2 - t1 ).count();
+    DurationInitialCondition=duration/1000;
+
+    InitialTxCor_ThPhR[0]=GuessResultCor[0][0]*(Interferometer::pi/180);
+    InitialTxCor_ThPhR[1]=GuessResultCor[0][1]*(Interferometer::pi/180);
+    InitialTxCor_ThPhR[2]=GuessResultCor[0][2];
+    
+    Interferometer::DoInterferometery(InitialTxCor_ThPhR, FinalTxCor_ThPhR, ExpectedPositionUncertainty, ChHitTime, IgnoreCh, ChSNR, FinalMinValue, DurationReconstruction, Iterations,MinimizerRadialWidth);
+
+    if(RefineRecoResults==true){
+      cout<<"1st try Final Reco Results are: |  Th_initial="<<InitialTxCor_ThPhR[0]<<" ,Ph_initial="<<InitialTxCor_ThPhR[1]<<" ,R_initial="<<InitialTxCor_ThPhR[2]<<" | Th_reco="<<FinalTxCor_ThPhR[0]<<" ,Ph_reco="<<FinalTxCor_ThPhR[1]<<" ,R_reco="<<FinalTxCor_ThPhR[2]<<endl;
+    
+      InitialTxCor_ThPhR[0]=FinalTxCor_ThPhR[0]*(Interferometer::pi/180);
+      InitialTxCor_ThPhR[1]=FinalTxCor_ThPhR[1]*(Interferometer::pi/180);
+      InitialTxCor_ThPhR[2]=FinalTxCor_ThPhR[2];  
+      
+      Interferometer::DoInterferometery(InitialTxCor_ThPhR, FinalTxCor_ThPhR, ChHitTime, IgnoreCh, ChSNR, FinalMinValue, DurationReconstruction, Iterations,MinimizerRadialWidth, IsItBelowStation,50);
+    }
+    
+    // double FixedR=50;
+    // if(rawAtriEvPtr->isCalpulserEvent()==true){
+    //   FixedR=GuessResultCor[0][2];
+    // }else{
+    //   FixedR=200;
+    // }
+    // Interferometer::GetRecoFixedR(GuessResultCor[0], FinalTxCor_ThPhR_fR,ChHitTime, IgnoreCh, ChSNR, FixedR, IsItBelowStation, 50);
     
     DurationTotal=DurationInitialCondition+DurationReconstruction;
     
@@ -902,11 +1131,16 @@ void ReconstructARAevents(Int_t StationId, char const *InputFileName, int Run, i
   
     cout<<"Final Reco Results are: |  X_initial="<<InitialTxCor_XYZ[0]<<" ,Y_initial="<<InitialTxCor_XYZ[1]<<" ,Z_initial="<<InitialTxCor_XYZ[2]<<" | X_reco="<<FinalTxCor_XYZ[0]<<" ,Y_reco="<<FinalTxCor_XYZ[1]<<" ,Z_reco="<<FinalTxCor_XYZ[2]<<endl;
     cout<<"Final Reco Results are: |  Th_initial="<<InitialTxCor_ThPhR[0]<<" ,Ph_initial="<<InitialTxCor_ThPhR[1]<<" ,R_initial="<<InitialTxCor_ThPhR[2]<<" | Th_reco="<<FinalTxCor_ThPhR[0]<<" ,Ph_reco="<<FinalTxCor_ThPhR[1]<<" ,R_reco="<<FinalTxCor_ThPhR[2]<<endl;
-
+    cout<<" "<<endl;
     cout<<"Final Reco Results for fixed R are: |  Th_initial="<<InitialTxCor_ThPhR[0]<<" ,Ph_initial="<<InitialTxCor_ThPhR[1]<<" ,R_initial="<<FixedR<<" | Th_reco="<<FinalTxCor_ThPhR_fR[0]<<" ,Ph_reco="<<FinalTxCor_ThPhR_fR[1]<<" ,R_reco="<<FixedR<<endl;
     cout<<"Fn Min Value:"<<FinalMinValue<<", Total Minimizer Iterations: "<<Iterations<<", Total Reco Duration (ms): "<<DurationTotal<<endl;
   }else{
 
+    //If no reconstruction was performed then fill the final arrays with zeroes
+    ArrivalDirection[0]=0;
+    ArrivalDirection[1]=0;
+    ArrivalDirection[2]=0;
+    
     FinalTxCor_XYZ[0]=0;
     FinalTxCor_XYZ[1]=0;
     FinalTxCor_XYZ[2]=0;

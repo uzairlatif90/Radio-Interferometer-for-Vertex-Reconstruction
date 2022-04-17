@@ -52,7 +52,7 @@ void DeclareAntennaConfig(){
 	AvgAntennaCoordRx[2]+=z;
 	
 	TotalAntennas++;
-	cout<<idepth<<" "<<iring<<" "<<ipnt<<" "<<x<<" "<<y<<" "<<z<<endl;
+	//cout<<idepth<<" "<<iring<<" "<<ipnt<<" "<<x<<" "<<y<<" "<<z<<endl;
       }
     }
   }
@@ -60,6 +60,18 @@ void DeclareAntennaConfig(){
   AvgAntennaCoordRx[0]=AvgAntennaCoordRx[0]/TotalAntennasRx;
   AvgAntennaCoordRx[1]=AvgAntennaCoordRx[1]/TotalAntennasRx;
   AvgAntennaCoordRx[2]=AvgAntennaCoordRx[2]/TotalAntennasRx;
+
+    /*Get the coordinates of the station channels*/
+  for(int ich=0;ich<TotalAntennasRx;ich++) {
+    
+    AntennaCoordRx[ich][0]-=AvgAntennaCoordRx[0];
+    AntennaCoordRx[ich][1]-=AvgAntennaCoordRx[1];
+    AntennaCoordRx[ich][2]-=AvgAntennaCoordRx[2];
+    
+    cout<<ich<<" "<<AntennaCoordRx[ich][0]<<" "<<AntennaCoordRx[ich][1]<<" "<<AntennaCoordRx[ich][2]<<endl;
+    //delete [] antLocRx;
+  }
+
   
 }
 
@@ -81,7 +93,7 @@ void DeclareAntennaConfigARA(Int_t StationId){
     AvgAntennaCoordRx[1]+=antLocRx[1];
     AvgAntennaCoordRx[2]+=antLocRx[2];
     
-    cout<<ich<<" "<<AntennaCoordRx[ich][0]<<" "<<AntennaCoordRx[ich][1]<<" "<<AntennaCoordRx[ich][2]<<endl;
+    //cout<<ich<<" "<<AntennaCoordRx[ich][0]<<" "<<AntennaCoordRx[ich][1]<<" "<<AntennaCoordRx[ich][2]<<endl;
     //delete [] antLocRx;
   }
   // delete geom;
@@ -90,6 +102,18 @@ void DeclareAntennaConfigARA(Int_t StationId){
   AvgAntennaCoordRx[0]=AvgAntennaCoordRx[0]/TotalAntennasRx;
   AvgAntennaCoordRx[1]=AvgAntennaCoordRx[1]/TotalAntennasRx;
   AvgAntennaCoordRx[2]=AvgAntennaCoordRx[2]/TotalAntennasRx;
+
+
+  /*Get the coordinates of the station channels*/
+  for(int ich=0;ich<TotalAntennasRx;ich++) {
+    
+    AntennaCoordRx[ich][0]-=AvgAntennaCoordRx[0];
+    AntennaCoordRx[ich][1]-=AvgAntennaCoordRx[1];
+    AntennaCoordRx[ich][2]-=AvgAntennaCoordRx[2];
+    
+    cout<<ich<<" "<<AntennaCoordRx[ich][0]<<" "<<AntennaCoordRx[ich][1]<<" "<<AntennaCoordRx[ich][2]<<endl;
+    //delete [] antLocRx;
+  }
 }
 
 void DeclareAntennaConfigAraSim(){
@@ -144,4 +168,16 @@ void DeclareAntennaConfigAraSim(){
   AvgAntennaCoordRx[0]=0;
   AvgAntennaCoordRx[1]=0;
   AvgAntennaCoordRx[2]=-179.934;
+
+  /*Get the coordinates of the station channels*/
+  for(int ich=0;ich<TotalAntennasRx;ich++) {
+    
+    AntennaCoordRx[ich][0]-=AvgAntennaCoordRx[0];
+    AntennaCoordRx[ich][1]-=AvgAntennaCoordRx[1];
+    AntennaCoordRx[ich][2]-=AvgAntennaCoordRx[2];
+    
+    cout<<ich<<" "<<AntennaCoordRx[ich][0]<<" "<<AntennaCoordRx[ich][1]<<" "<<AntennaCoordRx[ich][2]<<endl;
+    //delete [] antLocRx;
+  }
+
 }
