@@ -29,6 +29,11 @@ void GetCPCor(Int_t iStation, vector <double> CalPulCor[3],double year){
       antLocD6[i-2][2]=antLocTx[2];       
       //cout<<i<<" D6: "<<antLocD6[i-2][0]<<" "<<antLocD6[i-2][1]<<" "<<antLocD6[i-2][2]<<endl;         
     }
+
+    antLocTx[0]-=AvgAntennaCoordRx[0];
+    antLocTx[1]-=AvgAntennaCoordRx[1];
+    antLocTx[2]-=AvgAntennaCoordRx[2];
+
     Double_t ThPhR[3]={0,0,0};
     Interferometer::XYZtoThPhR(antLocTx,ThPhR);
     ThPhR[0]=ThPhR[0]*(180./Interferometer::pi);
@@ -46,11 +51,17 @@ void RunInterferometerARA(){
   double ExpectedTimeJitter=2;// in ns
   double ExpectedPositionUncertainty=5;// in m
   
-  bool RefineRecoResults=false;
-  
-  double ChHitTime[2][TotalAntennasRx]; ////Channel Hit Time
-  int IgnoreCh[2][TotalAntennasRx];
-  double ChSNR[2][TotalAntennasRx];  
+  bool RefineRecoResults=false;  
+
+  vector <double> ChHitTime[2]; ////Channel Hit Time
+  vector <int> IgnoreCh[2];
+  vector <double> ChSNR[2]; 
+  ChHitTime[0].resize(TotalAntennasRx);
+  ChHitTime[1].resize(TotalAntennasRx);
+  IgnoreCh[0].resize(TotalAntennasRx);
+  IgnoreCh[1].resize(TotalAntennasRx);
+  ChSNR[0].resize(TotalAntennasRx);
+  ChSNR[1].resize(TotalAntennasRx);
   
   int countTotal=0;
   int countRecoSuccess=0;
@@ -127,7 +138,7 @@ void RunInterferometerARA(){
       }
     }
 
-    if(TrueTxCor_XYZ[2]<0){
+    if(TrueTxCor_XYZ[2]+AvgAntennaCoordRx[2]<0){
       Interferometer::GenerateChHitTimeAndCheckHits(TrueTxCor_XYZ,ChHitTime,IgnoreCh);
     }else{
       Interferometer::GenerateChHitTimeAndCheckHits_Air(TrueTxCor_XYZ,ChHitTime,IgnoreCh);

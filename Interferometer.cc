@@ -12,23 +12,29 @@ void Interferometer::ThPhRtoXYZ(Double_t ThPhR[3],Double_t XYZ[3]){
   XYZ[2]=ThPhR[2]*cos(ThPhR[0]);
 }
 
-void Interferometer::GenerateChHitTimeAndCheckHits(double TxCor[3],double timeRay[2][TotalAntennasRx],int IgnoreCh[2][TotalAntennasRx]){
+void Interferometer::GenerateChHitTimeAndCheckHits(double TxCor[3],vector<double> (&timeRay)[2],vector<int> (&IgnoreCh)[2]){
+  timeRay[0].resize(TotalAntennasRx);
+  timeRay[1].resize(TotalAntennasRx);
+  IgnoreCh[0].resize(TotalAntennasRx);
+  IgnoreCh[1].resize(TotalAntennasRx);
 
   double AntennaCoordTx[3]={TxCor[0],TxCor[1],TxCor[2]+AvgAntennaCoordRx[2]};
   
   int DHits=0,RHits=0;
-  // double timeD[TotalAntennasRx], timeR[TotalAntennasRx], timeRa[2][TotalAntennasRx];
-  // double RangD[TotalAntennasRx], RangR[TotalAntennasRx], RangRa[2][TotalAntennasRx];
   double timeD, timeR, timeRa[2];
   double RangD, RangR, RangRa[2];
   double LangD, LangR, LangRa[2];
 
-  double RangRay[2][TotalAntennasRx];  
-  double LangRay[2][TotalAntennasRx];  
-
+  vector <double> RangRay[2];  
+  vector <double> LangRay[2];  
+  RangRay[0].resize(TotalAntennasRx);
+  LangRay[0].resize(TotalAntennasRx);
+  RangRay[1].resize(TotalAntennasRx);
+  LangRay[1].resize(TotalAntennasRx);
+  
   for(int iRx=0;iRx<TotalAntennasRx;iRx++){
-    double Distance=sqrt(pow(AntennaCoordRx[iRx][0]-AntennaCoordTx[0],2) + pow(AntennaCoordRx[iRx][1]-AntennaCoordTx[1],2));
-    double RxDepth=AntennaCoordRx[iRx][2]+AvgAntennaCoordRx[2];
+    double Distance=sqrt(pow(AntennaCoordRx[0][iRx]-AntennaCoordTx[0],2) + pow(AntennaCoordRx[1][iRx]-AntennaCoordTx[1],2));
+    double RxDepth=AntennaCoordRx[2][iRx]+AvgAntennaCoordRx[2];
     double TxDepth=AntennaCoordTx[2];
     
     //cout<<"rt parameters are "<<0<<" "<<TxDepth<<" "<<Distance<<" "<<RxDepth<<endl;
@@ -163,33 +169,40 @@ void Interferometer::GenerateChHitTimeAndCheckHits(double TxCor[3],double timeRa
   //cout<<"hits are "<<DHits<<" "<<RHits<<endl; 
 }
 
-void Interferometer::GenerateChHitTimeAndCheckHits_Cnz(double TxCor[3],double timeRay[2][TotalAntennasRx],int IgnoreCh[2][TotalAntennasRx]){
+void Interferometer::GenerateChHitTimeAndCheckHits_Cnz(double TxCor[3],vector<double> (&timeRay)[2],vector<int> (&IgnoreCh)[2]){
 
+  timeRay[0].resize(TotalAntennasRx);
+  timeRay[1].resize(TotalAntennasRx);
+  IgnoreCh[0].resize(TotalAntennasRx);
+  IgnoreCh[1].resize(TotalAntennasRx);
+  
   double AntennaCoordTx[3]={TxCor[0],TxCor[1],TxCor[2]+AvgAntennaCoordRx[2]};
   
   int DHits=0,RHits=0;
-  // double LangD=0;double LangR=0;double LangRa=0;
-  double timeD[TotalAntennasRx], timeR[TotalAntennasRx], timeRa[TotalAntennasRx];
-  double RangD[TotalAntennasRx], RangR[TotalAntennasRx], RangRa[TotalAntennasRx];
-  double RangRay[2][TotalAntennasRx];  
+
+  double timeD, timeR, timeRa;
+  double RangD, RangR, RangRa;
+  vector <double> RangRay[2];  
+  RangRay[0].resize(TotalAntennasRx);
+  RangRay[1].resize(TotalAntennasRx);
   
   for(int iRx=0;iRx<TotalAntennasRx;iRx++){
-    double Distance=sqrt(pow(AntennaCoordRx[iRx][0]-AntennaCoordTx[0],2) + pow(AntennaCoordRx[iRx][1]-AntennaCoordTx[1],2));
-    double RxDepth=AntennaCoordRx[iRx][2]+AvgAntennaCoordRx[2];
+    double Distance=sqrt(pow(AntennaCoordRx[0][iRx]-AntennaCoordTx[0],2) + pow(AntennaCoordRx[1][iRx]-AntennaCoordTx[1],2));
+    double RxDepth=AntennaCoordRx[2][iRx]+AvgAntennaCoordRx[2];
     double TxDepth=AntennaCoordTx[2];
     double *RTresults=IceRayTracing::IceRayTracing_Cnz(0, TxDepth, Distance,RxDepth,(IceRayTracing::Getnz(TxDepth)+IceRayTracing::Getnz(RxDepth))/2);
 
-    timeD[iRx]=RTresults[2]*pow(10,9);
-    timeR[iRx]=RTresults[3]*pow(10,9);
+    timeD=RTresults[2]*pow(10,9);
+    timeR=RTresults[3]*pow(10,9);
    
-    RangD[iRx]=RTresults[4];
-    RangR[iRx]=RTresults[5];
+    RangD=RTresults[4];
+    RangR=RTresults[5];
     
-    timeRay[0][iRx]=timeD[iRx];
-    timeRay[1][iRx]=timeR[iRx];
+    timeRay[0][iRx]=timeD;
+    timeRay[1][iRx]=timeR;
 
-    RangRay[0][iRx]=RangD[iRx];
-    RangRay[1][iRx]=RangR[iRx];
+    RangRay[0][iRx]=RangD;
+    RangRay[1][iRx]=RangR;
     
     DHits++;
     RHits++;
@@ -200,26 +213,30 @@ void Interferometer::GenerateChHitTimeAndCheckHits_Cnz(double TxCor[3],double ti
 }
 
 
-void Interferometer::GenerateChHitTimeAndCheckHits_Air(double TxCor[3],double timeRay[2][TotalAntennasRx],int IgnoreCh[2][TotalAntennasRx]){
+void Interferometer::GenerateChHitTimeAndCheckHits_Air(double TxCor[3],vector<double> (&timeRay)[2],vector<int> (&IgnoreCh)[2]){
 
+  timeRay[0].resize(TotalAntennasRx);
+  timeRay[1].resize(TotalAntennasRx);
+  IgnoreCh[0].resize(TotalAntennasRx);
+  IgnoreCh[1].resize(TotalAntennasRx);
+  
   double AntennaCoordTx[3]={TxCor[0],TxCor[1],TxCor[2]+AvgAntennaCoordRx[2]};
   
   int DHits=0;
-  // double LangD=0;;
-  double timeD[TotalAntennasRx];
-  double RangD[TotalAntennasRx];
+  double timeD;
+  double RangD;
   
   for(int iRx=0;iRx<TotalAntennasRx;iRx++){
-    double Distance=sqrt(pow(AntennaCoordRx[iRx][0]-AntennaCoordTx[0],2) + pow(AntennaCoordRx[iRx][1]-AntennaCoordTx[1],2));
-    double RxDepth=AntennaCoordRx[iRx][2]+AvgAntennaCoordRx[2];
+    double Distance=sqrt(pow(AntennaCoordRx[0][iRx]-AntennaCoordTx[0],2) + pow(AntennaCoordRx[1][iRx]-AntennaCoordTx[1],2));
+    double RxDepth=AntennaCoordRx[2][iRx]+AvgAntennaCoordRx[2];
     double TxHeight=AntennaCoordTx[2];   
     //cout<<"RT par are "<<RxDepth<<" "<<Distance<<" "<<TxHeight<<endl;
     double *RTresults=IceRayTracing::GetDirectRayPar_Air(RxDepth, Distance, TxHeight);
-    timeD[iRx]=RTresults[2]*pow(10,9);
-    RangD[iRx]=RTresults[0];
-    timeRay[0][iRx]=timeD[iRx];
+    timeD=RTresults[2]*pow(10,9);
+    RangD=RTresults[0];
+    timeRay[0][iRx]=timeD;
 
-    if(RangD[iRx]==-1000){
+    if(RangD==-1000){
       IgnoreCh[0][iRx]=0;
     }
 
@@ -231,7 +248,7 @@ void Interferometer::GenerateChHitTimeAndCheckHits_Air(double TxCor[3],double ti
   }
 }
 
-bool Interferometer::CheckTrigger(int IgnoreCh[2][TotalAntennasRx]){
+bool Interferometer::CheckTrigger(vector<int> (&IgnoreCh)[2]){
 
   int count[2][2]={{0,0},{0,0}};
   
@@ -274,8 +291,11 @@ bool Interferometer::CheckTrigger(int IgnoreCh[2][TotalAntennasRx]){
   return DidStationTrigger;
 }
 
-void Interferometer::ReadChHitTimeFromData(const char * filename,double ChHitTime[2][TotalAntennasRx]){
-
+void Interferometer::ReadChHitTimeFromData(const char * filename,vector<double> (&ChHitTime)[2]){
+  
+  ChHitTime[0].resize(TotalAntennasRx);
+  ChHitTime[1].resize(TotalAntennasRx);
+  
   ////Open the file
   std::ifstream ain(filename);
   int n1=0;////variable for counting total number of data points
@@ -295,7 +315,7 @@ void Interferometer::ReadChHitTimeFromData(const char * filename,double ChHitTim
   ain.close();
 }
 
-void Interferometer::FindFirstHitAndNormalizeHitTime(double ChHitTime[2][TotalAntennasRx],int IgnoreCh[2][TotalAntennasRx], int NormalizeRay){
+void Interferometer::FindFirstHitAndNormalizeHitTime(vector<double> (&ChHitTime)[2],vector<int> (&IgnoreCh)[2], int NormalizeRay){
 
   double FirstHitTime[2]={0,0};
   int FirstHitCh[2]={0,0};
@@ -303,9 +323,7 @@ void Interferometer::FindFirstHitAndNormalizeHitTime(double ChHitTime[2][TotalAn
   double LastHitTime[2]={0,0};
   int LastHitCh[2]={0,0};
   vector <double> ChHitTimeB[2];
-  vector <double> ChHitTimeC[2];
   vector <int> ChHitNum[2];
-
   
   for(int iray=0;iray<2;iray++){ 
     for(int iRx=0;iRx<TotalAntennasRx;iRx++){
@@ -348,7 +366,7 @@ void Interferometer::FindFirstHitAndNormalizeHitTime(double ChHitTime[2][TotalAn
   // }
 }
 
-void Interferometer::AddGaussianJitterToHitTimes(double JitterNumber,double ChHitTime[2][TotalAntennasRx]){
+void Interferometer::AddGaussianJitterToHitTimes(double JitterNumber,vector<double> (&ChHitTime)[2]){
 
   ////Introduce jitter +-JitterNumber
   TRandom3 *RandNumIni = new TRandom3(0);
@@ -369,7 +387,7 @@ void Interferometer::AddGaussianJitterToHitTimes(double JitterNumber,double ChHi
   delete RandNumIni;
 }
 
-int Interferometer::IsItAboveOrBelow(double ChHitTime[2][TotalAntennasRx],int IgnoreCh[2][TotalAntennasRx]){
+int Interferometer::IsItAboveOrBelow(vector<double> (&ChHitTime)[2],vector<int> (&IgnoreCh)[2]){
 
   int IsItBelowStation=1;
   double XYZ[3]={0,0,0};
@@ -388,9 +406,9 @@ int Interferometer::IsItAboveOrBelow(double ChHitTime[2][TotalAntennasRx],int Ig
   // XYZ[1]=AntennaCoordRx[min_Ch][1]-AvgAntennaCoordRx[1];
   // XYZ[2]=AntennaCoordRx[min_Ch][2]-AvgAntennaCoordRx[2];
 
-  XYZ[0]=AntennaCoordRx[min_Ch][0];
-  XYZ[1]=AntennaCoordRx[min_Ch][1];
-  XYZ[2]=AntennaCoordRx[min_Ch][2];
+  XYZ[0]=AntennaCoordRx[0][min_Ch];
+  XYZ[1]=AntennaCoordRx[1][min_Ch];
+  XYZ[2]=AntennaCoordRx[2][min_Ch];
 
   if(XYZ[2]>0){
     cout<<"Ch."<<min_Ch<<" was hit first and the arrival direction is from above the station"<<endl;
@@ -432,10 +450,14 @@ double Interferometer::Minimizer_f1D(double m, void *params){
     AntennaCoordTx[ixyz]=XYZ[ixyz];
   }
     
-  double timeRay[2][TotalAntennasRx];
-  int IgnoreCh[2][TotalAntennasRx];
-  int IgnoreChB[2][TotalAntennasRx];
-    
+  vector<double> timeRay[2];
+  vector<int> IgnoreCh[2];
+
+  timeRay[0].resize(TotalAntennasRx);
+  timeRay[1].resize(TotalAntennasRx);
+  IgnoreCh[0].resize(TotalAntennasRx);
+  IgnoreCh[1].resize(TotalAntennasRx);
+  
   for(int iRx=0;iRx<TotalAntennasRx;iRx++){
     for(int iray=0;iray<2;iray++){
       IgnoreCh[iray][iRx]=1;
@@ -449,13 +471,7 @@ double Interferometer::Minimizer_f1D(double m, void *params){
     //cout<<"working for air "<<ExpectedTh<<" "<<ExpectedPh<<" "<<p[6*TotalAntennasRx+10]<<" "<<XYZ[2]+AvgAntennaCoordRx[2]<<" "<<p[6*TotalAntennasRx+12]<<endl;;
     Interferometer::GenerateChHitTimeAndCheckHits_Air(AntennaCoordTx,timeRay,IgnoreCh);  
   }
-
-  for(int iRx=0;iRx<TotalAntennasRx;iRx++){
-    for(int iray=0;iray<2;iray++){
-      IgnoreChB[iray][iRx]=IgnoreCh[iray][iRx];
-    }
-  }
-
+  
   Double_t SumSNRD=0, SumSNRR=0;
   int chanD[2]={0,0};
   int chanR[2]={0,0};
@@ -573,7 +589,7 @@ double Interferometer::Minimizer_f1D(double m, void *params){
     // 	  double sum_W=0;
     // 	  for(int iRxB=0;iRxB<TotalAntennasRx;iRxB++){ 
 
-    // 	    if(p[2*TotalAntennasRx +iRx]!=0 && IgnoreChB[1][iRx]!=0 && p[2*TotalAntennasRx +iRxB]!=0 && IgnoreChB[1][iRxB]!=0){
+    // 	    if(p[2*TotalAntennasRx +iRx]!=0 && IgnoreCh[1][iRx]!=0 && p[2*TotalAntennasRx +iRxB]!=0 && IgnoreCh[1][iRxB]!=0){
 
     // 	      if(sum==0){
     // 		loop1+=p[4*TotalAntennasRx +iRx];
@@ -656,10 +672,14 @@ double Interferometer::Minimizer_f(const gsl_vector *v, void *params){
     AntennaCoordTx[ixyz]=XYZ[ixyz];
   }
     
-  double timeRay[2][TotalAntennasRx];
-  int IgnoreCh[2][TotalAntennasRx];
-  int IgnoreChB[2][TotalAntennasRx];
-    
+  vector<double> timeRay[2];
+  vector<int> IgnoreCh[2];
+
+  timeRay[0].resize(TotalAntennasRx);
+  timeRay[1].resize(TotalAntennasRx);
+  IgnoreCh[0].resize(TotalAntennasRx);
+  IgnoreCh[1].resize(TotalAntennasRx);
+  
   for(int iRx=0;iRx<TotalAntennasRx;iRx++){
     for(int iray=0;iray<2;iray++){
       IgnoreCh[iray][iRx]=1;
@@ -673,13 +693,7 @@ double Interferometer::Minimizer_f(const gsl_vector *v, void *params){
     //cout<<"working for air "<<gsl_vector_get(v, 0)<<" "<<gsl_vector_get(v, 1)<<" "<<p[6*TotalAntennasRx+10]<<" "<<XYZ[2]+AvgAntennaCoordRx[2]<<" "<<p[6*TotalAntennasRx+12]<<endl;;
     Interferometer::GenerateChHitTimeAndCheckHits_Air(AntennaCoordTx,timeRay,IgnoreCh);  
   }
-
-  for(int iRx=0;iRx<TotalAntennasRx;iRx++){
-    for(int iray=0;iray<2;iray++){
-      IgnoreChB[iray][iRx]=IgnoreCh[iray][iRx];
-    }
-  }
-
+  
   Double_t SumSNRD=0, SumSNRR=0,SumSNR=0;
   int chanD[2]={0,0};
   int chanR[2]={0,0};
@@ -798,7 +812,7 @@ double Interferometer::Minimizer_f(const gsl_vector *v, void *params){
     // 	  double sum_W=0;
     // 	  for(int iRxB=0;iRxB<TotalAntennasRx;iRxB++){ 
 
-    // 	    if(p[2*TotalAntennasRx +iRx]!=0 && IgnoreChB[1][iRx]!=0 && p[2*TotalAntennasRx +iRxB]!=0 && IgnoreChB[1][iRxB]!=0){
+    // 	    if(p[2*TotalAntennasRx +iRx]!=0 && IgnoreCh[1][iRx]!=0 && p[2*TotalAntennasRx +iRxB]!=0 && IgnoreCh[1][iRxB]!=0){
 
     // 	      if(sum==0){
     // 		loop1+=p[4*TotalAntennasRx +iRx];
@@ -880,10 +894,14 @@ double Interferometer::Minimizer_fCnz(const gsl_vector *v, void *params){
     AntennaCoordTx[ixyz]=XYZ[ixyz];
   }
     
-  double timeRay[2][TotalAntennasRx];
-  int IgnoreCh[2][TotalAntennasRx];
-  int IgnoreChB[2][TotalAntennasRx];
+  vector<double> timeRay[2];
+  vector<int> IgnoreCh[2];
 
+  timeRay[0].resize(TotalAntennasRx);
+  timeRay[1].resize(TotalAntennasRx);
+  IgnoreCh[0].resize(TotalAntennasRx);
+  IgnoreCh[1].resize(TotalAntennasRx);
+  
   for(int iRx=0;iRx<TotalAntennasRx;iRx++){
     for(int iray=0;iray<2;iray++){
       IgnoreCh[iray][iRx]=1;
@@ -897,13 +915,7 @@ double Interferometer::Minimizer_fCnz(const gsl_vector *v, void *params){
     //cout<<"working for air "<<gsl_vector_get(v, 0)<<" "<<gsl_vector_get(v, 1)<<" "<<p[6*TotalAntennasRx+10]<<" "<<XYZ[2]+AvgAntennaCoordRx[2]<<" "<<p[6*TotalAntennasRx+12]<<endl;;
     Interferometer::GenerateChHitTimeAndCheckHits_Air(AntennaCoordTx,timeRay,IgnoreCh);  
   }
-
   
-  for(int iRx=0;iRx<TotalAntennasRx;iRx++){
-    for(int iray=0;iray<2;iray++){
-      IgnoreChB[iray][iRx]=IgnoreCh[iray][iRx];
-    }
-  }
   Double_t SumSNRD=0, SumSNRR=0,SumSNR=0;
   int chanD[2]={0,0};
   int chanR[2]={0,0};
@@ -1019,7 +1031,7 @@ double Interferometer::Minimizer_fCnz(const gsl_vector *v, void *params){
     // 	  double sum_W=0;
     // 	  for(int iRxB=0;iRxB<TotalAntennasRx;iRxB++){ 
 
-    // 	    if(p[2*TotalAntennasRx +iRx]!=0 && IgnoreChB[1][iRx]!=0 && p[2*TotalAntennasRx +iRxB]!=0 && IgnoreChB[1][iRxB]!=0){
+    // 	    if(p[2*TotalAntennasRx +iRx]!=0 && IgnoreCh[1][iRx]!=0 && p[2*TotalAntennasRx +iRxB]!=0 && IgnoreCh[1][iRxB]!=0){
 
     // 	      if(sum==0){
     // 		loop1+=p[4*TotalAntennasRx +iRx];
@@ -1127,8 +1139,7 @@ void Interferometer::MinimizerThPhR1D(double m, double a, double b, double &Fina
   gsl_min_fminimizer_free (s);
 }
 
-double Interferometer::MinimizerThPh(double x, void * params)
-{
+double Interferometer::MinimizerThPh(double x, void * params){
  
   double *p = (double *)params;
 
@@ -1136,8 +1147,14 @@ double Interferometer::MinimizerThPh(double x, void * params)
   double TxCor[3]={0,0,0};
   Interferometer::ThPhRtoXYZ(ThPhR,TxCor);
   
-  double timeRay[2][TotalAntennasRx];
-  int IgnoreCh[2][TotalAntennasRx];
+  vector<double> timeRay[2];
+  vector<int> IgnoreCh[2];
+
+  timeRay[0].resize(TotalAntennasRx);
+  timeRay[1].resize(TotalAntennasRx);
+  IgnoreCh[0].resize(TotalAntennasRx);
+  IgnoreCh[1].resize(TotalAntennasRx);
+  
   for(int iRx=0;iRx<TotalAntennasRx;iRx++){
     for(int iray=0;iray<2;iray++){
       IgnoreCh[iray][iRx]=1;
@@ -1228,7 +1245,7 @@ double Interferometer::MinimizerThPh(double x, void * params)
   return FinalMinValue;
 }
 
-void Interferometer::MinimizerThPhR(double InitialTxCor_XYZ[3], double InitialTxCor_ThPhR[3], double FinalTxCor[3], double ChHitTime[2][TotalAntennasRx], int IgnoreCh[2][TotalAntennasRx], double ChSNR[2][TotalAntennasRx], double &FinalMinValue, int &Iterations, double MinimizerRadialWidth, int IsItBelowStation, int max_iter){
+void Interferometer::MinimizerThPhR(double InitialTxCor_XYZ[3], double InitialTxCor_ThPhR[3], double FinalTxCor[3], vector<double> (&ChHitTime)[2], vector<int> (&IgnoreCh)[2], vector <double> (&ChSNR)[2], double &FinalMinValue, int &Iterations, double MinimizerRadialWidth, int IsItBelowStation, int max_iter){
  
   int wloop=0;
   double m = InitialTxCor_ThPhR[2]; 
@@ -1415,7 +1432,7 @@ void Interferometer::MinimizerThPhR(double InitialTxCor_XYZ[3], double InitialTx
 
 }
 
-double Interferometer::GetChiSquaredThPhR(double UserCor[3], double ChHitTime[2][TotalAntennasRx], int IgnoreCh[2][TotalAntennasRx], double ChSNR[2][TotalAntennasRx], int IsItBelowStation,int CnzOrEnz, int max_iter){
+double Interferometer::GetChiSquaredThPhR(double UserCor[3], vector<double> (&ChHitTime)[2], vector<int> (&IgnoreCh)[2], vector <double> (&ChSNR)[2], int IsItBelowStation,int CnzOrEnz, int max_iter){
 
   gsl_vector *ThPhRVec;
   ThPhRVec = gsl_vector_alloc (2);
@@ -1493,20 +1510,20 @@ double Interferometer::GetChiSquaredThPhR(double UserCor[3], double ChHitTime[2]
   
 }
 
-void Interferometer::GetRecieveAngle(double ChHitTime[2][TotalAntennasRx], int IgnoreCh[2][TotalAntennasRx], double ChSNR[2][TotalAntennasRx], int max_iter, double StartCor[3]){
+void Interferometer::GetRecieveAngle(vector<double> (&ChHitTime)[2], vector<int> (&IgnoreCh)[2], vector <double> (&ChSNR)[2], int max_iter, double StartCor[3]){
 
   double TestCor[3]={0,0,0}; 
   double min=1e9;
   int minbin=0;
 
-  int IgnoreChB[2][TotalAntennasRx];
-  double ChSNRB[2][TotalAntennasRx];
+  vector <int> IgnoreChB[2];
+  vector <double> ChSNRB[2];
   
   for(int iRx=0;iRx<TotalAntennasRx;iRx++){
-    IgnoreChB[0][iRx]=IgnoreCh[0][iRx];
-    ChSNRB[0][iRx]=ChSNR[0][iRx];
-    IgnoreChB[1][iRx]=0;
-    ChSNRB[1][iRx]=1;
+    IgnoreChB[0].push_back(IgnoreCh[0][iRx]);
+    ChSNRB[0].push_back(ChSNR[0][iRx]);
+    IgnoreChB[1].push_back(0);
+    ChSNRB[1].push_back(1);
   }
   
   for(int ith=1;ith<90;ith++){
@@ -1539,10 +1556,17 @@ void Interferometer::SearchApproxiMin(double GuessResultCor[3][4],double Paramet
 
   int TotEnt=6*TotalAntennasRx;
 
-  int IgnoreCh[2][TotalAntennasRx];
-  double ChHitTime[2][TotalAntennasRx];
-  double ChSNR[2][TotalAntennasRx];
+  vector<int> IgnoreCh[2];
+  vector<double> ChHitTime[2];
+  vector <double> ChSNR[2];
 
+  ChHitTime[0].resize(TotalAntennasRx);
+  ChHitTime[1].resize(TotalAntennasRx);
+  IgnoreCh[0].resize(TotalAntennasRx);
+  IgnoreCh[1].resize(TotalAntennasRx);
+  ChSNR[0].resize(TotalAntennasRx);
+  ChSNR[1].resize(TotalAntennasRx);
+  
   int iEnt=0;
 
   for(int iray=0;iray<2;iray++){
@@ -1694,7 +1718,7 @@ void Interferometer::SearchApproxiMin(double GuessResultCor[3][4],double Paramet
   
 }
 
-void Interferometer::GetApproximateMinUserCor(vector <double> UserCor[3] ,double GuessResultCor[3][4], double ChHitTime[2][TotalAntennasRx], int IgnoreCh[2][TotalAntennasRx], double ChSNR[2][TotalAntennasRx], int IsItBelowStation, int max_iter){
+void Interferometer::GetApproximateMinUserCor(vector <double>(&UserCor)[3],double GuessResultCor[3][4], vector<double> (&ChHitTime)[2], vector<int> (&IgnoreCh)[2], vector <double> (&ChSNR)[2], int IsItBelowStation, int max_iter){
   
   vector <double> RecoPar[4];
   gsl_vector *ThPhRVec;
@@ -1793,7 +1817,7 @@ void Interferometer::GetApproximateMinUserCor(vector <double> UserCor[3] ,double
   }
 }
 
-void Interferometer::GetApproximateMinThPhR(double GuessResultCor[3][4], double ChHitTime[2][TotalAntennasRx], int IgnoreCh[2][TotalAntennasRx], double ChSNR[2][TotalAntennasRx], int IsItBelowStation, int max_iter){
+void Interferometer::GetApproximateMinThPhR(double GuessResultCor[3][4], vector<double> (&ChHitTime)[2], vector<int> (&IgnoreCh)[2], vector <double> (&ChSNR)[2], int IsItBelowStation, int max_iter){
   
   double ParameterArray[6*TotalAntennasRx+15];
   int iEnt=0;
@@ -1878,9 +1902,9 @@ void Interferometer::GetApproximateMinThPhR(double GuessResultCor[3][4], double 
 
 }
 
-void Interferometer::GetApproximateDistance(double GuessResultCor[3][4], double ChHitTime[2][TotalAntennasRx], int IgnoreCh[2][TotalAntennasRx], double ChSNR[2][TotalAntennasRx], int IsItBelowStation, int max_iter){
+void Interferometer::GetApproximateDistance(double GuessResultCor[3][4], vector<double> (&ChHitTime)[2], vector<int> (&IgnoreCh)[2], vector <double> (&ChSNR)[2], int IsItBelowStation, int max_iter){
   
-  double ParameterArray[6*TotalAntennasRx+13];
+  double ParameterArray[6*TotalAntennasRx+15];
   int iEnt=0;
   for(int iray=0;iray<2;iray++){
     for(int iRx=0;iRx<TotalAntennasRx;iRx++){
@@ -2041,9 +2065,6 @@ void Interferometer::GetApproximateDistance(double GuessResultCor[3][4], double 
   testTh=GuessResultCor[0][0];
   testPh=GuessResultCor[0][1];
   testR=StopR+1;    
-
-  double timeRay_test[2][TotalAntennasRx];
-  int IgnoreCh_test[2][TotalAntennasRx];
 
   while(checkmincurve==false && testR>StopR){
    
@@ -2327,7 +2348,7 @@ void Interferometer::GetApproximateDistance(double GuessResultCor[3][4], double 
 
 }
 
-void Interferometer::GetRecoFixedR(double InitialTxCor[3], double FinalTxCor[3], double ChHitTime[2][TotalAntennasRx], int IgnoreCh[2][TotalAntennasRx], double ChSNR[2][TotalAntennasRx], double &FixedR, int IsItBelowStation, int max_iter){
+void Interferometer::GetRecoFixedR(double InitialTxCor[3], double FinalTxCor[3], vector<double> (&ChHitTime)[2], vector<int> (&IgnoreCh)[2], vector <double> (&ChSNR)[2], double &FixedR, int IsItBelowStation, int max_iter){
   
   double ParameterArray[6*TotalAntennasRx+13];
   int iEnt=0;
@@ -2397,7 +2418,7 @@ void Interferometer::GetRecoFixedR(double InitialTxCor[3], double FinalTxCor[3],
   
 }
 
-void Interferometer::DoInterferometery(double InitialTxCor[3], double FinalTxCor[3], double ChHitTime[2][TotalAntennasRx], int IgnoreCh[2][TotalAntennasRx],double ChSNR[2][TotalAntennasRx], double &FinalMinValue, double &Duration,int &Iterations, double MinimizerRadialWidth,int IsItBelowStation, int max_iter){ 
+void Interferometer::DoInterferometery(double InitialTxCor[3], double FinalTxCor[3], vector<double> (&ChHitTime)[2], vector<int> (&IgnoreCh)[2],vector <double> (&ChSNR)[2], double &FinalMinValue, double &Duration,int &Iterations, double MinimizerRadialWidth,int IsItBelowStation, int max_iter){ 
   auto t1b = std::chrono::high_resolution_clock::now();
   
   Double_t ThPhR[3]={InitialTxCor[0],InitialTxCor[1],InitialTxCor[2]};

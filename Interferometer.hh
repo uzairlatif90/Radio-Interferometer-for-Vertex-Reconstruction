@@ -22,21 +22,21 @@ namespace Interferometer{
   
   void ThPhRtoXYZ(Double_t ThPhR[3],Double_t XYZ[3]);
   
-  void GenerateChHitTimeAndCheckHits(double TxCor[3],double timeRay[2][TotalAntennasRx],int IgnoreCh[2][TotalAntennasRx]);
+  void GenerateChHitTimeAndCheckHits(double TxCor[3],vector<double> (&timeRay)[2],vector <int> (&IgnoreCh)[2]);
 
-  void GenerateChHitTimeAndCheckHits_Cnz(double TxCor[3],double timeRay[2][TotalAntennasRx],int IgnoreCh[2][TotalAntennasRx]);
+  void GenerateChHitTimeAndCheckHits_Cnz(double TxCor[3],vector<double> (&timeRay)[2],vector <int> (&IgnoreCh)[2]);
 
-  void GenerateChHitTimeAndCheckHits_Air(double TxCor[3],double timeRay[2][TotalAntennasRx],int IgnoreCh[2][TotalAntennasRx]);
+  void GenerateChHitTimeAndCheckHits_Air(double TxCor[3],vector<double> (&timeRay)[2],vector <int> (&IgnoreCh)[2]);
   
-  bool CheckTrigger(int IgnoreCh[2][TotalAntennasRx]);
+  bool CheckTrigger(vector <int> (&IgnoreCh)[2]);
   
-  void ReadChHitTimeFromData(const char * filename,double ChHitTime[2][TotalAntennasRx]);
+  void ReadChHitTimeFromData(const char * filename,vector<double> (&ChHitTime)[2]);
 
-  void FindFirstHitAndNormalizeHitTime(double ChHitTime[2][TotalAntennasRx],int IgnoreCh[2][TotalAntennasRx],int NormalizeRay);
+  void FindFirstHitAndNormalizeHitTime(vector<double> (&ChHitTime)[2],vector <int> (&IgnoreCh)[2],int NormalizeRay);
   
-  void AddGaussianJitterToHitTimes(double JitterNumber,double ChHitTime[2][TotalAntennasRx]);
+  void AddGaussianJitterToHitTimes(double JitterNumber,vector<double> (&ChHitTime)[2]);
 
-  int IsItAboveOrBelow(double ChHitTime[2][TotalAntennasRx],int IgnoreCh[2][TotalAntennasRx]);
+  int IsItAboveOrBelow(vector<double> (&ChHitTime)[2],vector <int> (&IgnoreCh)[2]);
 
   double Minimizer_f1D(double m, void *params);
 
@@ -46,25 +46,25 @@ namespace Interferometer{
 
   double MinimizerThPh(double x, void * params);
 
-  void MinimizerThPhR1D(double m, double a, double b, double &FinalMinValue, double &FnMinValue, int &Iterations, void *parameters);
+  void MinimizerThPhR1D(double m, double a, double b, double  &FinalMinValue, double  &FnMinValue, int  &Iterations, void *parameters);
   
-  void MinimizerThPhR(double InitialTxCor_XYZ[3], double InitialTxCor_ThPhR[3], double FinalTxCor[3], double ChHitTime[2][TotalAntennasRx], int IgnoreCh[2][TotalAntennasRx], double ChSNR[2][TotalAntennasRx], double &FinalMinValue, int &Iterations, double MinimizerRadialWidth,int IsItBelowStation, int max_iter);
+  void MinimizerThPhR(double InitialTxCor_XYZ[3], double InitialTxCor_ThPhR[3], double FinalTxCor[3], vector<double> (&ChHitTime)[2], vector <int> (&IgnoreCh)[2], vector <double> (&ChSNR)[2], double  &FinalMinValue, int  &Iterations, double MinimizerRadialWidth,int IsItBelowStation, int max_iter);
 
-  double GetChiSquaredThPhR(double UserCor[3], double ChHitTime[2][TotalAntennasRx], int IgnoreCh[2][TotalAntennasRx], double ChSNR[2][TotalAntennasRx], int IsItBelowStation, int CnzOrEnz, int max_iter);
+  double GetChiSquaredThPhR(double UserCor[3], vector<double> (&ChHitTime)[2], vector <int> (&IgnoreCh)[2], vector <double> (&ChSNR)[2], int IsItBelowStation, int CnzOrEnz, int max_iter);
 
-  void GetRecieveAngle( double ChHitTime[2][TotalAntennasRx], int IgnoreCh[2][TotalAntennasRx], double ChSNR[2][TotalAntennasRx], int max_iter, double StartCor[3]);
+  void GetRecieveAngle( vector<double> (&ChHitTime)[2], vector <int> (&IgnoreCh)[2], vector <double>(&ChSNR)[2], int max_iter, double StartCor[3]);
 
-  void SearchApproxiMin(double GuessResultCor[3][4],double ParameterArray[6*TotalAntennasRx+14], bool CheckAboveSurface);
+  void SearchApproxiMin(double GuessResultCor[3][4],double ParameterArray[], bool CheckAboveSurface);
 
-  void GetApproximateMinUserCor(vector <double> UserCor[3] ,double GuessResultCor[3][4], double ChHitTime[2][TotalAntennasRx], int IgnoreCh[2][TotalAntennasRx], double ChSNR[2][TotalAntennasRx], int IsItBelowStation, int max_iter);
+  void GetApproximateMinUserCor(vector <double> (&UserCor)[3] ,double GuessResultCor[3][4], vector<double> (&ChHitTime)[2], vector <int> (&IgnoreCh)[2], vector <double> (&ChSNR)[2], int IsItBelowStation, int max_iter);
   
-  void GetApproximateMinThPhR(double GuessResultCor[3][4], double ChHitTime[2][TotalAntennasRx], int IgnoreCh[2][TotalAntennasRx], double ChSNR[2][TotalAntennasRx], int IsItBelowStation, int max_iter);
+  void GetApproximateMinThPhR(double GuessResultCor[3][4], vector<double> (&ChHitTime)[2], vector <int> (&IgnoreCh)[2], vector <double> (&ChSNR)[2], int IsItBelowStation, int max_iter);
 
-  void GetApproximateDistance(double GuessResultCor[3][4], double ChHitTime[2][TotalAntennasRx], int IgnoreCh[2][TotalAntennasRx], double ChSNR[2][TotalAntennasRx], int IsItBelowStation, int max_iter);
+  void GetApproximateDistance(double GuessResultCor[3][4], vector<double> (&ChHitTime)[2], vector <int> (&IgnoreCh)[2], vector <double> (&ChSNR)[2], int IsItBelowStation, int max_iter);
 
-  void GetRecoFixedR(double InitialTxCor[3], double FinalTxCor[3], double ChHitTime[2][TotalAntennasRx], int IgnoreCh[2][TotalAntennasRx], double ChSNR[2][TotalAntennasRx], double &FixedR, int IsItBelowStation, int max_iter);
+  void GetRecoFixedR(double InitialTxCor[3], double FinalTxCor[3], vector<double> (&ChHitTime)[2], vector <int> (&IgnoreCh)[2], vector <double> (&ChSNR)[2], double  &FixedR, int IsItBelowStation, int max_iter);
   
-  void DoInterferometery(double InitialTxCor[3], double FinalTxCor[3], double ChHitTime[2][TotalAntennasRx], int IgnoreCh[2][TotalAntennasRx],double ChSNR[2][TotalAntennasRx], double &FinalMinValue, double &Duration,int &Iterations, double MinimizerRadialWidth, int IsItBelowStation, int max_iter);
+  void DoInterferometery(double InitialTxCor[3], double FinalTxCor[3], vector<double> (&ChHitTime)[2], vector <int> (&IgnoreCh)[2],vector <double> (&ChSNR)[2], double  &FinalMinValue, double &Duration,int &Iterations, double MinimizerRadialWidth, int IsItBelowStation, int max_iter);
 
 }
 #endif

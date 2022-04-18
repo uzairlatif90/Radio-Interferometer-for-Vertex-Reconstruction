@@ -8,9 +8,15 @@ void RunInterferometerMultTx(){
 
   bool RefineRecoResults=false;
   
-  double ChHitTime[2][TotalAntennasRx]; ////Channel Hit Time
-  int IgnoreCh[2][TotalAntennasRx];
-  double ChSNR[2][TotalAntennasRx];  
+  vector <double> ChHitTime[2]; ////Channel Hit Time
+  vector <int> IgnoreCh[2];
+  vector <double> ChSNR[2]; 
+  ChHitTime[0].resize(TotalAntennasRx);
+  ChHitTime[1].resize(TotalAntennasRx);
+  IgnoreCh[0].resize(TotalAntennasRx);
+  IgnoreCh[1].resize(TotalAntennasRx);
+  ChSNR[0].resize(TotalAntennasRx);
+  ChSNR[1].resize(TotalAntennasRx);
   
   double DurationTotal;
   double DurationReconstruction;
@@ -58,7 +64,7 @@ void RunInterferometerMultTx(){
 
 	  for(int ixyz=0;ixyz<3;ixyz++){
 	    double RandNum = 0;//(RandNumIni->Rndm(ixyz)*2-1)*ExpectedPositionUncertainty;
-	    TrueTxCor_XYZ[ixyz]=DummyTxCor[ixyz];	 
+	    TrueTxCor_XYZ[ixyz]=DummyTxCor[ixyz]-AvgAntennaCoordRx[ixyz];	 
 	    InitialTxCor_XYZ[ixyz]=DummyTxCor[ixyz]+RandNum;
 	  }
 	  Interferometer::XYZtoThPhR(TrueTxCor_XYZ,TrueTxCor_ThPhR);
@@ -72,7 +78,7 @@ void RunInterferometerMultTx(){
 	    }
 	  }
 
-	  if(DummyTxCor[2]<0){
+	  if(DummyTxCor[2]+AvgAntennaCoordRx[2]<0){
 	    Interferometer::GenerateChHitTimeAndCheckHits(TrueTxCor_XYZ,ChHitTime,IgnoreCh);
 	  }else{
 	    Interferometer::GenerateChHitTimeAndCheckHits_Air(TrueTxCor_XYZ,ChHitTime,IgnoreCh);

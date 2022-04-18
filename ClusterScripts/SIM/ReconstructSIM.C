@@ -86,8 +86,9 @@ void ReconstructSIM(int eventID, double Theta, double Phi, double R){
   
   TRandom3 *RandNumIni = new TRandom3(0); 
   for(int ixyz=0;ixyz<3;ixyz++){
-    double RandNum = (RandNumIni->Rndm(ixyz)*2-1)*ExpectedPositionUncertainty;
-    //InitialTxCor_XYZ[ixyz]=TrueTxCor_XYZ[ixyz]+RandNum;
+    double RandNum = 0;//(RandNumIni->Rndm(ixyz)*2-1)*ExpectedPositionUncertainty;
+    TrueTxCor_XYZ[ixyz]-=AvgAntennaCoordRx[ixyz];
+    InitialTxCor_XYZ[ixyz]=TrueTxCor_XYZ[ixyz]+RandNum;
   }
  	  
   for(int iRx=0;iRx<TotalAntennasRx;iRx++){
@@ -102,17 +103,34 @@ void ReconstructSIM(int eventID, double Theta, double Phi, double R){
 
   }
 
-  if(TrueTxCor_XYZ[2]<0){
+  if(TrueTxCor_XYZ[2]+AvgAntennaCoordRx[2]<0){
     Interferometer::GenerateChHitTimeAndCheckHits(TrueTxCor_XYZ,ChHitTime,IgnoreCh);  
   }else{
     Interferometer::GenerateChHitTimeAndCheckHits_Air(TrueTxCor_XYZ,ChHitTime,IgnoreCh);  
   }  
   Interferometer::AddGaussianJitterToHitTimes(ExpectedTimeJitter,ChHitTime);  
+
+  vector <double> ChHitTimev[2]; ////Channel Hit Time
+  vector <int> IgnoreChv[2];
+  vector <double> ChSNRv[2]; 
+  ChHitTimev[0].resize(TotalAntennasRx);
+  ChHitTimev[1].resize(TotalAntennasRx);
+  IgnoreChv[0].resize(TotalAntennasRx);
+  IgnoreChv[1].resize(TotalAntennasRx);
+  ChSNRv[0].resize(TotalAntennasRx);
+  ChSNRv[1].resize(TotalAntennasRx);
   
-  bool CheckStationTrigger=Interferometer::CheckTrigger(IgnoreCh);
+  for(int ich=0;ich<TotalAntennasRx;ich++){
+    for(int iray=0;iray<2;iray++){
+      ChHitTimev[iray][iRx]=ChHitTime[iray][iRx];
+      IgnoreChv[iray][iRx]=IgnoreCh[iray][iRx];
+      ChSNRv[iray][iRx]=ChSNR[iray][iRx];
+    }
+  }
+  
+  bool CheckStationTrigger=Interferometer::CheckTrigger(IgnoreChv);
   if(CheckStationTrigger==true){
     cout<<"XYZ Tx coordinates are  "<<TrueTxCor_XYZ[0]<<" "<<TrueTxCor_XYZ[1]<<" "<<TrueTxCor_XYZ[2]<<endl;
-
         
     double A=1.78;
     double B=-0.43;
@@ -121,12 +139,12 @@ void ReconstructSIM(int eventID, double Theta, double Phi, double R){
     IceRayTracing::SetB(B);
     IceRayTracing::SetC(C);      
     //Check if the station was hit from above or below
-    IsItBelowStation=Interferometer::IsItAboveOrBelow(ChHitTime,IgnoreCh) ;
+    IsItBelowStation=Interferometer::IsItAboveOrBelow(ChHitTimev,IgnoreChv) ;
 
     // double X2a=Interferometer::GetChiSquaredThPhR(TrueTxCor_ThPhR, ChHitTime, IgnoreCh, ChSNR, IsItBelowStation,0,50);    
     // cout<<"chi sqaured values are "<<X2a<<endl;
       
-    Interferometer::GetRecieveAngle(ChHitTime, IgnoreCh, ChSNR, 100, ArrivalDirection);
+    Interferometer::GetRecieveAngle(ChHitTimev, IgnoreChv, ChSNRv, 100, ArrivalDirection);
 
     //Set up variables for interferometry
     double GuessResultCor[3][4]; 
@@ -135,10 +153,10 @@ void ReconstructSIM(int eventID, double Theta, double Phi, double R){
     auto t1 = std::chrono::high_resolution_clock::now();
 
     ////Get a guess direction
-    Interferometer::GetApproximateMinThPhR(GuessResultCor,ChHitTime,IgnoreCh,ChSNR,IsItBelowStation,10);
+    Interferometer::GetApproximateMinThPhR(GuessResultCor,ChHitTimev,IgnoreChv,ChSNRv,IsItBelowStation,10);
       
     //Get a guess distance
-    Interferometer::GetApproximateDistance(GuessResultCor,ChHitTime,IgnoreCh,ChSNR,IsItBelowStation,10);
+    Interferometer::GetApproximateDistance(GuessResultCor,ChHitTimev,IgnoreChv,ChSNRv,IsItBelowStation,10);
       
     //Calculate the time it took to guess the initial condition
     auto t2 = std::chrono::high_resolution_clock::now();
@@ -154,7 +172,7 @@ void ReconstructSIM(int eventID, double Theta, double Phi, double R){
     double MinimizerRadialWidth=500;
 
     //do the interferometry
-    Interferometer::DoInterferometery(InitialTxCor_ThPhR, FinalTxCor_ThPhR, ChHitTime, IgnoreCh, ChSNR, FinalMinValue, DurationReconstruction, Iterations,MinimizerRadialWidth, IsItBelowStation,50);   
+    Interferometer::DoInterferometery(InitialTxCor_ThPhR, FinalTxCor_ThPhR, ChHitTimev, IgnoreChv, ChSNRv, FinalMinValue, DurationReconstruction, Iterations,MinimizerRadialWidth, IsItBelowStation,50);   
 
     if(RefineRecoResults==true){
       cout<<"1st try Final Reco Results are: |  Th_initial="<<InitialTxCor_ThPhR[0]*(180./Interferometer::pi)<<" ,Ph_initial="<<InitialTxCor_ThPhR[1]*(180./Interferometer::pi)<<" ,R_initial="<<InitialTxCor_ThPhR[2]<<" | Th_reco="<<FinalTxCor_ThPhR[0]<<" ,Ph_reco="<<FinalTxCor_ThPhR[1]<<" ,R_reco="<<FinalTxCor_ThPhR[2]<<endl;
@@ -163,7 +181,7 @@ void ReconstructSIM(int eventID, double Theta, double Phi, double R){
       InitialTxCor_ThPhR[1]=FinalTxCor_ThPhR[1]*(Interferometer::pi/180);
       InitialTxCor_ThPhR[2]=FinalTxCor_ThPhR[2];  
 	
-      Interferometer::DoInterferometery(InitialTxCor_ThPhR, FinalTxCor_ThPhR, ChHitTime, IgnoreCh, ChSNR, FinalMinValue, DurationReconstruction, Iterations,MinimizerRadialWidth, IsItBelowStation,50);   
+      Interferometer::DoInterferometery(InitialTxCor_ThPhR, FinalTxCor_ThPhR, ChHitTimev, IgnoreChv, ChSNRv, FinalMinValue, DurationReconstruction, Iterations,MinimizerRadialWidth, IsItBelowStation,50);   
     }
       
     //Calcualte the total duration

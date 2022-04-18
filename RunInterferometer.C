@@ -3,7 +3,7 @@
 void RunInterferometer(){
   DeclareAntennaConfig();
 
-  double DummyTxCor[3]={-180,160,200};
+  double DummyTxCor[3]={-180,160,-200};
   //double DummyTxCor[3]={3,4,20};
   //double DummyTxCor[3]={0.02,3,370};
   //double DummyTxCor[3]={-500,-500,-151};
@@ -13,10 +13,16 @@ void RunInterferometer(){
   
   bool RefineRecoResults=false;
   
-  double ChHitTime[2][TotalAntennasRx]; ////Channel Hit Time
-  int IgnoreCh[2][TotalAntennasRx];
-  double ChSNR[2][TotalAntennasRx];
-
+  vector <double> ChHitTime[2]; ////Channel Hit Time
+  vector <int> IgnoreCh[2];
+  vector <double> ChSNR[2]; 
+  ChHitTime[0].resize(TotalAntennasRx);
+  ChHitTime[1].resize(TotalAntennasRx);
+  IgnoreCh[0].resize(TotalAntennasRx);
+  IgnoreCh[1].resize(TotalAntennasRx);
+  ChSNR[0].resize(TotalAntennasRx);
+  ChSNR[1].resize(TotalAntennasRx);
+  
   double DurationTotal;
   double DurationReconstruction;
   double DurationInitialCondition;
@@ -36,7 +42,7 @@ void RunInterferometer(){
   TRandom3 *RandNumIni = new TRandom3(0);  	  
   for(int ixyz=0;ixyz<3;ixyz++){
     double RandNum = 0;// (RandNumIni->Rndm(ixyz)*2-1)*ExpectedPositionUncertainty;
-    TrueTxCor_XYZ[ixyz]=DummyTxCor[ixyz];
+    TrueTxCor_XYZ[ixyz]=DummyTxCor[ixyz]-AvgAntennaCoordRx[ixyz];
     InitialTxCor_XYZ[ixyz]=DummyTxCor[ixyz]+RandNum;
   }  
   Interferometer::XYZtoThPhR(TrueTxCor_XYZ,TrueTxCor_ThPhR);
@@ -50,7 +56,7 @@ void RunInterferometer(){
     }
   }
   
-  if(TrueTxCor_XYZ[2]<0){
+  if(TrueTxCor_XYZ[2]+AvgAntennaCoordRx[2]<0){
     Interferometer::GenerateChHitTimeAndCheckHits(TrueTxCor_XYZ,ChHitTime,IgnoreCh);
   }else{
     Interferometer::GenerateChHitTimeAndCheckHits_Air(TrueTxCor_XYZ,ChHitTime,IgnoreCh);

@@ -618,7 +618,6 @@ void ReconstructSPICEevents(int StationId,char const *InputFileName, int Run, in
   vector <double> V2n[MCH];
   vector <double> PwrSNR[2][MCH];
   
-  vector <double> dtDR_Ch[MCH];
   vector <double> DRAmpRatio_Ch[MCH];
   vector <double> SPICEReco[3];
   vector <double> UnixTimeSelected;
@@ -996,21 +995,45 @@ void ReconstructSPICEevents(int StationId,char const *InputFileName, int Run, in
       }
     }
 
+    vector <double> ChHitTimev[2]; ////Channel Hit Time
+    vector <int> IgnoreChv[2];
+    vector <double> ChSNRv[2]; 
+    ChHitTimev[0].resize(TotalAntennasRx);
+    ChHitTimev[1].resize(TotalAntennasRx);
+    IgnoreChv[0].resize(TotalAntennasRx);
+    IgnoreChv[1].resize(TotalAntennasRx);
+    ChSNRv[0].resize(TotalAntennasRx);
+    ChSNRv[1].resize(TotalAntennasRx);
+
+    for(int ich=0;ich<TotalAntennasRx;ich++){
+      for(int iray=0;iray<2;iray++){
+	ChHitTimev[iray][iRx]=ChHitTime[iray][iRx];
+	IgnoreChv[iray][iRx]=IgnoreCh[iray][iRx];
+	ChSNRv[iray][iRx]=ChSNR[iray][iRx];
+      }
+    }
+    
     if(NumChAvailable>=4){
       double GuessResultCor[3][3]; 
       double MinimizerRadialWidth;
-
-      double timeRay[2][TotalAntennasRx];
-      int IgnoreChB[2][TotalAntennasRx];
+        
+      IsItBelowStation=Interferometer::IsItAboveOrBelow(ChHitTimev,IgnoreChv) ;
+      
+      Interferometer::GetRecieveAngle(ChHitTimev, IgnoreChv, ChSNRv, IsItBelowStation, 100, ArrivalDirection);
+      
       bool CheckTrigger=true;
  
       auto t1 = std::chrono::high_resolution_clock::now();
       double SPICE_Depth = gsl_spline_eval(spline_steffen, unixTime, spline_acc);
  
       if(GetActualInitialCondition==true){  
-	InitialTxCor_XYZ[0]=TrueX;
-	InitialTxCor_XYZ[1]=TrueY;
-	InitialTxCor_XYZ[2]=-SPICE_Depth;
+
+	vector <double> timeRay[2];
+	vector <int> IgnoreChB[2];
+	
+	InitialTxCor_XYZ[0]=TrueX -AvgAntennaCoordRx[0];
+	InitialTxCor_XYZ[1]=TrueY -AvgAntennaCoordRx[1];
+	InitialTxCor_XYZ[2]=-SPICE_Depth -AvgAntennaCoordRx[2];;
     
 	Interferometer::XYZtoThPhR(InitialTxCor_XYZ,InitialTxCor_ThPhR);
 	InitialTxCor_ThPhR[0]=InitialTxCor_ThPhR[0]*(180./Interferometer::pi);
@@ -1026,8 +1049,8 @@ void ReconstructSPICEevents(int StationId,char const *InputFileName, int Run, in
 	CheckTrigger=Interferometer::CheckTrigger(IgnoreChB);
 
       }else{
-	Interferometer::GetApproximateMinThPhR(GuessResultCor,ChHitTime,IgnoreCh,ChSNR,IsItBelowStation,10);      
-	Interferometer::GetApproximateDistance(GuessResultCor,ChHitTime,IgnoreCh,ChSNR,IsItBelowStation,10);
+	Interferometer::GetApproximateMinThPhR(GuessResultCor,ChHitTimev,IgnoreChv,ChSNRv,IsItBelowStation,10);      
+	Interferometer::GetApproximateDistance(GuessResultCor,ChHitTimev,IgnoreChv,ChSNRv,IsItBelowStation,10);
 	MinimizerRadialWidth=500;
       }
       auto t2 = std::chrono::high_resolution_clock::now();
@@ -1040,7 +1063,7 @@ void ReconstructSPICEevents(int StationId,char const *InputFileName, int Run, in
       
       if(CheckTrigger==true){
  
-	Interferometer::DoInterferometery(InitialTxCor_ThPhR, FinalTxCor_ThPhR, ExpectedPositionUncertainty, ChHitTime, IgnoreCh, ChSNR, FinalMinValue, DurationReconstruction, Iterations,MinimizerRadialWidth); 
+	Interferometer::DoInterferometery(InitialTxCor_ThPhR, FinalTxCor_ThPhR, ExpectedPositionUncertainty, ChHitTimev, IgnoreChv, ChSNRv, FinalMinValue, DurationReconstruction, Iterations,MinimizerRadialWidth); 
 	
 	if(RefineRecoResults==true){
 	  cout<<"1st try Final Reco Results are: |  Th_initial="<<InitialTxCor_ThPhR[0]*(180./Interferometer::pi)<<" ,Ph_initial="<<InitialTxCor_ThPhR[1]*(180./Interferometer::pi)<<" ,R_initial="<<InitialTxCor_ThPhR[2]<<" | Th_reco="<<FinalTxCor_ThPhR[0]<<" ,Ph_reco="<<FinalTxCor_ThPhR[1]<<" ,R_reco="<<FinalTxCor_ThPhR[2]<<endl;
@@ -1049,11 +1072,11 @@ void ReconstructSPICEevents(int StationId,char const *InputFileName, int Run, in
 	  InitialTxCor_ThPhR[1]=FinalTxCor_ThPhR[1]*(Interferometer::pi/180);
 	  InitialTxCor_ThPhR[2]=FinalTxCor_ThPhR[2];  
 	  
-	  Interferometer::DoInterferometery(InitialTxCor_ThPhR, FinalTxCor_ThPhR, ChHitTime, IgnoreCh, ChSNR, FinalMinValue, DurationReconstruction, Iterations,MinimizerRadialWidth, IsItBelowStation,50); 
+	  Interferometer::DoInterferometery(InitialTxCor_ThPhR, FinalTxCor_ThPhR, ChHitTimev, IgnoreChv, ChSNRv, FinalMinValue, DurationReconstruction, Iterations,MinimizerRadialWidth, IsItBelowStation,50); 
 	}
 	
 	double FixedR=sqrt(SPICE_Depth*SPICE_Depth+ TrueX*TrueX + TrueY*TrueY);
-	Interferometer::GetRecoFixedR(GuessResultCor[0], FinalTxCor_ThPhR_fR,ChHitTime, IgnoreCh, ChSNR, FixedR);
+	Interferometer::GetRecoFixedR(GuessResultCor[0], FinalTxCor_ThPhR_fR,ChHitTimev, IgnoreChv, ChSNRv, FixedR);
 
 	DurationTotal=DurationInitialCondition+DurationReconstruction;
 

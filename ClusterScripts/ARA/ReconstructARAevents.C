@@ -744,7 +744,6 @@ void ReconstructARAevents(Int_t StationId, char const *InputFileName, int Run, i
       
     //Calculate the noise RMS for the waveform
     double noiserms=GetNoiseRMS(grIntPower);
-
     
     //Fill in the peak hit times and peak SNR values
     ChHitTime[0][ich]=vvHitTimes[0];
@@ -1045,6 +1044,24 @@ void ReconstructARAevents(Int_t StationId, char const *InputFileName, int Run, i
       
     }
   }
+
+  vector <double> ChHitTimev[2]; ////Channel Hit Time
+  vector <int> IgnoreChv[2];
+  vector <double> ChSNRv[2]; 
+  ChHitTimev[0].resize(TotalAntennasRx);
+  ChHitTimev[1].resize(TotalAntennasRx);
+  IgnoreChv[0].resize(TotalAntennasRx);
+  IgnoreChv[1].resize(TotalAntennasRx);
+  ChSNRv[0].resize(TotalAntennasRx);
+  ChSNRv[1].resize(TotalAntennasRx);
+  
+  for(int ich=0;ich<TotalAntennasRx;ich++){
+    for(int iray=0;iray<2;iray++){
+      ChHitTimev[iray][iRx]=ChHitTime[iray][iRx];
+      IgnoreChv[iray][iRx]=IgnoreCh[iray][iRx];
+      ChSNRv[iray][iRx]=ChSNR[iray][iRx];
+    }
+  }
   
   if(NumChAvailable>=4){
     
@@ -1059,19 +1076,19 @@ void ReconstructARAevents(Int_t StationId, char const *InputFileName, int Run, i
     double GuessResultCor[3][4]; 
     double MinimizerRadialWidth;
       
-    IsItBelowStation=Interferometer::IsItAboveOrBelow(ChHitTime,IgnoreCh) ;
+    IsItBelowStation=Interferometer::IsItAboveOrBelow(ChHitTimev,IgnoreChv) ;
     
-    Interferometer::GetRecieveAngle(ChHitTime, IgnoreCh, ChSNR, IsItBelowStation, 100, ArrivalDirection);
+    Interferometer::GetRecieveAngle(ChHitTimev, IgnoreChv, ChSNRv, IsItBelowStation, 100, ArrivalDirection);
     
     auto t1 = std::chrono::high_resolution_clock::now();
     if(rawAtriEvPtr->isCalpulserEvent()==true){
       vector <double> CalPulCor[3];
       GetCPCor(StationId, CalPulCor,firstUnixTime);
-      Interferometer::GetApproximateMinUserCor(UserCor ,GuessResultCor, ChHitTime, IgnoreCh, ChSNR, IsItBelowStation, max_iter);
+      Interferometer::GetApproximateMinUserCor(UserCor ,GuessResultCor, ChHitTimev, IgnoreChv, ChSNRv, IsItBelowStation, max_iter);
       MinimizerRadialWidth=20;
     }else{
-      Interferometer::GetApproximateMinThPhR(GuessResultCor,ChHitTime,IgnoreCh,ChSNR,IsItBelowStation,10);      
-      Interferometer::GetApproximateDistance(GuessResultCor,ChHitTime,IgnoreCh,ChSNR,IsItBelowStation,10);
+      Interferometer::GetApproximateMinThPhR(GuessResultCor,ChHitTimev,IgnoreChv,ChSNRv,IsItBelowStation,10);      
+      Interferometer::GetApproximateDistance(GuessResultCor,ChHitTimev,IgnoreChv,ChSNRv,IsItBelowStation,10);
       MinimizerRadialWidth=500;
     }
     auto t2 = std::chrono::high_resolution_clock::now();
@@ -1082,7 +1099,7 @@ void ReconstructARAevents(Int_t StationId, char const *InputFileName, int Run, i
     InitialTxCor_ThPhR[1]=GuessResultCor[0][1]*(Interferometer::pi/180);
     InitialTxCor_ThPhR[2]=GuessResultCor[0][2];
     
-    Interferometer::DoInterferometery(InitialTxCor_ThPhR, FinalTxCor_ThPhR, ExpectedPositionUncertainty, ChHitTime, IgnoreCh, ChSNR, FinalMinValue, DurationReconstruction, Iterations,MinimizerRadialWidth);
+    Interferometer::DoInterferometery(InitialTxCor_ThPhR, FinalTxCor_ThPhR, ExpectedPositionUncertainty, ChHitTimev, IgnoreChv, ChSNRv, FinalMinValue, DurationReconstruction, Iterations,MinimizerRadialWidth);
 
     if(RefineRecoResults==true){
       cout<<"1st try Final Reco Results are: |  Th_initial="<<InitialTxCor_ThPhR[0]<<" ,Ph_initial="<<InitialTxCor_ThPhR[1]<<" ,R_initial="<<InitialTxCor_ThPhR[2]<<" | Th_reco="<<FinalTxCor_ThPhR[0]<<" ,Ph_reco="<<FinalTxCor_ThPhR[1]<<" ,R_reco="<<FinalTxCor_ThPhR[2]<<endl;
@@ -1091,7 +1108,7 @@ void ReconstructARAevents(Int_t StationId, char const *InputFileName, int Run, i
       InitialTxCor_ThPhR[1]=FinalTxCor_ThPhR[1]*(Interferometer::pi/180);
       InitialTxCor_ThPhR[2]=FinalTxCor_ThPhR[2];  
       
-      Interferometer::DoInterferometery(InitialTxCor_ThPhR, FinalTxCor_ThPhR, ChHitTime, IgnoreCh, ChSNR, FinalMinValue, DurationReconstruction, Iterations,MinimizerRadialWidth, IsItBelowStation,50);
+      Interferometer::DoInterferometery(InitialTxCor_ThPhR, FinalTxCor_ThPhR, ChHitTimev, IgnoreChv, ChSNRv, FinalMinValue, DurationReconstruction, Iterations,MinimizerRadialWidth, IsItBelowStation,50);
     }
     
     // double FixedR=50;
