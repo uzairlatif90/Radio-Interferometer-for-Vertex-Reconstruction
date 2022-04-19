@@ -87,7 +87,6 @@ void ReconstructSIM(int eventID, double Theta, double Phi, double R){
   TRandom3 *RandNumIni = new TRandom3(0); 
   for(int ixyz=0;ixyz<3;ixyz++){
     double RandNum = 0;//(RandNumIni->Rndm(ixyz)*2-1)*ExpectedPositionUncertainty;
-    TrueTxCor_XYZ[ixyz]-=AvgAntennaCoordRx[ixyz];
     InitialTxCor_XYZ[ixyz]=TrueTxCor_XYZ[ixyz]+RandNum;
   }
  	  
@@ -103,13 +102,6 @@ void ReconstructSIM(int eventID, double Theta, double Phi, double R){
 
   }
 
-  if(TrueTxCor_XYZ[2]+AvgAntennaCoordRx[2]<0){
-    Interferometer::GenerateChHitTimeAndCheckHits(TrueTxCor_XYZ,ChHitTime,IgnoreCh);  
-  }else{
-    Interferometer::GenerateChHitTimeAndCheckHits_Air(TrueTxCor_XYZ,ChHitTime,IgnoreCh);  
-  }  
-  Interferometer::AddGaussianJitterToHitTimes(ExpectedTimeJitter,ChHitTime);  
-
   vector <double> ChHitTimev[2]; ////Channel Hit Time
   vector <int> IgnoreChv[2];
   vector <double> ChSNRv[2]; 
@@ -120,13 +112,20 @@ void ReconstructSIM(int eventID, double Theta, double Phi, double R){
   ChSNRv[0].resize(TotalAntennasRx);
   ChSNRv[1].resize(TotalAntennasRx);
   
-  for(int ich=0;ich<TotalAntennasRx;ich++){
+  for(int iRx=0;iRx<TotalAntennasRx;iRx++){
     for(int iray=0;iray<2;iray++){
       ChHitTimev[iray][iRx]=ChHitTime[iray][iRx];
       IgnoreChv[iray][iRx]=IgnoreCh[iray][iRx];
       ChSNRv[iray][iRx]=ChSNR[iray][iRx];
     }
   }
+
+  if(TrueTxCor_XYZ[2]+AvgAntennaCoordRx[2]<0){
+    Interferometer::GenerateChHitTimeAndCheckHits(TrueTxCor_XYZ,ChHitTimev,IgnoreChv);  
+  }else{
+    Interferometer::GenerateChHitTimeAndCheckHits_Air(TrueTxCor_XYZ,ChHitTimev,IgnoreChv);  
+  }  
+  Interferometer::AddGaussianJitterToHitTimes(ExpectedTimeJitter,ChHitTimev);  
   
   bool CheckStationTrigger=Interferometer::CheckTrigger(IgnoreChv);
   if(CheckStationTrigger==true){

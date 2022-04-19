@@ -1,14 +1,14 @@
 const int MCH=16;
 
 #include "FFTtools.h"
-#include "../Interferometer/Interferometer.cc"
+#include "/data/user/ulatif/Interferometer/Interferometer.cc"
 
 TGraph *gCPtemp[2][16];
 
 void ReadCPTemp(){
 
   {
-    TString filename="../Interferometer/";
+    TString filename="/data/user/ulatif/ARA_Inter/";
     filename+="CP_D6VPol_A2.root";
     TFile *f = TFile::Open(filename, "READ");
     for(int ich=0;ich<MCH;ich++){
@@ -29,7 +29,7 @@ void ReadCPTemp(){
     delete f;
   }
   {
-    TString filename="../Interferometer/";
+    TString filename="/data/user/ulatif/ARA_Inter/";
     filename+="CP_D6HPol_A2.root";
     TFile *f = TFile::Open(filename, "READ");
     for(int ich=0;ich<MCH;ich++){
@@ -583,7 +583,7 @@ void ReconstructARAevents(Int_t StationId, char const *InputFileName, int Run, i
   DeclareAntennaConfigARA(StationId);
   ReadCPTemp();
   
-  TString OutputFileName="./output/";
+  TString OutputFileName="/data/user/ulatif/ARA_Inter/output/";
   OutputFileName+="Run";
   OutputFileName+=Run;
   OutputFileName+="Event";
@@ -709,10 +709,6 @@ void ReconstructARAevents(Int_t StationId, char const *InputFileName, int Run, i
   runNum=Run;
   
   double ChSNR[2][TotalAntennasRx];	
-  double ChAmp[2][TotalAntennasRx];
-
-  double dtDR_Avg=0;
-  int IgnorePeakCount=0;
 
   double CutCh[16]={-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1};
   double FaultyCh[16]={-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,1};
@@ -723,7 +719,7 @@ void ReconstructARAevents(Int_t StationId, char const *InputFileName, int Run, i
   for(int ich=0; ich<MCH; ich++){
           
     //Get the Waveform from the data file for each channel
-    TGraph *grdum=usefulAtriEvPtr->getGraphFromRFChan(ich);
+    TGraph *grdum=realAtriEvPtr->getGraphFromRFChan(ich);
 
     //Interpolate the waveforms to ensure equal spacing between the samples
     TGraph *gr=FFTtools::getInterpolatedGraph(grdum,0.01);
@@ -895,8 +891,6 @@ void ReconstructARAevents(Int_t StationId, char const *InputFileName, int Run, i
 	// ChHitTime[1][ich]=Rtime;
 	// ChSNR[0][ich]=DSNR;
 	// ChSNR[1][ich]=RSNR;
-	// ChAmp[0][ich]=DAmp;
-	// ChAmp[1][ich]=RAmp;
 	  
 	Dtime=ChHitTime[0][ich];
 	Rtime=ChHitTime[1][ich];
@@ -940,8 +934,6 @@ void ReconstructARAevents(Int_t StationId, char const *InputFileName, int Run, i
 	// ChHitTime[1][ich]=0;
 	// ChSNR[0][ich]=DSNR;
 	// ChSNR[1][ich]=0;
-	// ChAmp[0][ich]=DAmp;
-	// ChAmp[1][ich]=0;
 	// cout<<ich<<" "<<Dtime<<" "<<VoltageSNR[ich]<<" "<<DSNR<<endl;
 
 	Dtime=ChHitTime[0][ich];
@@ -951,6 +943,13 @@ void ReconstructARAevents(Int_t StationId, char const *InputFileName, int Run, i
 	ChSNR[1][ich]=0;
 	cout<<ich<<" one peak "<<Dtime<<" "<<ChSNR[0][ich]<<endl;
       }
+
+      //Get the Waveform from the data file for each channel
+      TGraph *grdum=realAtriEvPtr->getGraphFromRFChan(ich);
+      
+      //Interpolate the waveforms to ensure equal spacing between the samples
+      TGraph *gr=FFTtools::getInterpolatedGraph(grdum,0.01);
+      delete grdum;
       
       int N=gr->GetN();
       int DummyBin=TMath::LocMax(N,gr->GetY());
@@ -1036,10 +1035,10 @@ void ReconstructARAevents(Int_t StationId, char const *InputFileName, int Run, i
     for(int ich=0;ich<TotalAntennasRx;ich++){
       if(IgnoreCh[1][ich]==1){
 	IgnoreCh[1][ich]=0;
-	if(ChAmp[1][ich]>ChAmp[0][ich]){
-	  swap(ChHitTime[0][ich], ChHitTime[1][ich]);
-	  swap(ChSNR[0][ich], ChSNR[1][ich]);
-	}
+	// if(ChSNR[1][ich]>ChSNR[0][ich]){
+	//   swap(ChHitTime[0][ich], ChHitTime[1][ich]);
+	//   swap(ChSNR[0][ich], ChSNR[1][ich]);
+	// }
       }
       
     }
@@ -1055,7 +1054,7 @@ void ReconstructARAevents(Int_t StationId, char const *InputFileName, int Run, i
   ChSNRv[0].resize(TotalAntennasRx);
   ChSNRv[1].resize(TotalAntennasRx);
   
-  for(int ich=0;ich<TotalAntennasRx;ich++){
+  for(int iRx=0;iRx<TotalAntennasRx;iRx++){
     for(int iray=0;iray<2;iray++){
       ChHitTimev[iray][iRx]=ChHitTime[iray][iRx];
       IgnoreChv[iray][iRx]=IgnoreCh[iray][iRx];
@@ -1078,13 +1077,13 @@ void ReconstructARAevents(Int_t StationId, char const *InputFileName, int Run, i
       
     IsItBelowStation=Interferometer::IsItAboveOrBelow(ChHitTimev,IgnoreChv) ;
     
-    Interferometer::GetRecieveAngle(ChHitTimev, IgnoreChv, ChSNRv, IsItBelowStation, 100, ArrivalDirection);
+    Interferometer::GetRecieveAngle(ChHitTimev, IgnoreChv, ChSNRv, 50, ArrivalDirection);
     
     auto t1 = std::chrono::high_resolution_clock::now();
     if(rawAtriEvPtr->isCalpulserEvent()==true){
       vector <double> CalPulCor[3];
       GetCPCor(StationId, CalPulCor,firstUnixTime);
-      Interferometer::GetApproximateMinUserCor(UserCor ,GuessResultCor, ChHitTimev, IgnoreChv, ChSNRv, IsItBelowStation, max_iter);
+      Interferometer::GetApproximateMinUserCor(CalPulCor ,GuessResultCor, ChHitTimev, IgnoreChv, ChSNRv, IsItBelowStation, 50);
       MinimizerRadialWidth=20;
     }else{
       Interferometer::GetApproximateMinThPhR(GuessResultCor,ChHitTimev,IgnoreChv,ChSNRv,IsItBelowStation,10);      
@@ -1099,7 +1098,7 @@ void ReconstructARAevents(Int_t StationId, char const *InputFileName, int Run, i
     InitialTxCor_ThPhR[1]=GuessResultCor[0][1]*(Interferometer::pi/180);
     InitialTxCor_ThPhR[2]=GuessResultCor[0][2];
     
-    Interferometer::DoInterferometery(InitialTxCor_ThPhR, FinalTxCor_ThPhR, ExpectedPositionUncertainty, ChHitTimev, IgnoreChv, ChSNRv, FinalMinValue, DurationReconstruction, Iterations,MinimizerRadialWidth);
+    Interferometer::DoInterferometery(InitialTxCor_ThPhR, FinalTxCor_ThPhR, ChHitTimev, IgnoreChv, ChSNRv, FinalMinValue, DurationReconstruction, Iterations,MinimizerRadialWidth, IsItBelowStation,50);
 
     if(RefineRecoResults==true){
       cout<<"1st try Final Reco Results are: |  Th_initial="<<InitialTxCor_ThPhR[0]<<" ,Ph_initial="<<InitialTxCor_ThPhR[1]<<" ,R_initial="<<InitialTxCor_ThPhR[2]<<" | Th_reco="<<FinalTxCor_ThPhR[0]<<" ,Ph_reco="<<FinalTxCor_ThPhR[1]<<" ,R_reco="<<FinalTxCor_ThPhR[2]<<endl;
@@ -1111,13 +1110,13 @@ void ReconstructARAevents(Int_t StationId, char const *InputFileName, int Run, i
       Interferometer::DoInterferometery(InitialTxCor_ThPhR, FinalTxCor_ThPhR, ChHitTimev, IgnoreChv, ChSNRv, FinalMinValue, DurationReconstruction, Iterations,MinimizerRadialWidth, IsItBelowStation,50);
     }
     
-    // double FixedR=50;
-    // if(rawAtriEvPtr->isCalpulserEvent()==true){
-    //   FixedR=GuessResultCor[0][2];
-    // }else{
-    //   FixedR=200;
-    // }
-    // Interferometer::GetRecoFixedR(GuessResultCor[0], FinalTxCor_ThPhR_fR,ChHitTime, IgnoreCh, ChSNR, FixedR, IsItBelowStation, 50);
+    double FixedR=50;
+    if(rawAtriEvPtr->isCalpulserEvent()==true){
+      FixedR=GuessResultCor[0][2];
+    }else{
+      FixedR=50;
+    }
+    Interferometer::GetRecoFixedR(GuessResultCor[0], FinalTxCor_ThPhR_fR,ChHitTimev, IgnoreChv, ChSNRv, FixedR, IsItBelowStation, 50);
     
     DurationTotal=DurationInitialCondition+DurationReconstruction;
     

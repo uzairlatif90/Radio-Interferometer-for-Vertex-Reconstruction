@@ -1,7 +1,7 @@
 const int MCH=16;
 
 #include "FFTtools.h"
-#include "../../Interferometer/Interferometer.cc"
+#include "/data/user/ulatif/Interferometer/Interferometer.cc"
 #include <gsl/gsl_math.h>
 #include <gsl/gsl_spline.h>
 
@@ -12,7 +12,7 @@ void LoadDepthFile(){
   
   int StartTime=1545822000-13*60*60;
   ////Open the file
-  std::ifstream ain("../Depth26Dec.txt");
+  std::ifstream ain("/data/user/ulatif/SPICE_Inter/Depth26Dec.txt");
   int n1=0;////variable for counting total number of data points
   std::string line;
   int dummy[2]={0,0};////temporary variable for storing data values from the file  
@@ -48,7 +48,7 @@ TGraph *gCPtemp[2][16];
 void ReadCPTemp(){
 
   {
-    TString filename="../Interferometer/";
+    TString filename="/data/user/ulatif/SPICE_Inter/";
     filename+="CP_D6VPol_A2.root";
     TFile *f = TFile::Open(filename, "READ");
     for(int ich=0;ich<MCH;ich++){
@@ -69,7 +69,7 @@ void ReadCPTemp(){
     delete f;
   }
   {
-    TString filename="../Interferometer/";
+    TString filename="/data/user/ulatif/SPICE_Inter/";
     filename+="CP_D6HPol_A2.root";
     TFile *f = TFile::Open(filename, "READ");
     for(int ich=0;ich<MCH;ich++){
@@ -572,7 +572,7 @@ void ReconstructSPICEevents(int StationId,char const *InputFileName, int Run, in
   LoadDepthFile();
   ReadCPTemp();
   
-  TString OutputFileName="./output/";
+  TString OutputFileName="/data/user/ulatif/SPICE_Inter/output/";
   OutputFileName+="Run";
   OutputFileName+=Run;
   OutputFileName+="Event";
@@ -729,10 +729,9 @@ void ReconstructSPICEevents(int StationId,char const *InputFileName, int Run, in
     int NumChAvailableH=0;
      
     for(int ich=0; ich<MCH; ich++){
-
               
       //Get the Waveform from the data file for each channel
-      TGraph *grdum=usefulAtriEvPtr->getGraphFromRFChan(ich);
+      TGraph *grdum=realAtriEvPtr->getGraphFromRFChan(ich);
 
       //Interpolate the waveforms to ensure equal spacing between the samples
       TGraph *gr=FFTtools::getInterpolatedGraph(grdum,0.01);
@@ -903,6 +902,13 @@ void ReconstructSPICEevents(int StationId,char const *InputFileName, int Run, in
 	  ChSNR[1][ich]=0;
 	  cout<<ich<<" one peak "<<Dtime<<" "<<ChSNR[0][ich]<<endl;
 	}
+	
+	//Get the Waveform from the data file for each channel
+	TGraph *grdum=realAtriEvPtr->getGraphFromRFChan(ich);
+	
+	//Interpolate the waveforms to ensure equal spacing between the samples
+	TGraph *gr=FFTtools::getInterpolatedGraph(grdum,0.6);
+	delete grdum;
 	  
 	int N=gr->GetN();
 	int DummyBin=TMath::LocMax(N,gr->GetY());
@@ -929,7 +935,7 @@ void ReconstructSPICEevents(int StationId,char const *InputFileName, int Run, in
 	CorScore[ich]=MaxCorScore;
 	
 	delete gr;
-	delete grPeakPoint;
+	//delete grPeakPoint;
       }
     }////channel loop
 
@@ -1005,7 +1011,7 @@ void ReconstructSPICEevents(int StationId,char const *InputFileName, int Run, in
     ChSNRv[0].resize(TotalAntennasRx);
     ChSNRv[1].resize(TotalAntennasRx);
 
-    for(int ich=0;ich<TotalAntennasRx;ich++){
+    for(int iRx=0;iRx<TotalAntennasRx;iRx++){
       for(int iray=0;iray<2;iray++){
 	ChHitTimev[iray][iRx]=ChHitTime[iray][iRx];
 	IgnoreChv[iray][iRx]=IgnoreCh[iray][iRx];
@@ -1014,12 +1020,12 @@ void ReconstructSPICEevents(int StationId,char const *InputFileName, int Run, in
     }
     
     if(NumChAvailable>=4){
-      double GuessResultCor[3][3]; 
+      double GuessResultCor[3][4]; 
       double MinimizerRadialWidth;
         
       IsItBelowStation=Interferometer::IsItAboveOrBelow(ChHitTimev,IgnoreChv) ;
       
-      Interferometer::GetRecieveAngle(ChHitTimev, IgnoreChv, ChSNRv, IsItBelowStation, 100, ArrivalDirection);
+      Interferometer::GetRecieveAngle(ChHitTimev, IgnoreChv, ChSNRv, 50, ArrivalDirection);
       
       bool CheckTrigger=true;
  
@@ -1030,6 +1036,13 @@ void ReconstructSPICEevents(int StationId,char const *InputFileName, int Run, in
 
 	vector <double> timeRay[2];
 	vector <int> IgnoreChB[2];
+
+	for(int iRx=0;iRx<TotalAntennasRx;iRx++){
+	  for(int iray=0;iray<2;iray++){
+	    timeRay[iray].push_back(0);
+	    IgnoreChB[iray].push_back(1);
+	  }
+	}
 	
 	InitialTxCor_XYZ[0]=TrueX -AvgAntennaCoordRx[0];
 	InitialTxCor_XYZ[1]=TrueY -AvgAntennaCoordRx[1];
@@ -1063,7 +1076,7 @@ void ReconstructSPICEevents(int StationId,char const *InputFileName, int Run, in
       
       if(CheckTrigger==true){
  
-	Interferometer::DoInterferometery(InitialTxCor_ThPhR, FinalTxCor_ThPhR, ExpectedPositionUncertainty, ChHitTimev, IgnoreChv, ChSNRv, FinalMinValue, DurationReconstruction, Iterations,MinimizerRadialWidth); 
+	Interferometer::DoInterferometery(InitialTxCor_ThPhR, FinalTxCor_ThPhR, ChHitTimev, IgnoreChv, ChSNRv, FinalMinValue, DurationReconstruction, Iterations,MinimizerRadialWidth, IsItBelowStation,50); 
 	
 	if(RefineRecoResults==true){
 	  cout<<"1st try Final Reco Results are: |  Th_initial="<<InitialTxCor_ThPhR[0]*(180./Interferometer::pi)<<" ,Ph_initial="<<InitialTxCor_ThPhR[1]*(180./Interferometer::pi)<<" ,R_initial="<<InitialTxCor_ThPhR[2]<<" | Th_reco="<<FinalTxCor_ThPhR[0]<<" ,Ph_reco="<<FinalTxCor_ThPhR[1]<<" ,R_reco="<<FinalTxCor_ThPhR[2]<<endl;
@@ -1076,7 +1089,7 @@ void ReconstructSPICEevents(int StationId,char const *InputFileName, int Run, in
 	}
 	
 	double FixedR=sqrt(SPICE_Depth*SPICE_Depth+ TrueX*TrueX + TrueY*TrueY);
-	Interferometer::GetRecoFixedR(GuessResultCor[0], FinalTxCor_ThPhR_fR,ChHitTimev, IgnoreChv, ChSNRv, FixedR);
+	Interferometer::GetRecoFixedR(GuessResultCor[0], FinalTxCor_ThPhR_fR,ChHitTimev, IgnoreChv, ChSNRv, FixedR, IsItBelowStation,50);
 
 	DurationTotal=DurationInitialCondition+DurationReconstruction;
 
