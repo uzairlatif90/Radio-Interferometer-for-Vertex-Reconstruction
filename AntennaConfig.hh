@@ -197,11 +197,9 @@ void DeclareAntennaConfigAraSim(){
 void DeclareAntennaConfigRNOG(){
   TotalAntennasRx=24;
   
-  for(int ich=0;ich<TotalAntennasRx;ich++) {
-    AntennaCoordRx[0].push_back(0);
-    AntennaCoordRx[1].push_back(0);
-    AntennaCoordRx[2].push_back(0);
-  }
+  AntennaCoordRx[0].resize(TotalAntennasRx);
+  AntennaCoordRx[1].resize(TotalAntennasRx);
+  AntennaCoordRx[2].resize(TotalAntennasRx);
   
   //// "phased array",
   AntennaCoordRx[0][0]= 0.0;
@@ -325,9 +323,9 @@ void DeclareAntennaConfigRNOG(){
   
   /*Get the coordinates of the station channels*/
   for(int ich=0;ich<TotalAntennasRx;ich++) {
-    AvgAntennaCoordRx[0]+=AntennaCoordRx[ich][0];
-    AvgAntennaCoordRx[1]+=AntennaCoordRx[ich][1];
-    AvgAntennaCoordRx[2]+=AntennaCoordRx[ich][2];    
+    AvgAntennaCoordRx[0]+=AntennaCoordRx[0][ich];
+    AvgAntennaCoordRx[1]+=AntennaCoordRx[1][ich];
+    AvgAntennaCoordRx[2]+=AntennaCoordRx[2][ich];    
   }
 
   AvgAntennaCoordRx[0]=AvgAntennaCoordRx[0]/TotalAntennasRx;
@@ -336,9 +334,9 @@ void DeclareAntennaConfigRNOG(){
 
   /*Get the coordinates of the station channels*/
   for(int ich=0;ich<TotalAntennasRx;ich++) {
-    AntennaCoordRx[ich][0]-=AvgAntennaCoordRx[0];
-    AntennaCoordRx[ich][1]-=AvgAntennaCoordRx[1];
-    AntennaCoordRx[ich][2]-=AvgAntennaCoordRx[2];
+    AntennaCoordRx[0][ich]-=AvgAntennaCoordRx[0];
+    AntennaCoordRx[1][ich]-=AvgAntennaCoordRx[1];
+    AntennaCoordRx[2][ich]-=AvgAntennaCoordRx[2];
     
     cout<<ich<<" "<<AntennaCoordRx[0][ich]<<" "<<AntennaCoordRx[1][ich]<<" "<<AntennaCoordRx[2][ich]<<endl;
   }
