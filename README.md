@@ -21,7 +21,13 @@ In all of this I use my own analytic raytracing which can be accessed [here](htt
 
 ### Minimization function
 
-![equation](https://latex.codecogs.com/svg.image?%5Cchi%5E2=%5Cfrac%7B%5Csum%5E%7BN%7D_%7Bi%7D&space;%5Cleft(%5Cfrac%7B%5Csum%5E%7BN%7D_%7Bj%7D&space;(dt(i,j)_%7Bdata%7D-dt(i,j)_%7Bsim%7D)%5E2&space;w_%7Bj%7D%7D%7B%5Csum%5E%7BN%7D_%7Bj%7Dw_j%7D&space;%5Cright)w_i%7D%7B%5Csum%5E%7BN%7D_%7Bi%7Dw_i%7D%5Ctext%7B&space;here&space;%7Ddt(i,j)=T_i-T_j,~~w_i=SNR_i) 
+I minimize (or carry out the interferometry) the hit times of all the recieving channels/antennas by calculating the following pseudo-chisquared value:
+
+![equation](https://latex.codecogs.com/svg.image?%5Cchi%5E2=%5Cfrac%7B%5Csum%5E%7BN%7D_%7Bi%7D%20%5Cleft(%5Cfrac%7B%5Csum%5E%7BN%7D_%7Bj%7D%20(dt(i,j)_%7Bdata%7D-dt(i,j)_%7Bsim%7D)%5E2%20w_%7Bj%7D%7D%7B%5Csum%5E%7BN%7D_%7Bj%7Dw_j%7D%20%5Cright)w_i%7D%7B%5Csum%5E%7BN%7D_%7Bi%7Dw_i%7D%5C%5C%20%5C%5C%20%5C%5C~~~~~~~~~%5Ctext%7B%20here%20%7Ddt(i,j)=T_i-T_j,~~w_i=SNR_i) 
+
+If we also include R (or the second pulse) then the variables will be updated to:
+
+![equation](https://latex.codecogs.com/svg.image?N=N_D&plus;N_R~~~%5Ctext%7Band%7D~~~%5Csum_i%5EN%20w_i=%20%5Csum_i%5E%7BN_%7BD%7D%7D%20w_%7BD,i%7D%20&plus;%20%5Csum_i%5E%7BN_R%7D%20w_%7BR,i%7D%20)
 
 ## Scripts
 
