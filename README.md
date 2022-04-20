@@ -21,7 +21,7 @@ In all of this I use my own analytic raytracing which can be accessed [here](htt
 
 ### Minimization function
 
-![equation](https://latex.codecogs.com/svg.image?\chi^2=\frac{\sum^{N}_{i}&space;\left(\frac{\sum^{N}_{j}&space;(dt(i,j)_{data}-dt(i,j)_{sim})^2&space;w_{j}}{\sum^{N}_{j}w_j}&space;\right)w_i}{\sum^{N}_{i}w_i}\text{&space;here&space;}dt(i,j)=T_i-T_j,~~w_i=SNR_i) 
+![equation](https://latex.codecogs.com/svg.image?%5Cchi%5E2=%5Cfrac%7B%5Csum%5E%7BN%7D_%7Bi%7D&space;%5Cleft(%5Cfrac%7B%5Csum%5E%7BN%7D_%7Bj%7D&space;(dt(i,j)_%7Bdata%7D-dt(i,j)_%7Bsim%7D)%5E2&space;w_%7Bj%7D%7D%7B%5Csum%5E%7BN%7D_%7Bj%7Dw_j%7D&space;%5Cright)w_i%7D%7B%5Csum%5E%7BN%7D_%7Bi%7Dw_i%7D%5Ctext%7B&space;here&space;%7Ddt(i,j)=T_i-T_j,~~w_i=SNR_i) 
 
 ## Scripts
 
