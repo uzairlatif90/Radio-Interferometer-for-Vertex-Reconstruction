@@ -1,4 +1,4 @@
-#Interferometer for Radio Detectors
+# Interferometer for Radio Detectors
 
 In order to do vertex position reconstruction we need to carry out interferometry. Interferometery is basically a minimization problem where have a pulse arrival times from data which we need to match with pulse arrival times for a given transmitter position using simulation (i.e., raytracing).
 
@@ -6,7 +6,7 @@ The minimization happens over the spherical coordinates (theta,phi,R) of the tra
 
 The process ends when the minimizer finds the transmitter position that gives the closest match to the pulse hit times. The Tx coordinates that give the best match are then taken to be the  reconstructed coordinates of the original vertex.
 
-##A quick overview
+## A quick overview
 
 The minimization over Theta, Phi and R is broken down into:
 
@@ -19,11 +19,11 @@ I have set my origin to be at the station center. The center is basically at the
 
 In all of this I use my own analytic raytracing which can be accessed [here](https://https://github.com/uzairlatif90/IceRayTracing). By default I use the AraSim South Pole exponential refractive index profile which is given by n(z)=A+Be^{Cz} where A=1.78, B=-0.43, C=-0.0132 m^-1.
 
-###Minimization function
+### Minimization function
 
 - <img src="https://latex.codecogs.com/gif.latex?\chi^2=\frac{\sum^{N}_{i} \left(\frac{\sum^{N}_{j} (dt(i,j)_{data}-dt(i,j)_{sim})^2 w_{j}}{\sum^{N}_{j}w_j} \right)w_i}{\sum^{N}_{i}w_i}\text{ here }dt(i,j)=T_i-T_j,~~w_i=SNR_i " /> 
 
-##Scripts
+## Scripts
 
 - RunInterferometer.C : This script takes in as arguments of a given vertex and then tries to reconstruct the given position using interferometry. In this script the user has the option of scrambling hit times and changing the ice model (i.e., have a different a ice model for generating hit times and a different one for reconstructing the position). By default an ARA type station is chosen for this exercise though the user can define their own desired radion station in AntennaConfig.hh and then work with that. AntennaConfig.hh contains pre-defined station layout for ARA and RNO-G stations.  
 
