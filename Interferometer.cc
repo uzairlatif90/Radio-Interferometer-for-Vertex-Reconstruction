@@ -507,7 +507,7 @@ double Interferometer::Minimizer_f1D(double m, void *params){
   double deltaT=0;
   double output1=0;  
   double output2=0;
-
+  
   //if((p[6*TotalAntennasRx+13]==1 && chanDsame>=chanD[0]) || ( p[6*TotalAntennasRx+13]==0 && chanRsameB>=chanD[0])){
   if(chanDsame>=chanD[0]){
     //if(p[6*TotalAntennasRx+13]==1){
@@ -572,9 +572,9 @@ double Interferometer::Minimizer_f1D(double m, void *params){
 	}
       
 	output1+=sum1_D/loop1_D;
-	// if(loop1_R>0){
-	//   output1+=sum1_R/loop1_R;
-	// }
+	if(loop1_R>0){
+	  output1+=sum1_R/loop1_R;
+	}
 	// }
 
     // if(p[6*TotalAntennasRx+13]==0){
@@ -796,9 +796,9 @@ double Interferometer::Minimizer_f(const gsl_vector *v, void *params){
 	}
       
 	output1+=sum1_D/loop1_D;
-	// if(loop1_R>0){
-	//   output1+=sum1_R/loop1_R;
-	// }
+	if(loop1_R>0){
+	  output1+=sum1_R/loop1_R;
+	}
 	//}
 
     // if(p[6*TotalAntennasRx+13]==0){
@@ -987,30 +987,30 @@ double Interferometer::Minimizer_fCnz(const gsl_vector *v, void *params){
 	    }
 	  }
 
-	  loop2_R=0;
-	  sum_R=0;
-	  sum_W_R=0;
+	  // loop2_R=0;
+	  // sum_R=0;
+	  // sum_W_R=0;
 
-	  for(int iRxB=0;iRxB<TotalAntennasRx;iRxB++){ 
-	    if(p[3*TotalAntennasRx +iRx]!=0 && IgnoreCh[1][iRx]!=0  && p[3*TotalAntennasRx +iRxB]!=0 && IgnoreCh[1][iRxB]!=0){
-	      if(sum_R==0){
-	  	loop1_D+=p[5*TotalAntennasRx +iRx];
-		sum_R=1;
-	      }
+	  // for(int iRxB=0;iRxB<TotalAntennasRx;iRxB++){ 
+	  //   if(p[3*TotalAntennasRx +iRx]!=0 && IgnoreCh[1][iRx]!=0  && p[3*TotalAntennasRx +iRxB]!=0 && IgnoreCh[1][iRxB]!=0){
+	  //     if(sum_R==0){
+	  // 	loop1_D+=p[5*TotalAntennasRx +iRx];
+	  // 	sum_R=1;
+	  //     }
 
-	      deltaT=(timeRay[1][iRx] - timeRay[1][iRxB] - (p[1*TotalAntennasRx+iRx] - p[1*TotalAntennasRx+iRxB]));
-	      sum_D+=pow(deltaT,2)*p[5*TotalAntennasRx +iRxB];
-	      sum_W_D+=p[5*TotalAntennasRx +iRxB];
-	      loop2_R++;
-	    }
-	  }
+	  //     deltaT=(timeRay[1][iRx] - timeRay[1][iRxB] - (p[1*TotalAntennasRx+iRx] - p[1*TotalAntennasRx+iRxB]));
+	  //     sum_D+=pow(deltaT,2)*p[5*TotalAntennasRx +iRxB];
+	  //     sum_W_D+=p[5*TotalAntennasRx +iRxB];
+	  //     loop2_R++;
+	  //   }
+	  // }
 
-	  if(loop2_R>0){
-	    sum_R=sum_D/sum_W_D;
-	    if(p[3*TotalAntennasRx +iRx]!=0 && IgnoreCh[1][iRx]!=0){
-	      sum1_D+=sum_R*p[5*TotalAntennasRx +iRx];
-	    }
-	  }
+	  // if(loop2_R>0){
+	  //   sum_R=sum_D/sum_W_D;
+	  //   if(p[3*TotalAntennasRx +iRx]!=0 && IgnoreCh[1][iRx]!=0){
+	  //     sum1_D+=sum_R*p[5*TotalAntennasRx +iRx];
+	  //   }
+	  // }
 
 	}
 	      
