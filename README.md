@@ -23,11 +23,11 @@ In all of this I use my own analytic raytracing which can be accessed [here](htt
 
 I minimize (or carry out the interferometry) the hit times of all the recieving channels/antennas by calculating the following pseudo-chisquared value:
 
-$$\chi^2=\frac{\sum^{N}_{i} \left(\frac{\sum^{N}_{j} (dt(i,j)_{data}-dt(i,j)_{sim})^2 w_{j}}{\sum^{N}_{j}w_j} \right)w_i}{\sum^{N}_{i}w_i}\text{ here }dt(i,j)=T_i-T_j,~~w_i=SNR_i$$
+$$\chi^2=\frac{\sum^{N}_{i} \left(\frac{\sum^{N}_{j} (dt(i,j)_{data}-dt(i,j)_{sim})^2 w_{j}}{\sum^{N}_{j} w_j} \right)w_i}{\sum^{N}_{i} w_i}\text{ here }dt(i,j)=T_i-T_j,~~w_i=SNR_i$$
 
 If we also include R (or the second pulse) then the variables will be updated to:
 
-$$N &=N_D+N_R\\ \sum_i^N w_i &= \sum_i^{N_{D}} w_{D,i} + \sum_i^{N_R} w_{R,i}$$
+$$N =N_D+N_R\\ \sum_i^N w_i = \sum_i^{N_{D}} w_{D,i} + \sum_i^{N_R} w_{R,i}$$
 
 ## Scripts
 
