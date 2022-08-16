@@ -42,7 +42,7 @@ $$\sum_i^N w_i = \sum_i^{N_{D}} w_{D,i} + \sum_i^{N_R} w_{R,i}$$
 - ClusterScripts : This folder contains scripts which are just implementations of the interferometer for some specific cases like for looking ARA data and ARA SPICE data. If the user wants to use to the interferometer to simulate several vertex positions than the SIM folder provides some scripts which can be run on a computing cluster to reconstruct multiple vertex positions at the same time.
 
 ## Prerequisites
-You will need to have a functioning installation of [GSL](https://www.gnu.org/software/gsl/) ([2.6](https://ftp.gnu.org/gnu/gsl/gsl-2.6.tar.gz) is verified to work).
+You will need to have a functioning installation of [GSL](https://www.gnu.org/software/gsl/) ([2.7.1](https://ftp.gnu.org/gnu/gsl/gsl-2.7.1.tar.gz) is verified to work).
 - You will need to set the environment variable `GSLDIR` to your local installation of GSL.
 - You will also need to have `GSLDIR` in your `LD_LIBRARY_PATH`.
 - For Mac users: you can locate your GSL installation via `gsl-config --prefix`, i.e. `export GSLDIR=$(gsl-config --prefix)`
