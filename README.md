@@ -28,6 +28,7 @@ $$\chi^2=\frac{\sum_{i}^N \left(\frac{\sum_{j}^N (dt(i,j)_{data} - dt(i,j)_{sim}
 If we also include R (or the second pulse) then the variables will be updated to:
 
 $$N =N_D+N_R$$
+
 $$\sum_i^N w_i = \sum_i^{N_{D}} w_{D,i} + \sum_i^{N_R} w_{R,i}$$
 
 ## Scripts
