@@ -23,11 +23,11 @@ In all of this I use my own analytic raytracing which can be accessed [here](htt
 
 I minimize (or carry out the interferometry) the hit times of all the recieving channels/antennas by calculating the following pseudo-chisquared value:
 
-![equation](https://latex.codecogs.com/svg.image?%5Cchi%5E2=%5Cfrac%7B%5Csum%5E%7BN%7D_%7Bi%7D%20%5Cleft(%5Cfrac%7B%5Csum%5E%7BN%7D_%7Bj%7D%20(dt(i,j)_%7Bdata%7D-dt(i,j)_%7Bsim%7D)%5E2%20w_%7Bj%7D%7D%7B%5Csum%5E%7BN%7D_%7Bj%7Dw_j%7D%20%5Cright)w_i%7D%7B%5Csum%5E%7BN%7D_%7Bi%7Dw_i%7D%5C%5C%20%5C%5C%20%5C%5C~~~~~~~~~%5Ctext%7B%20here%20%7Ddt(i,j)=T_i-T_j,~~w_i=SNR_i) 
+<img src="https://render.githubusercontent.com/render/math?math=\chi^2=\frac{\sum^{N}_{i} \left(\frac{\sum^{N}_{j} (dt(i,j)_{data}-dt(i,j)_{sim})^2 w_{j}}{\sum^{N}_{j}w_j} \right)w_i}{\sum^{N}_{i}w_i}\text{ here }dt(i,j)=T_i-T_j,~~w_i=SNR_i">
 
 If we also include R (or the second pulse) then the variables will be updated to:
 
-![equation](https://latex.codecogs.com/svg.image?N=N_D&plus;N_R~~~%5Ctext%7Band%7D~~~%5Csum_i%5EN%20w_i=%20%5Csum_i%5E%7BN_%7BD%7D%7D%20w_%7BD,i%7D%20&plus;%20%5Csum_i%5E%7BN_R%7D%20w_%7BR,i%7D%20)
+<img src="https://render.githubusercontent.com/render/math?math=N &=N_D+N_R\\ \sum_i^N w_i &= \sum_i^{N_{D}} w_{D,i} + \sum_i^{N_R} w_{R,i}">
 
 ## Scripts
 
