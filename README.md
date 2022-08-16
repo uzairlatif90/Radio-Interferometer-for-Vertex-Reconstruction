@@ -17,13 +17,13 @@ The minimization over Theta, Phi and R is broken down into:
 
 I have set my origin to be at the station center. The center is basically at the average coordinate of all the receiving antennas. So theta<90 deg is above the station and theta>90 deg is below the station. Theta 0 deg is straight up and theta 180 deg is straight down. Distance is always given in meters.
 
-In all of this I use my own analytic raytracing which can be accessed [here](https://https://github.com/uzairlatif90/IceRayTracing). By default I use the AraSim South Pole exponential refractive index profile which is given by n(z)=A+Be^{Cz} where A=1.78, B=-0.43, C=-0.0132 m^-1.
+In all of this I use my own analytic raytracing which can be accessed [here](https://https://github.com/uzairlatif90/IceRayTracing). By default I use the AraSim South Pole exponential refractive index profile which is given by $n(z)=A+Be^{Cz}$ where A=1.78, B=-0.43, C=-0.0132 $m^{-1}$.
 
 ### Minimization function
 
 I minimize (or carry out the interferometry) the hit times of all the recieving channels/antennas by calculating the following pseudo-chisquared value:
 
-$\chi^2=\frac{\sum_{i}^N \left(\frac{\sum_{j}^N (dt(i,j)_{data} - dt(i,j)_{sim})^2 w_j }{\sum_{j}^N w_j } \right) w_i }{\sum_{i}^N w_i }\text{ here }dt(i,j)=T_i - T_j ,~~w_i = SNR_i$
+$$\chi^2=\frac{\sum^N_{i} \left( \frac{\sum^N_{j} (dt(i,j)_{data} - dt(i,j)_{sim})^2 w_j }{\sum^N_{j} w_j } \right) w_i }{\sum^N_{i} w_i }\text{ here }dt(i,j)=T_i - T_j ,~~w_i = SNR_i$$
 
 If we also include R (or the second pulse) then the variables will be updated to:
 
