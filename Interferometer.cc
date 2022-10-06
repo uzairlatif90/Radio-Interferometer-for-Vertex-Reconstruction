@@ -508,9 +508,9 @@ double Interferometer::Minimizer_f1D(double m, void *params){
   double output1=0;  
   double output2=0;
   
-  if((p[6*TotalAntennasRx+13]==1 && chanDsame>=chanD[0]) || ( p[6*TotalAntennasRx+13]==0 && chanRsameB>=chanD[0])){
-    //if(chanDsame>=chanD[0]){
-    if(p[6*TotalAntennasRx+13]==1){
+  //if((p[6*TotalAntennasRx+13]==1 && chanDsame>=chanD[0]) || ( p[6*TotalAntennasRx+13]==0 && chanRsameB>=chanD[0])){
+    if(chanDsame>=chanD[0]){
+      //if(p[6*TotalAntennasRx+13]==1){
 
       double loop1_D=0,loop1_R=0;   
       double loop2_D=0,loop2_R=0;
@@ -572,55 +572,56 @@ double Interferometer::Minimizer_f1D(double m, void *params){
       }
       
       output1+=sum1_D/loop1_D;
-    }  
-    if(p[6*TotalAntennasRx+13]==0){
+      //}  
 
-      double loop1=0;
-      double loop2=0;
+    //if(p[6*TotalAntennasRx+13]==0){
+
+    //   double loop1=0;
+    //   double loop2=0;
     
-      double sum1=0;  
-      for(int iRx=0;iRx<TotalAntennasRx;iRx++){ 
-	loop2=0;
-	double sum=0;
-	double sum_W=0;
-	for(int iRxB=0;iRxB<TotalAntennasRx;iRxB++){ 
+    //   double sum1=0;  
+    //   for(int iRx=0;iRx<TotalAntennasRx;iRx++){ 
+    // 	loop2=0;
+    // 	double sum=0;
+    // 	double sum_W=0;
+    // 	for(int iRxB=0;iRxB<TotalAntennasRx;iRxB++){ 
 
-	  if(p[2*TotalAntennasRx +iRx]!=0 && IgnoreCh[1][iRx]!=0 && p[2*TotalAntennasRx +iRxB]!=0 && IgnoreCh[1][iRxB]!=0){
+    // 	  if(p[2*TotalAntennasRx +iRx]!=0 && IgnoreCh[1][iRx]!=0 && p[2*TotalAntennasRx +iRxB]!=0 && IgnoreCh[1][iRxB]!=0){
 
-	    if(sum==0){
-	      loop1+=p[4*TotalAntennasRx +iRx];
-	    }
+    // 	    if(sum==0){
+    // 	      loop1+=p[4*TotalAntennasRx +iRx];
+    // 	    }
 
-	    deltaT=(timeRay[1][iRx] - timeRay[1][iRxB]  - (p[0+iRx] - p[0+iRxB]));
-	    sum+=pow(deltaT,2)*p[4*TotalAntennasRx +iRxB];
-	    sum_W+=p[4*TotalAntennasRx +iRxB];	  
-	    loop2++;
+    // 	    deltaT=(timeRay[1][iRx] - timeRay[1][iRxB]  - (p[0+iRx] - p[0+iRxB]));
+    // 	    sum+=pow(deltaT,2)*p[4*TotalAntennasRx +iRxB];
+    // 	    sum_W+=p[4*TotalAntennasRx +iRxB];	  
+    // 	    loop2++;
 
-	  }
-	}
+    // 	  }
+    // 	}
       
-	if(loop2>0){
-	  sum=sum/sum_W;
-	  if(p[2*TotalAntennasRx +iRx]!=0 && IgnoreCh[1][iRx]!=0){
-	    sum1+=sum*p[4*TotalAntennasRx +iRx];
-	  }
-	}
-      }
+    // 	if(loop2>0){
+    // 	  sum=sum/sum_W;
+    // 	  if(p[2*TotalAntennasRx +iRx]!=0 && IgnoreCh[1][iRx]!=0){
+    // 	    sum1+=sum*p[4*TotalAntennasRx +iRx];
+    // 	  }
+    // 	}
+    //   }
       
-      output2+=sum1/loop1;
+    //   output2+=sum1/loop1;
 
-    }
+    // }
     
-    if(p[6*TotalAntennasRx+13]==1){
+    //if(p[6*TotalAntennasRx+13]==1){
       output=output1;
-    }
+      //}
  
-    if(p[6*TotalAntennasRx+13]==0){
-      output=output2;
-    }
+    // if(p[6*TotalAntennasRx+13]==0){
+    //   output=output2;
+    // }
     
 
-  }else{
+    }else{
     output=1e9+r;
   }
 
@@ -725,10 +726,10 @@ double Interferometer::Minimizer_f(const gsl_vector *v, void *params){
   double output1=0;  
   double output2=0;
 
-  if((p[6*TotalAntennasRx+13]==1 && chanDsame>=chanD[0]) || ( p[6*TotalAntennasRx+13]==0 && chanRsameB>=chanD[0])){
-    //if(chanDsame>=chanD[0]){
+  //if((p[6*TotalAntennasRx+13]==1 && chanDsame>=chanD[0]) || ( p[6*TotalAntennasRx+13]==0 && chanRsameB>=chanD[0])){
+    if(chanDsame>=chanD[0]){
 
-    if(p[6*TotalAntennasRx+13]==1){
+    //if(p[6*TotalAntennasRx+13]==1){
       double loop1_D=0,loop1_R=0;   
       double loop2_D=0,loop2_R=0;
       double sum1_D=0,sum1_R=0;  
@@ -792,55 +793,55 @@ double Interferometer::Minimizer_f(const gsl_vector *v, void *params){
       }
       
       output1+=sum1_D/loop1_D;
-    }
+    // }
 
-    if(p[6*TotalAntennasRx+13]==0){
-      double loop1=0;
-      double loop2=0;
+    // if(p[6*TotalAntennasRx+13]==0){
+    //   double loop1=0;
+    //   double loop2=0;
     
-      double sum1=0;  
-      for(int iRx=0;iRx<TotalAntennasRx;iRx++){ 
-	loop2=0;
-	double sum=0;
-	double sum_W=0;
-	for(int iRxB=0;iRxB<TotalAntennasRx;iRxB++){ 
+    //   double sum1=0;  
+    //   for(int iRx=0;iRx<TotalAntennasRx;iRx++){ 
+    // 	loop2=0;
+    // 	double sum=0;
+    // 	double sum_W=0;
+    // 	for(int iRxB=0;iRxB<TotalAntennasRx;iRxB++){ 
 
-	  if(p[2*TotalAntennasRx +iRx]!=0 && IgnoreCh[1][iRx]!=0 && p[2*TotalAntennasRx +iRxB]!=0 && IgnoreCh[1][iRxB]!=0){
+    // 	  if(p[2*TotalAntennasRx +iRx]!=0 && IgnoreCh[1][iRx]!=0 && p[2*TotalAntennasRx +iRxB]!=0 && IgnoreCh[1][iRxB]!=0){
 
-	    if(sum==0){
-	      loop1+=p[4*TotalAntennasRx +iRx];
-	    }
+    // 	    if(sum==0){
+    // 	      loop1+=p[4*TotalAntennasRx +iRx];
+    // 	    }
 
-	    deltaT=(timeRay[1][iRx] - timeRay[1][iRxB]  - (p[0+iRx] - p[0+iRxB]));
-	    sum+=pow(deltaT,2)*p[4*TotalAntennasRx +iRxB];
-	    sum_W+=p[4*TotalAntennasRx +iRxB];	  
-	    loop2++;
+    // 	    deltaT=(timeRay[1][iRx] - timeRay[1][iRxB]  - (p[0+iRx] - p[0+iRxB]));
+    // 	    sum+=pow(deltaT,2)*p[4*TotalAntennasRx +iRxB];
+    // 	    sum_W+=p[4*TotalAntennasRx +iRxB];	  
+    // 	    loop2++;
 
-	  }
-	}
+    // 	  }
+    // 	}
       
-	if(loop2>0){
-	  sum=sum/sum_W;
-	  if(p[2*TotalAntennasRx +iRx]!=0 && IgnoreCh[1][iRx]!=0){
-	    sum1+=sum*p[4*TotalAntennasRx +iRx];
-	  }
-	}
-      }
+    // 	if(loop2>0){
+    // 	  sum=sum/sum_W;
+    // 	  if(p[2*TotalAntennasRx +iRx]!=0 && IgnoreCh[1][iRx]!=0){
+    // 	    sum1+=sum*p[4*TotalAntennasRx +iRx];
+    // 	  }
+    // 	}
+    //   }
       
-      output2+=sum1/loop1;
+    //   output2+=sum1/loop1;
 
-    }
+    // }
 	  
     
-    if(p[6*TotalAntennasRx+13]==1){
+      //if(p[6*TotalAntennasRx+13]==1){
       output=output1;
-    }
+      //}
  
-    if(p[6*TotalAntennasRx+13]==0){
-      output=output2;
-    }  
+      //if(p[6*TotalAntennasRx+13]==0){
+      //output=output2;
+      //}  
 
-  }else{
+    }else{
     output=1e9+r;
   }
 

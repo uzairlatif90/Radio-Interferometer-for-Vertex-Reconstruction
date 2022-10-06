@@ -689,6 +689,8 @@ void ReconstructARAevents(Int_t StationId, char const *InputFileName, int Run, i
   ceventTree->GetEntry(5);
   firstUnixTime=rawAtriEvPtr->unixTime;
   cout<<"firstUnixTime "<<setprecision(10)<<firstUnixTime<<endl;
+
+  //for(int i=0;i<ceventTree->GetEntries();i++){
   
   ceventTree->GetEntry(Event);
   cout<<Event<<" "<<rawAtriEvPtr->eventNumber<<endl;
@@ -1170,7 +1172,7 @@ void ReconstructARAevents(Int_t StationId, char const *InputFileName, int Run, i
 
   RecoTree->Fill();
   RecoTree->Write();
-  
+  //}
   ///Delete the event pointer so we get a new pointer for the next event and there is no memory
   delete realAtriEvPtr;
   delete InputFile;
