@@ -1304,11 +1304,11 @@ void Interferometer::MinimizerThPhR(double InitialTxCor_XYZ[3], double InitialTx
   const gsl_min_fminimizer_type *T;
   gsl_min_fminimizer *s; 
  
-  if(a<50){
-    a=50;
+  if(a<40){
+    a=40;
   }
  
-  if(fabs(m-50)<1){
+  if(fabs(m-40)<1){
     m=(a+b)/2;
   }
   double a_ini=a;
@@ -1394,7 +1394,7 @@ void Interferometer::MinimizerThPhR(double InitialTxCor_XYZ[3], double InitialTx
 
     if(fabs(m-a_ini)<10){
       //StartR=FinalTxCor[2]-MinimizerRadialWidth/2;   
-      StartR=50;   
+      StartR=40;   
       StopR=FinalTxCor[2]+MinimizerRadialWidth*2;
     }
 
@@ -1402,8 +1402,8 @@ void Interferometer::MinimizerThPhR(double InitialTxCor_XYZ[3], double InitialTx
       StopR=1000;
     }
       
-    if(StartR<50){
-      StartR=50;
+    if(StartR<40){
+      StartR=40;
     }
 
     double testTh=FinalTxCor[0];
@@ -1655,8 +1655,8 @@ void Interferometer::SearchApproxiMin(double GuessResultCor[3][4],double Paramet
   if(StopTh>=178){
     StopTh=178;
   }
-  if(StartR<50){
-    StartR=50;
+  if(StartR<40){
+    StartR=40;
   }
 
   // cout<<"start and stop thetas are "<<StartTh<<" "<<StopTh<<endl;
@@ -1945,8 +1945,8 @@ void Interferometer::GetApproximateDistance(double GuessResultCor[3][4], vector<
   double StartR=3000;
   double StopR=200;
 
-  if(StopR<50){
-    StopR=50;
+  if(StopR<40){
+    StopR=40;
   }  
 
   double StepSizeR=50;//(StopR-StartR)/20;
@@ -2046,11 +2046,11 @@ void Interferometer::GetApproximateDistance(double GuessResultCor[3][4], vector<
 
   StartR=GuessResultCor[0][2]+250;
   StopR=GuessResultCor[0][2]-250;
-  if(StartR<50){
-    StartR=50;
+  if(StartR<40){
+    StartR=40;
   }
-  if(StopR<50){
-    StopR=50;
+  if(StopR<40){
+    StopR=40;
   }
   StepSizeR=50;
   checkmincurve=false;
@@ -2149,8 +2149,8 @@ void Interferometer::GetApproximateDistance(double GuessResultCor[3][4], vector<
   StartR=4000;
   StopR=200;
 
-  if(StopR<50){
-    StopR=50;
+  if(StopR<40){
+    StopR=40;
   }
   
   StepSizeR=50;//(StopR-StartR)/20;
@@ -2247,8 +2247,8 @@ void Interferometer::GetApproximateDistance(double GuessResultCor[3][4], vector<
   StartR=GuessResultCor[0][2]+250;
   StopR=GuessResultCor[0][2]-250;
  
-  if(StartR<50){
-    StartR=50;
+  if(StartR<40){
+    StartR=40;
   }
   StepSizeR=100;
   checkmincurve=false;
