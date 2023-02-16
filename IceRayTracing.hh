@@ -32,8 +32,8 @@ using namespace std;
 namespace IceRayTracing{
 
   /********Stuff for Interpolation**********/
-  static vector<vector <double>> GridPositionXb;
-  static vector<vector <double>> GridPositionZb;
+  static vector<vector <float>> GridPositionXb;
+  static vector<vector <float>> GridPositionZb;
   static vector<vector<vector <double>>> GridZValueb;
   
   static double GridStepSizeX_O=0.1;
@@ -63,8 +63,8 @@ namespace IceRayTracing{
   static double B_ice=B_ice_def;
   static double C_ice=C_ice_def;
   static constexpr double TransitionBoundary=0;
-  // const double A_ice=1.775;
-  // const double TransitionBoundary=14.9;
+  // static double A_ice=1.775;
+  // static constexpr double TransitionBoundary=14.9;
   
   /* Get the value of the B parameter for the refractive index model */
   void SetA(double &A);
@@ -228,7 +228,7 @@ namespace IceRayTracing{
   double *DirectRayTracer(double xT, double yT, double zT, double xR, double yR, double zR);
   
   /* Function that makes interpolation tables for raytracing */
-  void MakeTable(double ShowerHitDistance, double zT, int AntNum);
+  void MakeTable(double ShowerHitDistance, double ShowerDepth, double zT, int AntNum);
 
   /* Function that calculates the interpolated value for raytracing. The rt parameter: 0 is for D ray optical time, 1 is for D ray geometric path length,  2 is for D launch angle, 3 is for D recieve angle, 4 is D for ray attenuation, 5 is for R ray optical time, 6 is for R ray geometric path length,  7 is for R launch angle, 8 is for R recieve angle, 9 is R for ray attenuation */
   double GetInterpolatedValue(double xR, double zR, int rtParameter,int AntNum);
