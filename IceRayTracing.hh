@@ -83,12 +83,14 @@ namespace IceRayTracing{
 
   /* Get the value of refractive index model for a given depth  */
   double Getnz(double z);
-
-  /* E-feild Power Fresnel coefficient for S-polarised wave which is perpendicular to the plane of propogation/incidence. This function gives you back the reflectance. The transmittance is T=1-R */
-  double Refl_S(double thetai);
   
-/* E-feild Power Fresnel coefficient for P-polarised wave which is parallel to the plane of propogation/incidence. This function gives you back the reflectance. The transmittance is T=1-R */
+  /* E-feild Fresnel coefficient for S-polarised wave which is perpendicular to the plane of propogation/incidence. This function gives you back the reflection coefficient. The transmittance is t=1+r */
+  double Refl_S(double thetai);
+  double Trans_S(double thetai);
+  
+/* E-feild Fresnel coefficient for P-polarised wave which is parallel to the plane of propogation/incidence. This function gives you back the reflection coefficient. The transmittance is t=(n_1/n_2)*(1+R) */
   double Refl_P(double thetai);
+  double Trans_P(double thetai);
     
   /* The temperature and attenuation model has been taken from AraSim which also took it from here http://icecube.wisc.edu/~araproject/radio/ . This is basically Matt Newcomb's icecube directory which has alot of information, plots and codes about South Pole Ice activities. Please read it if you find it interesting. */
 
@@ -228,12 +230,20 @@ namespace IceRayTracing{
   double *DirectRayTracer(double xT, double yT, double zT, double xR, double yR, double zR);
   
   /* Function that makes interpolation tables for raytracing */
+<<<<<<< HEAD
+  void MakeTable(double ShowerHitDistance, double ShowerDepth, double zR, int AntNum);
+=======
   void MakeTable(double ShowerHitDistance, double ShowerDepth, double zT, int AntNum);
+>>>>>>> 037bacc8eed656ca3346a6867dc9a1935432bffe
 
   /* Function that calculates the interpolated value for raytracing. The rt parameter: 0 is for D ray optical time, 1 is for D ray geometric path length,  2 is for D launch angle, 3 is for D recieve angle, 4 is D for ray attenuation, 5 is for R ray optical time, 6 is for R ray geometric path length,  7 is for R launch angle, 8 is for R recieve angle, 9 is R for ray attenuation */
-  double GetInterpolatedValue(double xR, double zR, int rtParameter,int AntNum);
+  double GetInterpolatedValue(double xT, double zT, int rtParameter,int AntNum);
 			      
   void GetRayTracingSolutions(double RxDepth, double Distance, double TxDepth, double TimeRay[2], double PathRay[2], double LaunchAngle[2], double RecieveAngle[2], int IgnoreCh[2], double IncidenceAngleInIce[2], double A0, double frequency, double AttRay[2]);
-  
+
+  // Sets the number of antennas to make a table for. Use it before making the tables.
+  void SetNumberOfAntennas(int numberOfAntennas);
+
+  void GetFocusingFactor(double zT, double xR, double zR, double focusing[2]);
 }
 #endif

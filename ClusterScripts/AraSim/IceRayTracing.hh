@@ -5,6 +5,13 @@ released under GPL3.
 #ifndef IRT_HEAD
 #define IRT_HEAD
 
+#include "TGraph.h"
+#include "TMultiGraph.h"
+#include "TCanvas.h"
+#include "TString.h"
+#include "TAxis.h"
+#include "TMath.h"
+
 #include <stdio.h>
 #include <math.h>
 #include <iostream>
@@ -12,13 +19,6 @@ released under GPL3.
 #include <string>
 #include <algorithm>
 #include <chrono>
-
-// #include </cvmfs/ara.opensciencegrid.org/trunk/centos7/misc_build/include/gsl/gsl_errno.h>
-// #include </cvmfs/ara.opensciencegrid.org/trunk/centos7/misc_build/include/gsl/gsl_math.h>
-// #include </cvmfs/ara.opensciencegrid.org/trunk/centos7/misc_build/include/gsl/gsl_roots.h>
-// #include </cvmfs/ara.opensciencegrid.org/trunk/centos7/misc_build/include/gsl/gsl_deriv.h>
-// #include <sys/time.h>
-// #include </cvmfs/ara.opensciencegrid.org/trunk/centos7/misc_build/include/gsl/gsl_integration.h>
 
 #include <gsl/gsl_errno.h>
 #include <gsl/gsl_math.h>
@@ -30,6 +30,24 @@ released under GPL3.
 using namespace std;
 
 namespace IceRayTracing{
+
+  /********Stuff for Interpolation**********/
+  static vector<vector <float>> GridPositionXb;
+  static vector<vector <float>> GridPositionZb;
+  static vector<vector<vector <double>>> GridZValueb;
+  
+  static double GridStepSizeX_O=0.1;
+  static double GridStepSizeZ_O=0.1;
+  static double GridWidthX=20;
+  static double GridWidthZ=20;
+
+  static int GridPoints=100;////just set a non-zeronumber for now
+  static int TotalStepsX_O=100;////just set a non-zeronumber for now
+  static int TotalStepsZ_O=100;////just set a non-zeronumber for now
+  static double GridStartX=40;////just set a non-zeronumber for now
+  static double GridStopX=60;////just set a non-zeronumber for now
+  static double GridStartZ=-20;////just set a non-zeronumber for now
+  static double GridStopZ=0;
   
   /* Set the value of pi */
   static constexpr double pi=3.14159265359;
@@ -41,7 +59,14 @@ namespace IceRayTracing{
   static const double B_ice_def=-0.43;
   static const double C_ice_def=0.0132;
 
- /* Get the value of the B parameter for the refractive index model */
+  static double A_ice=A_ice_def;
+  static double B_ice=B_ice_def;
+  static double C_ice=C_ice_def;
+  static constexpr double TransitionBoundary=0;
+  // static double A_ice=1.775;
+  // static constexpr double TransitionBoundary=14.9;
+  
+  /* Get the value of the B parameter for the refractive index model */
   void SetA(double &A);
 
   /* Get the value of the B parameter for the refractive index model */
@@ -49,7 +74,7 @@ namespace IceRayTracing{
   
   /* Get the value of the C parameter for the refractive index model */
   void SetC(double &C);
- 
+  
   /* Get the value of the B parameter for the refractive index model */
   double GetB(double z);
   
@@ -58,12 +83,14 @@ namespace IceRayTracing{
 
   /* Get the value of refractive index model for a given depth  */
   double Getnz(double z);
-
-  /* E-feild Power Fresnel coefficient for S-polarised wave which is perpendicular to the plane of propogation/incidence. This function gives you back the reflectance. The transmittance is T=1-R */
-  double Refl_S(double thetai);
   
-/* E-feild Power Fresnel coefficient for P-polarised wave which is parallel to the plane of propogation/incidence. This function gives you back the reflectance. The transmittance is T=1-R */
+  /* E-feild Fresnel coefficient for S-polarised wave which is perpendicular to the plane of propogation/incidence. This function gives you back the reflection coefficient. The transmittance is t=1+r */
+  double Refl_S(double thetai);
+  double Trans_S(double thetai);
+  
+/* E-feild Fresnel coefficient for P-polarised wave which is parallel to the plane of propogation/incidence. This function gives you back the reflection coefficient. The transmittance is t=(n_1/n_2)*(1+R) */
   double Refl_P(double thetai);
+  double Trans_P(double thetai);
     
   /* The temperature and attenuation model has been taken from AraSim which also took it from here http://icecube.wisc.edu/~araproject/radio/ . This is basically Matt Newcomb's icecube directory which has alot of information, plots and codes about South Pole Ice activities. Please read it if you find it interesting. */
 
@@ -148,15 +175,14 @@ namespace IceRayTracing{
   /* This functions works for the Refracted ray and gives you back the launch angle, receive angle and propagation times (of the whole ray and the two direct rays that make it up) together with values of the L parameter and checkzero variable. checkzero variable checks how close the minimiser came to 0. 0 is perfect and less than 0.5 is pretty good. more than that should not be acceptable. It requires the launch angle of the reflected ray as an input. */
   double *GetRefractedRayPar(double z0, double x1 ,double z1, double LangR, double RangR, double checkzeroD, double checkzeroR);
 
-  
-  /* This function returns the x and z values for the full Direct ray path and prints out the ray path in a text file */
-  void GetFullDirectRayPath(double z0, double x1, double z1,double lvalueD, vector <double> &x, vector <double> &z);
+    /* This function returns the x and z values for the full Direct ray path in a TGraph and also prints out the ray path in a text file */
+  TGraph* GetFullDirectRayPath(double z0, double x1, double z1,double lvalueD);
 
-  /* This function returns the x and z values for the full Reflected ray path and prints out the ray path in a text file */
-  void GetFullReflectedRayPath(double z0, double x1, double z1,double lvalueR, vector <double> &x, vector <double> &z);
-  
-  /* This function returns the x and z values for the full Refracted ray path and prints out the ray path in a text file */
-  void GetFullRefractedRayPath(double z0, double x1, double z1, double zmax, double lvalueRa, vector <double> &x, vector <double> &z,int raynumber);
+  /* This function returns the x and z values for the full Reflected ray path in a TGraph and also prints out the ray path in a text file */
+  TGraph* GetFullReflectedRayPath(double z0, double x1, double z1,double lvalueR);
+
+  /* This function returns the x and z values for the full Refracted ray path in a TGraph and also prints out the ray path in a text file */
+  TGraph* GetFullRefractedRayPath(double z0, double x1, double z1, double zmax, double lvalueRa, int raynumber);
 
   /* function for plotting and storing all the rays */
   void PlotAndStoreRays(double x0,double z0, double z1, double x1, double zmax[2], double lvalues[4], double checkzeroes[4]);
@@ -182,11 +208,12 @@ namespace IceRayTracing{
   /* This functions works for the Reflected ray and gives you back the launch angle, receive angle and propagation times (of the whole ray and the two direct rays that make it up) together with values of the L parameter. This is for constant refractive index*/
   double *GetReflectedRayPar_Cnz(double z0, double x1 , double z1, double A_ice_Cnz);
 
-  /* This function returns the x and z values for the full Direct ray path and prints out the ray path in a text file. This is for a constant refractive index. */
-  void GetFullDirectRayPath_Cnz(double z0, double x1, double z1, double lvalueD, double A_ice_Cnz,vector <double> &x, vector <double> &z);
+  
+  /* This function returns the x and z values for the full Direct ray path in a TGraph and also prints out the ray path in a text file. This is for a constant refractive index. */
+  TGraph* GetFullDirectRayPath_Cnz(double z0, double x1, double z1, double lvalueD, double A_ice_Cnz);
 
-  /* This function returns the x and z values for the full Reflected ray path and prints out the ray path in a text file. This is for a constant refractive index. */
-  void GetFullReflectedRayPath_Cnz(double z0, double x1, double z1, double lvalueR, double A_ice_Cnz,vector <double> &x, vector <double> &z);
+  /* This function returns the x and z values for the full Reflected ray path in a TGraph and also prints out the ray path in a text file. This is for a constant refractive index. */
+  TGraph* GetFullReflectedRayPath_Cnz(double z0, double x1, double z1, double lvalueR, double A_ice_Cnz);
 
   /* function for plotting and storing all the rays. This is for constant refractive index. */
   void PlotAndStoreRays_Cnz(double x0,double z0, double z1, double x1, double lvalues[2], double A_ice_Cnz);
@@ -200,16 +227,23 @@ namespace IceRayTracing{
   /* This functions works for the Direct ray and gives you back the launch angle, receive angle and propagation time of the ray together with values of the L parameter and checkzero variable. checkzero variable checks how close the minimiser came to 0. 0 is perfect and less than 0.5 is pretty good. more than that should not be acceptable. */
   double* GetDirectRayPar_Air(double z0, double x1, double z1);
 
-  double *GeantRayTracer(double xT, double yT, double zT, double xR, double yR, double zR);
+  double *DirectRayTracer(double xT, double yT, double zT, double xR, double yR, double zR);
   
   /* Function that makes interpolation tables for raytracing */
-  void MakeTable(double ShowerHitDistance,double zT);
+<<<<<<< HEAD
+  void MakeTable(double ShowerHitDistance, double ShowerDepth, double zR, int AntNum);
+=======
+  void MakeTable(double ShowerHitDistance, double ShowerDepth, double zT, int AntNum);
+>>>>>>> 037bacc8eed656ca3346a6867dc9a1935432bffe
 
-  /* Function that calculates the interpolated value for raytracing. The rt parameter: 0 is for launch angle, 1 is for recieve angle, 2 is for propagation time, 3 is for distance */
-  
-  double GetInterpolatedValue(double xR, double zR, int rtParameter);
+  /* Function that calculates the interpolated value for raytracing. The rt parameter: 0 is for D ray optical time, 1 is for D ray geometric path length,  2 is for D launch angle, 3 is for D recieve angle, 4 is D for ray attenuation, 5 is for R ray optical time, 6 is for R ray geometric path length,  7 is for R launch angle, 8 is for R recieve angle, 9 is R for ray attenuation */
+  double GetInterpolatedValue(double xT, double zT, int rtParameter,int AntNum);
 			      
-  void GetRayTracingSolutions(double RxDepth, double Distance, double TxDepth, double TimeRay[2], double PathRay[2], double LaunchAngle[2], double RecieveAngle[2], int IgnoreCh[2], double IncidenceAngleInIce[2],vector <double> xRay[2], vector <double> zRay[2]);
-  
+  void GetRayTracingSolutions(double RxDepth, double Distance, double TxDepth, double TimeRay[2], double PathRay[2], double LaunchAngle[2], double RecieveAngle[2], int IgnoreCh[2], double IncidenceAngleInIce[2], double A0, double frequency, double AttRay[2]);
+
+  // Sets the number of antennas to make a table for. Use it before making the tables.
+  void SetNumberOfAntennas(int numberOfAntennas);
+
+  void GetFocusingFactor(double zT, double xR, double zR, double focusing[2]);
 }
 #endif

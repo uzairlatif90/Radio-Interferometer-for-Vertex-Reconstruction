@@ -57,7 +57,7 @@ double IceRayTracing::Getnz(double z){
   return IceRayTracing::A_ice+IceRayTracing::GetB(z)*exp(-IceRayTracing::GetC(z)*z);
 }
 
-/* E-feild Power Fresnel coefficient for S-polarised wave which is perpendicular to the plane of propogation/incidence. This function gives you back the reflectance. The transmittance is T=1-R */
+/* E-feild Fresnel coefficient for S-polarised wave which is perpendicular to the plane of propogation/incidence. This function gives you back the reflection coefficient. The transmission coefficient is t=1+r */
 double IceRayTracing::Refl_S(double thetai){
 
   double Nair=1;
@@ -68,15 +68,33 @@ double IceRayTracing::Refl_S(double thetai){
   double sqterm=sqrt(1-pow((n1/n2)*(sin(thetai)),2));
   double num=n1*cos(thetai)-n2*sqterm;
   double den=n1*cos(thetai)+n2*sqterm;
-  double RS=(num*num)/(den*den);
+  double rS=(num/den);
 
-  if(std::isnan(RS)){
-    RS=1;
+  if(std::isnan(rS)){
+    rS=1;
   }
-  return (RS);
+  return (rS);
 }
 
-/* E-feild Power Fresnel coefficient for P-polarised wave which is parallel to the plane of propogation/incidence. This function gives you back the reflectance. The transmittance is T=1-R */
+double IceRayTracing::Trans_S(double thetai){
+
+  double Nair=1;
+  double Nice=IceRayTracing::Getnz(0); 
+  double n1=Nice;
+  double n2=Nair;
+  
+  double sqterm=sqrt(1-pow((n1/n2)*(sin(thetai)),2));
+  double num=n1*cos(thetai)-n2*sqterm;
+  double den=n1*cos(thetai)+n2*sqterm;
+  double tS=1+(num/den);
+
+  if(std::isnan(tS)){
+    tS=0;
+  }
+  return (tS);
+}
+
+/* E-feild Fresnel coefficient for P-polarised wave which is parallel to the plane of propogation/incidence. This function gives you back the reflection coeffient. The transmission coefficient is t=(n_1/n_2)*(1+r) */
 double IceRayTracing::Refl_P(double thetai){
    
   double Nair=1;
@@ -87,11 +105,29 @@ double IceRayTracing::Refl_P(double thetai){
   double sqterm=sqrt(1-pow((n1/n2)*(sin(thetai)),2));
   double num=n1*sqterm-n2*cos(thetai);
   double den=n1*sqterm+n2*cos(thetai);
-  double RP=(num*num)/(den*den);
-  if(std::isnan(RP)){
-    RP=1;
+  double rP=-(num)/(den);
+  if(std::isnan(rP)){
+    rP=1;
   }
-  return (RP);
+  return (rP);
+}
+
+double IceRayTracing::Trans_P(double thetai){
+   
+  double Nair=1;
+  double Nice=IceRayTracing::Getnz(0); 
+  double n1=Nice;
+  double n2=Nair;
+
+  double sqterm=sqrt(1-pow((n1/n2)*(sin(thetai)),2));
+  double num=n1*sqterm-n2*cos(thetai);
+  double den=n1*sqterm+n2*cos(thetai);
+  double tP=(1-(num/den))*(n1/n2);
+
+  if(std::isnan(tP)){
+    tP=0;
+  }
+  return (tP);
 }
 
 /* The temperature and attenuation model has been taken from AraSim which also took it from here http://icecube.wisc.edu/~araproject/radio/ . This is basically Matt Newcomb's icecube directory which has alot of information, plots and codes about South Pole Ice activities. Please read it if you find it interesting. */
@@ -2663,8 +2699,13 @@ double *IceRayTracing::DirectRayTracer(double xT, double yT, double zT, double x
 }
 
 
+<<<<<<< HEAD
+void IceRayTracing::MakeTable(double ShowerHitDistance, double ShowerDepth, double zR, int AntNum){ 
+  GridZValueb[AntNum].resize(15);
+=======
 void IceRayTracing::MakeTable(double ShowerHitDistance, double ShowerDepth, double zT, int AntNum){ 
   GridZValueb[AntNum].resize(12);
+>>>>>>> 037bacc8eed656ca3346a6867dc9a1935432bffe
   
   IceRayTracing::TotalStepsX_O=(IceRayTracing::GridWidthX/IceRayTracing::GridStepSizeX_O)+1;
   IceRayTracing::TotalStepsZ_O=(IceRayTracing::GridWidthZ/IceRayTracing::GridStepSizeZ_O)+1;
@@ -2682,7 +2723,11 @@ void IceRayTracing::MakeTable(double ShowerHitDistance, double ShowerDepth, doub
   IceRayTracing::GridStartZ=ShowerDepth-(IceRayTracing::GridWidthZ/2);
   IceRayTracing::GridStopZ=ShowerDepth+(IceRayTracing::GridWidthZ/2);
 
+<<<<<<< HEAD
+  if(fabs(ShowerDepth)<=10 || IceRayTracing::GridStopZ>=0 ){
+=======
   if(fabs(zT)<=10 || IceRayTracing::GridStopZ>=0 ){
+>>>>>>> 037bacc8eed656ca3346a6867dc9a1935432bffe
     IceRayTracing::GridStartZ=-20;
     IceRayTracing::GridStopZ=0;
   }
@@ -2698,9 +2743,9 @@ void IceRayTracing::MakeTable(double ShowerHitDistance, double ShowerDepth, doub
   for(int ix=0;ix<IceRayTracing::TotalStepsX_O;ix++){
     for(int iz=0;iz<IceRayTracing::TotalStepsZ_O;iz++){
 
-      double xR=IceRayTracing::GridStartX+IceRayTracing::GridStepSizeX_O*ix;
-      double zR=IceRayTracing::GridStartZ+IceRayTracing::GridStepSizeZ_O*iz;
-
+      double xT=IceRayTracing::GridStartX+IceRayTracing::GridStepSizeX_O*ix;
+      double zT=IceRayTracing::GridStartZ+IceRayTracing::GridStepSizeZ_O*iz;
+      
       double A0=1;
       double frequency=0.1;//Tx frequency in GHz  
   
@@ -2711,10 +2756,22 @@ void IceRayTracing::MakeTable(double ShowerHitDistance, double ShowerDepth, doub
       int IgnoreCh_Tx[2]={0,0};
       double IncidenceAngleInIce_Tx[2]={0,0};
       double AttRay_Tx[2]={0,0};
-      IceRayTracing::GetRayTracingSolutions(zR, xR, zT, TimeRay_Tx, PathRay_Tx, LaunchAngle_Tx, RecieveAngle_Tx, IgnoreCh_Tx, IncidenceAngleInIce_Tx, A0, frequency, AttRay_Tx);
       
-      GridPositionXb[AntNum][ix]=xR;
-      GridPositionZb[AntNum][iz]=zR;
+      IceRayTracing::GetRayTracingSolutions(zR, xT, zT, TimeRay_Tx, PathRay_Tx, LaunchAngle_Tx, RecieveAngle_Tx, IgnoreCh_Tx, IncidenceAngleInIce_Tx, A0, frequency, AttRay_Tx);
+
+      double focusing[2]={1,1};
+      IceRayTracing::GetFocusingFactor(zT, xT, zR, focusing);
+
+      if(std::isnan(focusing[0])==true){
+	focusing[0]=1;
+      }
+
+      if(std::isnan(focusing[1])==true){
+	focusing[1]=1;
+      }
+      
+      GridPositionXb[AntNum][ix]=xT;
+      GridPositionZb[AntNum][iz]=zT;
 
       if(IgnoreCh_Tx[0]!=0){
 	GridZValueb[AntNum][0].push_back(TimeRay_Tx[0]);
@@ -2722,15 +2779,31 @@ void IceRayTracing::MakeTable(double ShowerHitDistance, double ShowerDepth, doub
 	GridZValueb[AntNum][2].push_back(LaunchAngle_Tx[0]);
 	GridZValueb[AntNum][3].push_back(RecieveAngle_Tx[0]);
 	GridZValueb[AntNum][4].push_back(AttRay_Tx[0]);
+	GridZValueb[AntNum][5].push_back(focusing[0]);
       }else{
 	GridZValueb[AntNum][0].push_back(-1000);
 	GridZValueb[AntNum][1].push_back(-1000);
 	GridZValueb[AntNum][2].push_back(-1000);
 	GridZValueb[AntNum][3].push_back(-1000);
 	GridZValueb[AntNum][4].push_back(-1000);
+	GridZValueb[AntNum][5].push_back(-1000);
       }
 
       if(IgnoreCh_Tx[1]!=0){
+<<<<<<< HEAD
+	GridZValueb[AntNum][6].push_back(TimeRay_Tx[1]);
+	GridZValueb[AntNum][7].push_back(PathRay_Tx[1]);
+	GridZValueb[AntNum][8].push_back(LaunchAngle_Tx[1]);
+	GridZValueb[AntNum][9].push_back(RecieveAngle_Tx[1]);
+	GridZValueb[AntNum][10].push_back(AttRay_Tx[1]);
+	GridZValueb[AntNum][11].push_back(focusing[1]);
+	if(IncidenceAngleInIce_Tx[1]!=100){
+	  GridZValueb[AntNum][12].push_back(IncidenceAngleInIce_Tx[1]);
+	}
+	if(IncidenceAngleInIce_Tx[1]==100){
+	  GridZValueb[AntNum][12].push_back(-1000);
+	}
+=======
 	GridZValueb[AntNum][5].push_back(TimeRay_Tx[1]);
 	GridZValueb[AntNum][6].push_back(PathRay_Tx[1]);
 	GridZValueb[AntNum][7].push_back(LaunchAngle_Tx[1]);
@@ -2747,14 +2820,19 @@ void IceRayTracing::MakeTable(double ShowerHitDistance, double ShowerDepth, doub
 	  //   GridZValueb[AntNum][11].push_back(1);
 	}
 	//cout<<xR<<" "<<zR<<" "<<IncidenceAngleInIce_Tx[1]<<" "<<Refl_S(IncidenceAngleInIce_Tx[1])<<endl;
+>>>>>>> 037bacc8eed656ca3346a6867dc9a1935432bffe
       }else{
-	GridZValueb[AntNum][5].push_back(-1000);
 	GridZValueb[AntNum][6].push_back(-1000);
 	GridZValueb[AntNum][7].push_back(-1000);
 	GridZValueb[AntNum][8].push_back(-1000);
 	GridZValueb[AntNum][9].push_back(-1000);
 	GridZValueb[AntNum][10].push_back(-1000);
+<<<<<<< HEAD
+	GridZValueb[AntNum][11].push_back(-1000);
+	GridZValueb[AntNum][12].push_back(-1000);
+=======
 	//GridZValueb[AntNum][11].push_back(-1000);
+>>>>>>> 037bacc8eed656ca3346a6867dc9a1935432bffe
       }
       
     }
@@ -2767,7 +2845,7 @@ void IceRayTracing::MakeTable(double ShowerHitDistance, double ShowerDepth, doub
 }
 
 
-double IceRayTracing::GetInterpolatedValue(double xR, double zR, int rtParameter,int AntNum){
+double IceRayTracing::GetInterpolatedValue(double xT, double zT, int rtParameter,int AntNum){
 
   // int MinDistBin[20];
   // double MinDist[20];
@@ -2790,11 +2868,11 @@ double IceRayTracing::GetInterpolatedValue(double xR, double zR, int rtParameter
 
   //cout<<"Grid Variables are "<<GridStartX<<" "<<GridStartZ<<" "<<GridStopX<<" "<<GridStopZ<<" "<<GridWidthX<<" "<<TotalStepsX_O<<" "<<TotalStepsZ_O<<" "<<GridPoints<<endl;
 
-  if(xR>=IceRayTracing::GridStartX && xR<=IceRayTracing::GridStopX && zR>=IceRayTracing::GridStartZ && zR<=IceRayTracing::GridStopZ ){
-    double x=xR;
-    double y=zR;
-    int minXbin=floor((xR-IceRayTracing::GridStartX)/GridStepSizeX_O);
-    int minZbin=floor(fabs(zR-IceRayTracing::GridStartZ)/GridStepSizeZ_O);
+  if(xT>=IceRayTracing::GridStartX && xT<=IceRayTracing::GridStopX && zT>=IceRayTracing::GridStartZ && zT<=IceRayTracing::GridStopZ ){
+    double x=xT;
+    double y=zT;
+    int minXbin=floor((xT-IceRayTracing::GridStartX)/GridStepSizeX_O);
+    int minZbin=floor(fabs(zT-IceRayTracing::GridStartZ)/GridStepSizeZ_O);
 
     double x1,y1,y2,x2;
     if(minXbin+1<=IceRayTracing::TotalStepsX_O-1 && minZbin+1<=IceRayTracing::TotalStepsZ_O-1){
@@ -3229,4 +3307,79 @@ void IceRayTracing::GetRayTracingSolutions(double RxDepth, double Distance, doub
     RHits++;
   }
   delete [] RTresults;
+}
+
+void IceRayTracing::SetNumberOfAntennas(int numberOfAntennas){
+  IceRayTracing::GridPositionXb.resize(numberOfAntennas);
+  IceRayTracing::GridPositionZb.resize(numberOfAntennas);
+  IceRayTracing::GridZValueb.resize(numberOfAntennas);
+}
+
+void IceRayTracing::GetFocusingFactor(double zT, double xR, double zR, double focusing[2]){
+
+  double A0=1;
+  double frequency=0.1;//Tx frequency in GHz  
+
+  double distance[4]={0,0,0,0};
+  double recAng[4]={0,0,0,0};
+  double lauAng[4]={0,0,0,0};
+  double recPos[4]={0,0,0,0};
+  double nTx= IceRayTracing::Getnz(zT);  // emitter
+  double nRx= IceRayTracing::Getnz(zR); // receiver  
+  
+  double TimeRay[2]={0,0};
+  double PathRay[2]={0,0};
+  double LaunchAngle[2]={0,0};
+  double RecieveAngle[2]={0,0};
+  int IgnoreCh[2]={0,0};
+  double IncidenceAngleInIce[2]={0,0};
+  double AttRay[2]={0,0};
+  IceRayTracing::GetRayTracingSolutions(zR, xR, zT, TimeRay, PathRay, LaunchAngle, RecieveAngle, IgnoreCh, IncidenceAngleInIce, A0, frequency, AttRay);
+  
+  distance[0]=PathRay[0];
+  recAng[0]=RecieveAngle[0]*(IceRayTracing::pi/180);
+  lauAng[0]=LaunchAngle[0]*(IceRayTracing::pi/180);
+  recPos[0]=zR;
+
+  distance[1]=PathRay[1];
+  recAng[1]=RecieveAngle[1]*(IceRayTracing::pi/180);
+  lauAng[1]=LaunchAngle[1]*(IceRayTracing::pi/180);
+  recPos[1]=zR;
+  
+  double TimeRayB[2]={0,0};
+  double PathRayB[2]={0,0};
+  double LaunchAngleB[2]={0,0};
+  double RecieveAngleB[2]={0,0};
+  int IgnoreChB[2]={0,0};
+  double IncidenceAngleInIceB[2]={0,0};
+  double AttRayB[2]={0,0};
+  
+  IceRayTracing::GetRayTracingSolutions(zR-0.01, xR, zT, TimeRayB, PathRayB, LaunchAngleB, RecieveAngleB, IgnoreChB, IncidenceAngleInIceB, A0, frequency, AttRayB);
+  
+  distance[2]=PathRayB[0];
+  recAng[2]=RecieveAngleB[0]*(IceRayTracing::pi/180);
+  lauAng[2]=LaunchAngleB[0]*(IceRayTracing::pi/180);
+  recPos[2]=zR-0.01;
+
+  distance[3]=PathRayB[1];
+  recAng[3]=RecieveAngleB[1]*(IceRayTracing::pi/180);
+  lauAng[3]=LaunchAngleB[1]*(IceRayTracing::pi/180);
+  recPos[3]=zR-0.01;
+
+  double focusparts[6];
+
+  if(RecieveAngle[0]!=-1000 && RecieveAngleB[0]!=-1000){
+    focusing[0]= sqrt( ((distance[0] / (sin(recAng[0]) * fabs( (recPos[2] - recPos[0]) / (lauAng[2] - lauAng[0]) ) ) ) * (nTx / nRx) ));
+    // focusparts[0]=sqrt(distance[0] / sin(recAng[0]));
+    // focusparts[1]=sqrt(1.0/fabs( (recPos[2] - recPos[0]) / (lauAng[2] - lauAng[0]) ));
+    // focusparts[2]=sqrt((nTx / nRx));
+  }
+  
+  if(RecieveAngle[1]!=-1000 && RecieveAngleB[1]!=-1000){
+    focusing[1]= sqrt( ((distance[1] /( sin(recAng[1]) * fabs( (recPos[3] - recPos[1]) / (lauAng[3] - lauAng[1]) ) ) ) * (nTx / nRx)));
+    // focusparts[3]=sqrt(distance[1] / sin(recAng[1]));
+    // focusparts[4]=sqrt(1.0/fabs( (recPos[3] - recPos[1]) / (lauAng[3] - lauAng[1]) ));
+    // focusparts[5]=sqrt((nTx / nRx));
+  }
+  
 }
