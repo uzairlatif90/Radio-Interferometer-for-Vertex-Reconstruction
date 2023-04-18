@@ -1,14 +1,14 @@
 #include "Interferometer.cc"
 
 void RunInterferometer(){
-  DeclareAntennaConfig();
+  DeclareAntennaConfigARA(100);
 
-  double DummyTxCor[3]={-180,160,-200};
+  double DummyTxCor[3]={2500,0,10};
   //double DummyTxCor[3]={3,4,20};
   //double DummyTxCor[3]={0.02,3,370};
   //double DummyTxCor[3]={-500,-500,-151};
   //double DummyTxCor[3]={-500,-500,-101};
-  double ExpectedTimeJitter=2;// in ns
+  double ExpectedTimeJitter=0;// in ns
   double ExpectedPositionUncertainty=5;//in m
   
   bool RefineRecoResults=false;
@@ -63,10 +63,10 @@ void RunInterferometer(){
   }
   Interferometer::AddGaussianJitterToHitTimes(ExpectedTimeJitter,ChHitTime);
   
-  // for(int iRx=0;iRx<TotalAntennasRx;iRx++){
-  //   //cout<<"ignore channels are "<<iRx<<" "<<IgnoreCh[0][iRx]<<" "<<IgnoreCh[1][iRx]<<endl;
-  //   cout<<"Hit Times are "<<iRx<<" "<<ChHitTime[0][iRx]<<" "<<ChHitTime[1][iRx]<<endl;
-  // }
+  for(int iRx=0;iRx<TotalAntennasRx;iRx++){
+    //cout<<"ignore channels are "<<iRx<<" "<<IgnoreCh[0][iRx]<<" "<<IgnoreCh[1][iRx]<<endl;
+    cout<<"Hit Times are "<<iRx<<" "<<ChHitTime[0][iRx]-ChHitTime[0][0]<<" "<<ChHitTime[1][iRx]-ChHitTime[1][iRx]<<endl;
+  }
   cout<<" X_true="<<TrueTxCor_XYZ[0]<<" ,Y_true="<<TrueTxCor_XYZ[1]<<" ,Z_true="<<TrueTxCor_XYZ[2]<<endl;
   cout<<" Th_true="<<TrueTxCor_ThPhR[0]<<" ,Ph_true="<<TrueTxCor_ThPhR[1]<<" ,R_true="<<TrueTxCor_ThPhR[2]<<endl;
   bool CheckStationTrigger=Interferometer::CheckTrigger(IgnoreCh);

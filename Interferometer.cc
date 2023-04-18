@@ -1619,10 +1619,9 @@ void Interferometer::SearchApproxiMin(double GuessResultCor[3][4],double Paramet
     //cout<<"checking below surface"<<endl;  
     StartThBin=18;
   }
-
+  
   for(int idir=1;idir<72;idir++){
     for(int idis=4;idis<50;idis++){
-    //for(int idir=32;idir<72;idir++){
 
       TestCor[0]=2.5*idir;   
       TestCor[2]=50*idis;  
